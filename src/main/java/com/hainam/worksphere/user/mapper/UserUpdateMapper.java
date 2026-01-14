@@ -1,0 +1,18 @@
+package com.hainam.worksphere.user.mapper;
+
+import com.hainam.worksphere.user.domain.User;
+import com.hainam.worksphere.user.dto.request.UpdateProfileRequest;
+import org.mapstruct.*;
+
+@Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
+public interface UserUpdateMapper {
+
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "email", ignore = true)
+    @Mapping(target = "password", ignore = true)
+    @Mapping(target = "isActive", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
+    void updateUserFromRequest(UpdateProfileRequest request, @MappingTarget User user);
+}
