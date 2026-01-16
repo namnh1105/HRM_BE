@@ -26,7 +26,7 @@ public class UserRoleController {
     private final UserRoleMapper userRoleMapper;
 
     @PostMapping("/assign")
-    @PreAuthorize("hasPermission(null, 'user-role:assign')")
+    @PreAuthorize("hasAuthority('MANAGE_USER_ROLE')")
     public ResponseEntity<ApiResponse<Void>> assignRolesToUser(@Valid @RequestBody AssignRolesRequest request) {
         userRoleService.assignRolesToUser(request.getUserId(), request.getRoleIds());
 
@@ -34,7 +34,7 @@ public class UserRoleController {
     }
 
     @PostMapping("/remove")
-    @PreAuthorize("hasPermission(null, 'user-role:remove')")
+    @PreAuthorize("hasAuthority('MANAGE_USER_ROLE')")
     public ResponseEntity<ApiResponse<Void>> removeRolesFromUser(@Valid @RequestBody AssignRolesRequest request) {
         userRoleService.removeRolesFromUser(request.getUserId(), request.getRoleIds());
 
@@ -42,7 +42,7 @@ public class UserRoleController {
     }
 
     @PostMapping("/replace")
-    @PreAuthorize("hasPermission(null, 'user-role:assign')")
+    @PreAuthorize("hasAuthority('MANAGE_USER_ROLE')")
     public ResponseEntity<ApiResponse<Void>> replaceUserRoles(@Valid @RequestBody AssignRolesRequest request) {
         userRoleService.replaceUserRoles(request.getUserId(), request.getRoleIds());
 
@@ -50,7 +50,7 @@ public class UserRoleController {
     }
 
     @GetMapping("/user/{userId}")
-    @PreAuthorize("hasPermission(null, 'user-role:read')")
+    @PreAuthorize("hasAuthority('READ_USER_ROLE')")
     public ResponseEntity<ApiResponse<List<UserRoleResponse>>> getUserRoles(@PathVariable UUID userId) {
         List<UserRole> userRoles = userRoleService.getActiveUserRolesByUserId(userId);
         List<UserRoleResponse> response = userRoles.stream()
@@ -61,7 +61,7 @@ public class UserRoleController {
     }
 
     @GetMapping("/role/{roleId}")
-    @PreAuthorize("hasPermission(null, 'user-role:read')")
+    @PreAuthorize("hasAuthority('READ_USER_ROLE')")
     public ResponseEntity<ApiResponse<List<UserRoleResponse>>> getUsersByRole(@PathVariable UUID roleId) {
         List<UserRole> userRoles = userRoleService.getActiveUserRolesByRoleId(roleId);
         List<UserRoleResponse> response = userRoles.stream()
@@ -72,7 +72,7 @@ public class UserRoleController {
     }
 
     @PostMapping("/user/{userId}/role/{roleId}")
-    @PreAuthorize("hasPermission(null, 'user-role:assign')")
+    @PreAuthorize("hasAuthority('MANAGE_USER_ROLE')")
     public ResponseEntity<ApiResponse<Void>> assignRoleToUser(
             @PathVariable UUID userId,
             @PathVariable UUID roleId) {
@@ -82,7 +82,7 @@ public class UserRoleController {
     }
 
     @DeleteMapping("/user/{userId}/role/{roleId}")
-    @PreAuthorize("hasPermission(null, 'user-role:remove')")
+    @PreAuthorize("hasAuthority('MANAGE_USER_ROLE')")
     public ResponseEntity<ApiResponse<Void>> removeRoleFromUser(
             @PathVariable UUID userId,
             @PathVariable UUID roleId) {
@@ -92,36 +92,12 @@ public class UserRoleController {
     }
 
     @GetMapping("/user/{userId}/role/{roleId}/check")
-    @PreAuthorize("hasPermission(null, 'user-role:read')")
+    @PreAuthorize("hasAuthority('READ_USER_ROLE')")
     public ResponseEntity<ApiResponse<Boolean>> checkUserHasRole(
             @PathVariable UUID userId,
             @PathVariable UUID roleId) {
         boolean hasRole = userRoleService.userHasRole(userId, roleId);
 
         return ResponseEntity.ok(ApiResponse.success("User role check completed", hasRole));
-    }
-
-    @PostMapping("/user/{userId}/deactivate-all")
-    @PreAuthorize("hasPermission(null, 'user-role:remove')")
-    public ResponseEntity<ApiResponse<Void>> deactivateAllUserRoles(@PathVariable UUID userId) {
-        userRoleService.deactivateAllRolesForUser(userId);
-
-        return ResponseEntity.ok(ApiResponse.success("All user roles deactivated successfully", null));
-    }
-
-    @GetMapping("/user/{userId}/count")
-    @PreAuthorize("hasPermission(null, 'user-role:read')")
-    public ResponseEntity<ApiResponse<Long>> getUserRoleCount(@PathVariable UUID userId) {
-        long count = userRoleService.countActiveRolesByUserId(userId);
-
-        return ResponseEntity.ok(ApiResponse.success("User role count retrieved", count));
-    }
-
-    @GetMapping("/role/{roleId}/count")
-    @PreAuthorize("hasPermission(null, 'user-role:read')")
-    public ResponseEntity<ApiResponse<Long>> getRoleUserCount(@PathVariable UUID roleId) {
-        long count = userRoleService.countActiveUsersByRoleId(roleId);
-
-        return ResponseEntity.ok(ApiResponse.success("Role user count retrieved", count));
     }
 }

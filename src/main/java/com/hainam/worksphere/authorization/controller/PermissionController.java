@@ -7,6 +7,7 @@ import com.hainam.worksphere.authorization.dto.response.PermissionResponse;
 import com.hainam.worksphere.authorization.mapper.PermissionMapper;
 import com.hainam.worksphere.authorization.service.PermissionService;
 import com.hainam.worksphere.shared.dto.ApiResponse;
+import com.hainam.worksphere.shared.dto.PaginatedApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -52,12 +53,12 @@ public class PermissionController {
 
     @GetMapping
     @PreAuthorize("hasAuthority('MANAGE_PERMISSION')")
-    public ResponseEntity<ApiResponse<Page<PermissionResponse>>> getAllPermissions(
+    public ResponseEntity<PaginatedApiResponse<PermissionResponse>> getAllPermissions(
             @PageableDefault(size = 20) Pageable pageable) {
         Page<Permission> permissions = permissionService.getAllPermissions(pageable);
         Page<PermissionResponse> response = permissions.map(permissionMapper::toResponse);
 
-        return ResponseEntity.ok(ApiResponse.success("Permissions retrieved successfully", response));
+        return ResponseEntity.ok(PaginatedApiResponse.success("Permissions retrieved successfully", response));
     }
 
     @GetMapping("/active")

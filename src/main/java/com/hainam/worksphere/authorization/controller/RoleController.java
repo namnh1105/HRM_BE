@@ -9,6 +9,7 @@ import com.hainam.worksphere.authorization.mapper.RoleMapper;
 import com.hainam.worksphere.authorization.service.RolePermissionService;
 import com.hainam.worksphere.authorization.service.RoleService;
 import com.hainam.worksphere.shared.dto.ApiResponse;
+import com.hainam.worksphere.shared.dto.PaginatedApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -59,14 +60,14 @@ public class RoleController {
 
     @GetMapping
     @PreAuthorize("hasAuthority('MANAGE_ROLE')")
-    public ResponseEntity<ApiResponse<Page<RoleResponse>>> getAllRoles(
+    public ResponseEntity<PaginatedApiResponse<RoleResponse>> getAllRoles(
             @PageableDefault(size = 20) Pageable pageable) {
         log.info("Fetching all roles");
 
         Page<Role> roles = roleService.getAllRoles(pageable);
         Page<RoleResponse> response = roles.map(roleMapper::toSimpleResponse);
 
-        return ResponseEntity.ok(ApiResponse.success("Roles retrieved successfully", response));
+        return ResponseEntity.ok(PaginatedApiResponse.success("Roles retrieved successfully", response));
     }
 
     @GetMapping("/active")
