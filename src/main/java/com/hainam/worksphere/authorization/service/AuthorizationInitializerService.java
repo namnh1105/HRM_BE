@@ -65,9 +65,9 @@ public class AuthorizationInitializerService implements CommandLineRunner {
         );
 
         for (PermissionData permData : permissions) {
-            if (!permissionRepository.existsByName(permData.name)) {
+            if (!permissionRepository.existsByCode(permData.code)) {
                 Permission permission = Permission.builder()
-                        .name(permData.name)
+                        .code(permData.code)
                         .displayName(permData.displayName)
                         .description(permData.description)
                         .resource(permData.resource)
@@ -77,7 +77,6 @@ public class AuthorizationInitializerService implements CommandLineRunner {
                         .build();
 
                 permissionRepository.save(permission);
-                log.debug("Created permission: {}", permData.name);
             }
         }
     }
@@ -94,9 +93,9 @@ public class AuthorizationInitializerService implements CommandLineRunner {
         );
 
         for (RoleData roleData : roles) {
-            if (!roleRepository.existsByName(roleData.name)) {
+            if (!roleRepository.existsByCode(roleData.code)) {
                 Role role = Role.builder()
-                        .name(roleData.name)
+                        .code(roleData.code)
                         .displayName(roleData.displayName)
                         .description(roleData.description)
                         .isSystem(true)
@@ -104,20 +103,19 @@ public class AuthorizationInitializerService implements CommandLineRunner {
                         .build();
 
                 roleRepository.save(role);
-                log.debug("Created role: {}", roleData.name);
             }
         }
     }
 
     private static class PermissionData {
-        final String name;
+        final String code;
         final String displayName;
         final String description;
         final String resource;
         final String action;
 
-        PermissionData(String name, String displayName, String description, String resource, String action) {
-            this.name = name;
+        PermissionData(String code, String displayName, String description, String resource, String action) {
+            this.code = code;
             this.displayName = displayName;
             this.description = description;
             this.resource = resource;
@@ -126,12 +124,12 @@ public class AuthorizationInitializerService implements CommandLineRunner {
     }
 
     private static class RoleData {
-        final String name;
+        final String code;
         final String displayName;
         final String description;
 
-        RoleData(String name, String displayName, String description) {
-            this.name = name;
+        RoleData(String code, String displayName, String description) {
+            this.code = code;
             this.displayName = displayName;
             this.description = description;
         }

@@ -116,6 +116,20 @@ public class PermissionService {
         permissionRepository.save(permission);
     }
 
+    @Transactional
+    public void activatePermission(UUID permissionId) {
+        Permission permission = getPermissionById(permissionId);
+        permission.setIsActive(true);
+        permissionRepository.save(permission);
+    }
+
+    @Transactional
+    public void deactivatePermission(UUID permissionId) {
+        Permission permission = getPermissionById(permissionId);
+        permission.setIsActive(false);
+        permissionRepository.save(permission);
+    }
+
     public boolean existsByCode(String code) {
         return permissionRepository.existsByCode(code);
     }

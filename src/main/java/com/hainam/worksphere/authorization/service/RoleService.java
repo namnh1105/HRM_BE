@@ -106,6 +106,20 @@ public class RoleService {
         roleRepository.save(role);
     }
 
+    @Transactional
+    public void activateRole(UUID roleId) {
+        Role role = getRoleById(roleId);
+        role.setIsActive(true);
+        roleRepository.save(role);
+    }
+
+    @Transactional
+    public void deactivateRole(UUID roleId) {
+        Role role = getRoleById(roleId);
+        role.setIsActive(false);
+        roleRepository.save(role);
+    }
+
     public boolean existsByCode(String code) {
         return roleRepository.existsByCode(code);
     }
