@@ -14,6 +14,7 @@ import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -27,6 +28,7 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity(prePostEnabled = true)
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -74,6 +76,8 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers("/api/health/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
+                        // Authorization endpoints - secured by method-level security
+                        .requestMatchers("/api/roles/**", "/api/permissions/**", "/api/user-roles/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2
