@@ -2,8 +2,10 @@ package com.hainam.worksphere.authorization.service;
 
 import com.hainam.worksphere.authorization.domain.Permission;
 import com.hainam.worksphere.authorization.domain.Role;
+import com.hainam.worksphere.authorization.domain.RolePermission;
 import com.hainam.worksphere.authorization.repository.PermissionRepository;
 import com.hainam.worksphere.authorization.repository.RoleRepository;
+import com.hainam.worksphere.authorization.repository.RolePermissionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
@@ -22,46 +24,25 @@ public class AuthorizationInitializerService implements CommandLineRunner {
 
     private final RoleRepository roleRepository;
     private final PermissionRepository permissionRepository;
+    private final RolePermissionRepository rolePermissionRepository;
 
     @Override
     @Transactional
     public void run(String... args) {
         createDefaultPermissions();
         createDefaultRoles();
+        assignPermissionsToRoles();
     }
 
     private void createDefaultPermissions() {
         log.info("Creating default permissions...");
 
         List<PermissionData> permissions = Arrays.asList(
-            new PermissionData("user:create", "Create User", "Create new users", "user", "create"),
-            new PermissionData("user:read", "Read User", "View user information", "user", "read"),
-            new PermissionData("user:update", "Update User", "Update user information", "user", "update"),
-            new PermissionData("user:delete", "Delete User", "Delete users", "user", "delete"),
-            new PermissionData("user:list", "List Users", "List all users", "user", "list"),
-
-            new PermissionData("role:create", "Create Role", "Create new roles", "role", "create"),
-            new PermissionData("role:read", "Read Role", "View role information", "role", "read"),
-            new PermissionData("role:update", "Update Role", "Update role information", "role", "update"),
-            new PermissionData("role:delete", "Delete Role", "Delete roles", "role", "delete"),
-            new PermissionData("role:list", "List Roles", "List all roles", "role", "list"),
-
-            new PermissionData("permission:create", "Create Permission", "Create new permissions", "permission", "create"),
-            new PermissionData("permission:read", "Read Permission", "View permission information", "permission", "read"),
-            new PermissionData("permission:update", "Update Permission", "Update permission information", "permission", "update"),
-            new PermissionData("permission:delete", "Delete Permission", "Delete permissions", "permission", "delete"),
-            new PermissionData("permission:list", "List Permissions", "List all permissions", "permission", "list"),
-
-            new PermissionData("user-role:assign", "Assign User Roles", "Assign roles to users", "user-role", "assign"),
-            new PermissionData("user-role:remove", "Remove User Roles", "Remove roles from users", "user-role", "remove"),
-            new PermissionData("user-role:read", "Read User Roles", "View user role assignments", "user-role", "read"),
-
-            new PermissionData("system:admin", "System Admin", "Full system administration", "system", "admin"),
-            new PermissionData("system:config", "System Config", "System configuration", "system", "config"),
-            new PermissionData("system:monitoring", "System Monitoring", "System monitoring", "system", "monitoring"),
-
-            new PermissionData("profile:read", "Read Profile", "View own profile", "profile", "read"),
-            new PermissionData("profile:update", "Update Profile", "Update own profile", "profile", "update")
+            new PermissionData("MANAGE_USER", "Manage User", "Create, update, delete users", "USER", "MANAGE"),
+            new PermissionData("MANAGE_ROLE", "Manage Role", "Create, update, delete roles", "ROLE", "MANAGE"),
+            new PermissionData("MANAGE_PERMISSION", "Manage Permission", "Create, update, delete permissions", "PERMISSION", "MANAGE"),
+            new PermissionData("VIEW_PROFILE", "View Profile", "View own profile", "PROFILE", "VIEW"),
+            new PermissionData("UPDATE_PROFILE", "Update Profile", "Update own profile", "PROFILE", "UPDATE")
         );
 
         for (PermissionData permData : permissions) {
@@ -86,10 +67,8 @@ public class AuthorizationInitializerService implements CommandLineRunner {
 
         List<RoleData> roles = Arrays.asList(
             new RoleData("SUPER_ADMIN", "Super Administrator", "Full system access with all permissions"),
-            new RoleData("ADMIN", "Administrator", "Administrative access with most permissions"),
-            new RoleData("USER_MANAGER", "User Manager", "Can manage users and their roles"),
-            new RoleData("USER", "User", "Basic user with limited permissions"),
-            new RoleData("GUEST", "Guest", "Read-only access to basic features")
+            new RoleData("ADMIN", "Administrator", "Administrative access with user and role management"),
+            new RoleData("USER", "User", "Basic user with profile management permissions")
         );
 
         for (RoleData roleData : roles) {
@@ -105,6 +84,64 @@ public class AuthorizationInitializerService implements CommandLineRunner {
                 roleRepository.save(role);
             }
         }
+    }
+
+    private void assignPermissionsToRoles() {
+        log.info("Assigning permissions to roles...");
+
+        // SUPER_ADMIN gets ALL permissions
+        Role superAdmin = roleRepository.findByCode("SUPER_ADMIN").orElse(null);
+        if (superAdmin != null) {
+            List<Permission> allPermissions = permissionRepository.findAll();
+            for (Permission permission : allPermissions) {
+                if (!rolePermissionRepository.existsByRoleIdAndPermissionIdAndIsActiveTrue(superAdmin.getId(), permission.getId())) {
+                    RolePermission rolePermission = RolePermission.builder()
+                            .role(superAdmin)
+                            .permission(permission)
+                            .isActive(true)
+                            .build();
+                    rolePermissionRepository.save(rolePermission);
+                    log.debug("Assigned permission {} to SUPER_ADMIN", permission.getCode());
+                }
+            }
+        }
+
+        // ADMIN gets MANAGE_USER, MANAGE_ROLE permissions
+        Role admin = roleRepository.findByCode("ADMIN").orElse(null);
+        if (admin != null) {
+            String[] adminPermissions = {"MANAGE_USER", "MANAGE_ROLE"};
+            for (String permissionCode : adminPermissions) {
+                Permission permission = permissionRepository.findByCode(permissionCode).orElse(null);
+                if (permission != null && !rolePermissionRepository.existsByRoleIdAndPermissionIdAndIsActiveTrue(admin.getId(), permission.getId())) {
+                    RolePermission rolePermission = RolePermission.builder()
+                            .role(admin)
+                            .permission(permission)
+                            .isActive(true)
+                            .build();
+                    rolePermissionRepository.save(rolePermission);
+                    log.debug("Assigned permission {} to ADMIN", permission.getCode());
+                }
+            }
+        }
+
+        // USER gets VIEW_PROFILE, UPDATE_PROFILE permissions
+        Role user = roleRepository.findByCode("USER").orElse(null);
+        if (user != null) {
+            String[] userPermissions = {"VIEW_PROFILE", "UPDATE_PROFILE"};
+            for (String permissionCode : userPermissions) {
+                Permission permission = permissionRepository.findByCode(permissionCode).orElse(null);
+                if (permission != null && !rolePermissionRepository.existsByRoleIdAndPermissionIdAndIsActiveTrue(user.getId(), permission.getId())) {
+                    RolePermission rolePermission = RolePermission.builder()
+                            .role(user)
+                            .permission(permission)
+                            .isActive(true)
+                            .build();
+                    rolePermissionRepository.save(rolePermission);
+                    log.debug("Assigned permission {} to USER", permission.getCode());
+                }
+            }
+        }
+
     }
 
     private static class PermissionData {

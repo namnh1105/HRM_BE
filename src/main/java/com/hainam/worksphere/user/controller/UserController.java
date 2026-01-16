@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,6 +29,7 @@ public class UserController {
 
     @GetMapping("/me")
     @Operation(summary = "Get current user profile")
+    @PreAuthorize("hasAuthority('VIEW_PROFILE')")
     public ResponseEntity<ApiResponse<UserResponse>> getCurrentUser(
             @AuthenticationPrincipal UserPrincipal userPrincipal
     ) {
@@ -37,6 +39,7 @@ public class UserController {
 
     @GetMapping("/{userId}")
     @Operation(summary = "Get user by ID")
+    @PreAuthorize("hasAuthority('MANAGE_USER')")
     public ResponseEntity<ApiResponse<UserResponse>> getUserById(
             @PathVariable UUID userId
     ) {
@@ -46,6 +49,7 @@ public class UserController {
 
     @PutMapping("/profile")
     @Operation(summary = "Update user profile")
+    @PreAuthorize("hasAuthority('UPDATE_PROFILE')")
     public ResponseEntity<ApiResponse<UserResponse>> updateProfile(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
             @Valid @RequestBody UpdateProfileRequest request
@@ -56,6 +60,7 @@ public class UserController {
 
     @PutMapping("/change-password")
     @Operation(summary = "Change password")
+    @PreAuthorize("hasAuthority('UPDATE_PROFILE')")
     public ResponseEntity<ApiResponse<Void>> changePassword(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
             @Valid @RequestBody ChangePasswordRequest request
@@ -66,6 +71,7 @@ public class UserController {
 
     @DeleteMapping("/deactivate")
     @Operation(summary = "Deactivate account")
+    @PreAuthorize("hasAuthority('UPDATE_PROFILE')")
     public ResponseEntity<ApiResponse<Void>> deactivateAccount(
             @AuthenticationPrincipal UserPrincipal userPrincipal
     ) {

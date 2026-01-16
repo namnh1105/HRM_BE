@@ -34,7 +34,7 @@ public class RoleController {
     private final RoleMapper roleMapper;
 
     @PostMapping
-    @PreAuthorize("hasPermission(null, 'role:create')")
+    @PreAuthorize("hasAuthority('MANAGE_ROLE')")
     public ResponseEntity<ApiResponse<RoleResponse>> createRole(@Valid @RequestBody CreateRoleRequest request) {
         log.info("Creating role: {}", request.getCode());
 
@@ -47,7 +47,7 @@ public class RoleController {
     }
 
     @GetMapping("/{roleId}")
-    @PreAuthorize("hasPermission(null, 'role:read')")
+    @PreAuthorize("hasAuthority('MANAGE_ROLE')")
     public ResponseEntity<ApiResponse<RoleResponse>> getRole(@PathVariable UUID roleId) {
         log.info("Fetching role with ID: {}", roleId);
 
@@ -58,7 +58,7 @@ public class RoleController {
     }
 
     @GetMapping
-    @PreAuthorize("hasPermission(null, 'role:list')")
+    @PreAuthorize("hasAuthority('MANAGE_ROLE')")
     public ResponseEntity<ApiResponse<Page<RoleResponse>>> getAllRoles(
             @PageableDefault(size = 20) Pageable pageable) {
         log.info("Fetching all roles");
@@ -70,7 +70,7 @@ public class RoleController {
     }
 
     @GetMapping("/active")
-    @PreAuthorize("hasPermission(null, 'role:list')")
+    @PreAuthorize("hasAuthority('MANAGE_ROLE')")
     public ResponseEntity<ApiResponse<List<RoleResponse>>> getActiveRoles() {
         log.info("Fetching active roles");
 
@@ -83,7 +83,7 @@ public class RoleController {
     }
 
     @PutMapping("/{roleId}")
-    @PreAuthorize("hasPermission(null, 'role:update')")
+    @PreAuthorize("hasAuthority('MANAGE_ROLE')")
     public ResponseEntity<ApiResponse<RoleResponse>> updateRole(
             @PathVariable UUID roleId,
             @Valid @RequestBody UpdateRoleRequest request) {
@@ -98,7 +98,7 @@ public class RoleController {
     }
 
     @DeleteMapping("/{roleId}")
-    @PreAuthorize("hasPermission(null, 'role:delete')")
+    @PreAuthorize("hasAuthority('MANAGE_ROLE')")
     public ResponseEntity<ApiResponse<Void>> deleteRole(@PathVariable UUID roleId) {
         log.info("Deleting role with ID: {}", roleId);
 
@@ -108,7 +108,7 @@ public class RoleController {
     }
 
     @PostMapping("/{roleId}/activate")
-    @PreAuthorize("hasPermission(null, 'role:update')")
+    @PreAuthorize("hasAuthority('MANAGE_ROLE')")
     public ResponseEntity<ApiResponse<Void>> activateRole(@PathVariable UUID roleId) {
         log.info("Activating role with ID: {}", roleId);
 
@@ -118,7 +118,7 @@ public class RoleController {
     }
 
     @PostMapping("/{roleId}/deactivate")
-    @PreAuthorize("hasPermission(null, 'role:update')")
+    @PreAuthorize("hasAuthority('MANAGE_ROLE')")
     public ResponseEntity<ApiResponse<Void>> deactivateRole(@PathVariable UUID roleId) {
         log.info("Deactivating role with ID: {}", roleId);
 
@@ -128,7 +128,7 @@ public class RoleController {
     }
 
     @PostMapping("/{roleId}/permissions")
-    @PreAuthorize("hasPermission(null, 'role:update')")
+    @PreAuthorize("hasAuthority('MANAGE_ROLE')")
     public ResponseEntity<ApiResponse<Void>> assignPermissionsToRole(
             @PathVariable UUID roleId,
             @Valid @RequestBody AssignPermissionsToRoleRequest request) {
@@ -140,7 +140,7 @@ public class RoleController {
     }
 
     @DeleteMapping("/{roleId}/permissions")
-    @PreAuthorize("hasPermission(null, 'role:update')")
+    @PreAuthorize("hasAuthority('MANAGE_ROLE')")
     public ResponseEntity<ApiResponse<Void>> removePermissionsFromRole(
             @PathVariable UUID roleId,
             @RequestBody List<UUID> permissionIds) {
@@ -152,7 +152,7 @@ public class RoleController {
     }
 
     @GetMapping("/search")
-    @PreAuthorize("hasPermission(null, 'role:list')")
+    @PreAuthorize("hasAuthority('MANAGE_ROLE')")
     public ResponseEntity<ApiResponse<List<RoleResponse>>> searchRoles(@RequestParam String query) {
         log.info("Searching roles with query: {}", query);
 

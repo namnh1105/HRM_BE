@@ -31,7 +31,7 @@ public class PermissionController {
     private final PermissionMapper permissionMapper;
 
     @PostMapping
-    @PreAuthorize("hasPermission(null, 'permission:create')")
+    @PreAuthorize("hasAuthority('MANAGE_PERMISSION')")
     public ResponseEntity<ApiResponse<PermissionResponse>> createPermission(@Valid @RequestBody CreatePermissionRequest request) {
         Permission permission = permissionMapper.toEntity(request);
         Permission createdPermission = permissionService.createPermission(permission);
@@ -42,7 +42,7 @@ public class PermissionController {
     }
 
     @GetMapping("/{permissionId}")
-    @PreAuthorize("hasPermission(null, 'permission:read')")
+    @PreAuthorize("hasAuthority('MANAGE_PERMISSION')")
     public ResponseEntity<ApiResponse<PermissionResponse>> getPermission(@PathVariable UUID permissionId) {
         Permission permission = permissionService.getPermissionById(permissionId);
         PermissionResponse response = permissionMapper.toResponse(permission);
@@ -51,7 +51,7 @@ public class PermissionController {
     }
 
     @GetMapping
-    @PreAuthorize("hasPermission(null, 'permission:list')")
+    @PreAuthorize("hasAuthority('MANAGE_PERMISSION')")
     public ResponseEntity<ApiResponse<Page<PermissionResponse>>> getAllPermissions(
             @PageableDefault(size = 20) Pageable pageable) {
         Page<Permission> permissions = permissionService.getAllPermissions(pageable);
@@ -61,7 +61,7 @@ public class PermissionController {
     }
 
     @GetMapping("/active")
-    @PreAuthorize("hasPermission(null, 'permission:list')")
+    @PreAuthorize("hasAuthority('MANAGE_PERMISSION')")
     public ResponseEntity<ApiResponse<List<PermissionResponse>>> getActivePermissions() {
         List<Permission> permissions = permissionService.getAllActivePermissions();
         List<PermissionResponse> response = permissions.stream()
@@ -72,7 +72,7 @@ public class PermissionController {
     }
 
     @GetMapping("/resource/{resource}")
-    @PreAuthorize("hasPermission(null, 'permission:list')")
+    @PreAuthorize("hasAuthority('MANAGE_PERMISSION')")
     public ResponseEntity<ApiResponse<List<PermissionResponse>>> getPermissionsByResource(@PathVariable String resource) {
         List<Permission> permissions = permissionService.getPermissionsByResource(resource);
         List<PermissionResponse> response = permissions.stream()
@@ -83,7 +83,7 @@ public class PermissionController {
     }
 
     @GetMapping("/user/{userId}")
-    @PreAuthorize("hasPermission(null, 'permission:read')")
+    @PreAuthorize("hasAuthority('MANAGE_PERMISSION')")
     public ResponseEntity<ApiResponse<List<PermissionResponse>>> getPermissionsByUserId(@PathVariable UUID userId) {
         List<Permission> permissions = permissionService.getPermissionsByUserId(userId);
         List<PermissionResponse> response = permissions.stream()
@@ -94,7 +94,7 @@ public class PermissionController {
     }
 
     @PutMapping("/{permissionId}")
-    @PreAuthorize("hasPermission(null, 'permission:update')")
+    @PreAuthorize("hasAuthority('MANAGE_PERMISSION')")
     public ResponseEntity<ApiResponse<PermissionResponse>> updatePermission(
             @PathVariable UUID permissionId,
             @Valid @RequestBody UpdatePermissionRequest request) {
@@ -107,7 +107,7 @@ public class PermissionController {
     }
 
     @DeleteMapping("/{permissionId}")
-    @PreAuthorize("hasPermission(null, 'permission:delete')")
+    @PreAuthorize("hasAuthority('MANAGE_PERMISSION')")
     public ResponseEntity<ApiResponse<Void>> deletePermission(@PathVariable UUID permissionId) {
 
         permissionService.deletePermission(permissionId);
@@ -116,7 +116,7 @@ public class PermissionController {
     }
 
     @PostMapping("/{permissionId}/activate")
-    @PreAuthorize("hasPermission(null, 'permission:update')")
+    @PreAuthorize("hasAuthority('MANAGE_PERMISSION')")
     public ResponseEntity<ApiResponse<Void>> activatePermission(@PathVariable UUID permissionId) {
         permissionService.activatePermission(permissionId);
 
@@ -124,7 +124,7 @@ public class PermissionController {
     }
 
     @PostMapping("/{permissionId}/deactivate")
-    @PreAuthorize("hasPermission(null, 'permission:update')")
+    @PreAuthorize("hasAuthority('MANAGE_PERMISSION')")
     public ResponseEntity<ApiResponse<Void>> deactivatePermission(@PathVariable UUID permissionId) {
         permissionService.deactivatePermission(permissionId);
 
@@ -132,7 +132,7 @@ public class PermissionController {
     }
 
     @GetMapping("/search")
-    @PreAuthorize("hasPermission(null, 'permission:list')")
+    @PreAuthorize("hasAuthority('MANAGE_PERMISSION')")
     public ResponseEntity<ApiResponse<List<PermissionResponse>>> searchPermissions(@RequestParam String query) {
         List<Permission> permissions = permissionService.searchPermissions(query);
         List<PermissionResponse> response = permissions.stream()
