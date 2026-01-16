@@ -11,7 +11,9 @@ public interface UserUpdateMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "email", ignore = true)
     @Mapping(target = "password", ignore = true)
-    @Mapping(target = "isActive", ignore = true)
+    @Mapping(target = "name", ignore = true)
+    @Mapping(target = "googleId", ignore = true)
+    @Mapping(target = "isEnabled", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     void updateUserFromRequest(UpdateProfileRequest request, @MappingTarget User user);

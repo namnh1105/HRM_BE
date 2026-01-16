@@ -11,8 +11,9 @@ public interface UserMapper {
 
     @Mapping(target = "givenName", source = "givenName")
     @Mapping(target = "familyName", source = "familyName")
+    @Mapping(target = "name", source = "name")
     @Mapping(target = "avatarUrl", source = "avatarUrl")
-    @Mapping(target = "isActive", source = "isActive")
+    @Mapping(target = "isActive", source = "isEnabled")
     @Mapping(target = "createdAt", source = "createdAt")
     @Mapping(target = "updatedAt", source = "updatedAt")
     UserResponse toUserResponse(User user);

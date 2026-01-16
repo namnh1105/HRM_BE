@@ -1,15 +1,18 @@
 package com.hainam.worksphere.auth.config;
 
 import lombok.Data;
-import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
-@ConfigurationProperties(prefix = "jwt")
 @Data
 public class JwtProperties {
+    @Value("${JWT_SECRET:mySecretKey123456789012345678901234567890123456789012345678901234567890}")
+    private String secret;
 
-    private String secret = "mySecretKey123456789012345678901234567890123456789012345678901234567890";
-    private long accessTokenExpiration = 900000; // 15 minutes
-    private long refreshTokenExpiration = 604800000; // 7 days
+    @Value("${JWT_ACCESS_TOKEN_EXPIRATION:900000}")
+    private long accessTokenExpiration;
+
+    @Value("${JWT_REFRESH_TOKEN_EXPIRATION:604800000}")
+    private long refreshTokenExpiration;
 }

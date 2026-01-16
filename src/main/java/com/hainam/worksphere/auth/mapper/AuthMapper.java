@@ -11,7 +11,10 @@ public interface AuthMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "password", ignore = true)
-    @Mapping(target = "isActive", constant = "true")
+    @Mapping(target = "name", ignore = true)
+    @Mapping(target = "googleId", ignore = true)
+    @Mapping(target = "avatarUrl", ignore = true)
+    @Mapping(target = "isEnabled", constant = "true")
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     User toUser(RegisterRequest registerRequest);

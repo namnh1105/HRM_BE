@@ -18,18 +18,20 @@ public class UserPrincipal implements UserDetails {
     private UUID id;
     private String givenName;
     private String familyName;
+    private String name;
     private String email;
     private String password;
-    private boolean isActive;
+    private boolean isEnabled;
 
     public static UserPrincipal create(User user) {
         return new UserPrincipal(
                 user.getId(),
                 user.getGivenName(),
                 user.getFamilyName(),
+                user.getName(),
                 user.getEmail(),
                 user.getPassword(),
-                user.getIsActive()
+                user.getIsEnabled()
         );
     }
 
@@ -60,6 +62,6 @@ public class UserPrincipal implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return isActive;
+        return isEnabled;
     }
 }

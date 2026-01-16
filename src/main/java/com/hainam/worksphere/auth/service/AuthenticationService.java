@@ -116,5 +116,87 @@ public class AuthenticationService {
                 .orElseThrow(() -> UserNotFoundException.byId(userPrincipal.getId().toString()));
         refreshTokenService.revokeByUser(user);
     }
+
+    @Transactional
+    public AuthenticationResponse processGoogleOAuth2Login(String email, String name, String googleId, String givenName, String familyName) {
+        // Check if user exists by email
+        User user = userRepository.findByEmail(email)
+                .orElseGet(() -> {
+                    // Use provided givenName and familyName, with fallbacks
+                    String finalGivenName = givenName;
+                    String finalFamilyName = familyName;
+
+                    // If givenName or familyName are null/empty, parse from name
+                    if ((finalGivenName == null || finalGivenName.trim().isEmpty()) ||
+                        (finalFamilyName == null || finalFamilyName.trim().isEmpty())) {
+
+                        if (name != null && !name.trim().isEmpty()) {
+                            String[] nameParts = name.trim().split("\\s+");
+                            if (nameParts.length >= 2) {
+                                if (finalGivenName == null || finalGivenName.trim().isEmpty()) {
+                                    finalGivenName = nameParts[0];
+                                }
+                                if (finalFamilyName == null || finalFamilyName.trim().isEmpty()) {
+                                    finalFamilyName = String.join(" ", java.util.Arrays.copyOfRange(nameParts, 1, nameParts.length));
+                                }
+                            } else {
+                                if (finalGivenName == null || finalGivenName.trim().isEmpty()) {
+                                    finalGivenName = nameParts[0];
+                                }
+                                if (finalFamilyName == null || finalFamilyName.trim().isEmpty()) {
+                                    finalFamilyName = "User"; // Provide default value instead of empty string
+                                }
+                            }
+                        } else {
+                            // Fallback if name is null or empty
+                            if (finalGivenName == null || finalGivenName.trim().isEmpty()) {
+                                finalGivenName = "Unknown";
+                            }
+                            if (finalFamilyName == null || finalFamilyName.trim().isEmpty()) {
+                                finalFamilyName = "User";
+                            }
+                        }
+                    }
+
+                    // Create new user if doesn't exist
+                    User newUser = User.builder()
+                            .email(email)
+                            .name(name)
+                            .givenName(finalGivenName)
+                            .familyName(finalFamilyName)
+                            .googleId(googleId)
+                            .isEnabled(true)
+                            .build();
+                    return userRepository.save(newUser);
+                });
+
+        // Update Google ID if not set
+        if (user.getGoogleId() == null || !user.getGoogleId().equals(googleId)) {
+            user.setGoogleId(googleId);
+            user = userRepository.save(user);
+        }
+
+        UserPrincipal userPrincipal = UserPrincipal.create(user);
+        String accessToken = jwtUtil.generateAccessToken(userPrincipal);
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
+
+        return authResponseMapper.toAuthenticationResponse(
+                accessToken,
+                refreshToken.getToken(),
+                jwtUtil.getAccessTokenExpiration() / 1000,
+                userMapper.toUserResponse(user)
+        );
+    }
+
+    @Transactional
+    public AuthenticationResponse processGoogleOAuth2Callback(String code, String state) {
+        // TODO: Implement OAuth2 code exchange
+        // For now, this is a placeholder - in real implementation you would:
+        // 1. Exchange authorization code for access token with Google
+        // 2. Use access token to get user info from Google
+        // 3. Create/update user and return JWT tokens
+
+        throw new RuntimeException("OAuth2 callback processing not yet implemented");
+    }
 }
 

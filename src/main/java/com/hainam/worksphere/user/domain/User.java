@@ -32,15 +32,21 @@ public class User {
     @Column(name = "email", nullable = false, unique = true, length = 100)
     private String email;
 
-    @Column(name = "password", nullable = false)
+    @Column(name = "password")
     private String password;
+
+    @Column(name = "name", length = 100)
+    private String name;
+
+    @Column(name = "google_id", unique = true)
+    private String googleId;
 
     @Column(name = "avatar_url")
     private String avatarUrl;
 
-    @Column(name = "is_active")
+    @Column(name = "is_enabled")
     @Builder.Default
-    private Boolean isActive = true;
+    private Boolean isEnabled = true;
 
     @CreationTimestamp
     @Column(name = "created_at")

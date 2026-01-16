@@ -25,6 +25,8 @@ public class UserResponse {
 
     private String email;
 
+    private String name;
+
     @JsonProperty("avatar_url")
     private String avatarUrl;
 
