@@ -1,34 +1,36 @@
 package com.hainam.worksphere.auth.security;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hainam.worksphere.auth.service.AuthenticationService;
-import com.hainam.worksphere.shared.dto.ApiResponse;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 @Component
 @Slf4j
 public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
     private final AuthenticationService authenticationService;
-    private final ObjectMapper objectMapper;
 
-    public OAuth2AuthenticationSuccessHandler(@Lazy AuthenticationService authenticationService,
-                                            ObjectMapper objectMapper) {
+    @Value("${app.frontend.url:http://localhost:3000}")
+    private String frontendUrl;
+
+    @Value("${app.oauth.success-redirect-path:/oauth/success}")
+    private String successRedirectPath;
+
+    public OAuth2AuthenticationSuccessHandler(@Lazy AuthenticationService authenticationService) {
         this.authenticationService = authenticationService;
-        this.objectMapper = objectMapper;
     }
 
     @Override
@@ -50,29 +52,32 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             // Process OAuth2 login through AuthenticationService
             var authResponse = authenticationService.processGoogleOAuth2Login(email, name, googleId, givenName, familyName);
 
-            // Return JSON response instead of redirect
-            response.setContentType("application/json");
-            response.setStatus(HttpServletResponse.SC_OK);
+            // Build redirect URL to frontend with token parameters
+            String redirectUrl = UriComponentsBuilder.fromUriString(frontendUrl + successRedirectPath)
+                    .queryParam("access_token", authResponse.getAccessToken())
+                    .queryParam("refresh_token", authResponse.getRefreshToken())
+                    .queryParam("token_type", "Bearer")
+                    .queryParam("expires_in", authResponse.getExpiresIn())
+                    .queryParam("user", URLEncoder.encode(authResponse.getUser().getEmail(), StandardCharsets.UTF_8))
+                    .build()
+                    .toUriString();
 
-            Map<String, Object> responseBody = new HashMap<>();
-            responseBody.put("success", true);
-            responseBody.put("data", authResponse);
-            responseBody.put("message", "Google login successful");
+            log.info("Redirecting to frontend: {}", frontendUrl + successRedirectPath);
 
-            response.getWriter().write(objectMapper.writeValueAsString(responseBody));
+            // Redirect to frontend with token
+            response.sendRedirect(redirectUrl);
 
         } catch (Exception e) {
             log.error("Error processing Google OAuth2 login", e);
 
-            response.setContentType("application/json");
-            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            // Redirect to frontend with error
+            String errorRedirectUrl = UriComponentsBuilder.fromUriString(frontendUrl + successRedirectPath)
+                    .queryParam("error", "oauth_failed")
+                    .queryParam("message", URLEncoder.encode(e.getMessage(), StandardCharsets.UTF_8))
+                    .build()
+                    .toUriString();
 
-            ApiResponse<Object> errorResponse = ApiResponse.builder()
-                    .success(false)
-                    .message("Google login failed: " + e.getMessage())
-                    .build();
-
-            response.getWriter().write(objectMapper.writeValueAsString(errorResponse));
+            response.sendRedirect(errorRedirectUrl);
         }
     }
 }

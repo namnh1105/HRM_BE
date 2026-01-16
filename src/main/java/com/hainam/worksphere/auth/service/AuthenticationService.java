@@ -119,58 +119,35 @@ public class AuthenticationService {
 
     @Transactional
     public AuthenticationResponse processGoogleOAuth2Login(String email, String name, String googleId, String givenName, String familyName) {
-        // Check if user exists by email
+        if (email == null || email.trim().isEmpty()) {
+            throw new IllegalArgumentException("Email is required for Google OAuth2 login");
+        }
+        if (name == null || name.trim().isEmpty()) {
+            throw new IllegalArgumentException("Name is required for Google OAuth2 login");
+        }
+        if (googleId == null || googleId.trim().isEmpty()) {
+            throw new IllegalArgumentException("Google ID is required for Google OAuth2 login");
+        }
+        if (givenName == null || givenName.trim().isEmpty()) {
+            throw new IllegalArgumentException("Given name is required for Google OAuth2 login");
+        }
+        if (familyName == null || familyName.trim().isEmpty()) {
+            throw new IllegalArgumentException("Family name is required for Google OAuth2 login");
+        }
+
         User user = userRepository.findByEmail(email)
                 .orElseGet(() -> {
-                    // Use provided givenName and familyName, with fallbacks
-                    String finalGivenName = givenName;
-                    String finalFamilyName = familyName;
-
-                    // If givenName or familyName are null/empty, parse from name
-                    if ((finalGivenName == null || finalGivenName.trim().isEmpty()) ||
-                        (finalFamilyName == null || finalFamilyName.trim().isEmpty())) {
-
-                        if (name != null && !name.trim().isEmpty()) {
-                            String[] nameParts = name.trim().split("\\s+");
-                            if (nameParts.length >= 2) {
-                                if (finalGivenName == null || finalGivenName.trim().isEmpty()) {
-                                    finalGivenName = nameParts[0];
-                                }
-                                if (finalFamilyName == null || finalFamilyName.trim().isEmpty()) {
-                                    finalFamilyName = String.join(" ", java.util.Arrays.copyOfRange(nameParts, 1, nameParts.length));
-                                }
-                            } else {
-                                if (finalGivenName == null || finalGivenName.trim().isEmpty()) {
-                                    finalGivenName = nameParts[0];
-                                }
-                                if (finalFamilyName == null || finalFamilyName.trim().isEmpty()) {
-                                    finalFamilyName = "User"; // Provide default value instead of empty string
-                                }
-                            }
-                        } else {
-                            // Fallback if name is null or empty
-                            if (finalGivenName == null || finalGivenName.trim().isEmpty()) {
-                                finalGivenName = "Unknown";
-                            }
-                            if (finalFamilyName == null || finalFamilyName.trim().isEmpty()) {
-                                finalFamilyName = "User";
-                            }
-                        }
-                    }
-
-                    // Create new user if doesn't exist
                     User newUser = User.builder()
                             .email(email)
                             .name(name)
-                            .givenName(finalGivenName)
-                            .familyName(finalFamilyName)
+                            .givenName(givenName)
+                            .familyName(familyName)
                             .googleId(googleId)
                             .isEnabled(true)
                             .build();
                     return userRepository.save(newUser);
                 });
 
-        // Update Google ID if not set
         if (user.getGoogleId() == null || !user.getGoogleId().equals(googleId)) {
             user.setGoogleId(googleId);
             user = userRepository.save(user);
@@ -188,15 +165,19 @@ public class AuthenticationService {
         );
     }
 
-    @Transactional
-    public AuthenticationResponse processGoogleOAuth2Callback(String code, String state) {
-        // TODO: Implement OAuth2 code exchange
-        // For now, this is a placeholder - in real implementation you would:
-        // 1. Exchange authorization code for access token with Google
-        // 2. Use access token to get user info from Google
-        // 3. Create/update user and return JWT tokens
+    public User validateAccessToken(String token) {
+        String email = jwtUtil.extractUsername(token);
 
-        throw new RuntimeException("OAuth2 callback processing not yet implemented");
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> UserNotFoundException.byEmail(email));
+
+        UserPrincipal userPrincipal = UserPrincipal.create(user);
+
+        if (!jwtUtil.isTokenValid(token, userPrincipal)) {
+            throw new RuntimeException("Token is invalid");
+        }
+
+        return user;
     }
 }
 

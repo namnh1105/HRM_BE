@@ -16,7 +16,9 @@ public class DotenvConfiguration {
             "DB_NAME",
             "DB_USERNAME",
             "DB_PASSWORD",
-            "SERVER_PORT"
+            "SERVER_PORT",
+            "FRONTEND_URL",
+            "OAUTH_SUCCESS_REDIRECT_PATH"
         };
 
         for (String var : requiredVars) {
