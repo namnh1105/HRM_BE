@@ -6,13 +6,18 @@ import com.hainam.worksphere.auth.dto.response.AuthenticationResponse;
 import com.hainam.worksphere.auth.dto.response.TokenResponse;
 import com.hainam.worksphere.auth.mapper.AuthMapper;
 import com.hainam.worksphere.auth.mapper.AuthResponseMapper;
+import com.hainam.worksphere.auth.mapper.UserAuthorizationMapper;
 import com.hainam.worksphere.auth.security.UserPrincipal;
 import com.hainam.worksphere.auth.util.JwtUtil;
+import com.hainam.worksphere.authorization.domain.Permission;
+import com.hainam.worksphere.authorization.domain.Role;
+import com.hainam.worksphere.authorization.service.AuthorizationService;
 import com.hainam.worksphere.shared.exception.EmailAlreadyExistsException;
 import com.hainam.worksphere.shared.exception.InvalidCredentialsException;
 import com.hainam.worksphere.shared.exception.RefreshTokenException;
 import com.hainam.worksphere.shared.exception.UserNotFoundException;
 import com.hainam.worksphere.user.domain.User;
+import com.hainam.worksphere.user.dto.response.UserWithAuthorizationResponse;
 import com.hainam.worksphere.user.mapper.UserMapper;
 import com.hainam.worksphere.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +29,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -38,6 +45,8 @@ public class AuthenticationService {
     private final UserMapper userMapper;
     private final AuthMapper authMapper;
     private final AuthResponseMapper authResponseMapper;
+    private final AuthorizationService authorizationService;
+    private final UserAuthorizationMapper userAuthorizationMapper;
 
     @Transactional
     public AuthenticationResponse register(RegisterRequest request) {
@@ -49,16 +58,25 @@ public class AuthenticationService {
         user.setPassword(passwordEncoder.encode(request.getPassword()));
 
         User savedUser = userRepository.save(user);
-        UserPrincipal userPrincipal = UserPrincipal.create(savedUser);
+
+        // Fetch user roles and permissions (new users might have default roles)
+        List<Role> userRoles = authorizationService.getUserRoles(savedUser.getId());
+        List<Permission> userPermissions = authorizationService.getUserPermissions(savedUser.getId());
+
+        UserPrincipal userPrincipal = UserPrincipal.create(savedUser, userRoles, userPermissions);
 
         String accessToken = jwtUtil.generateAccessToken(userPrincipal);
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(savedUser);
+
+        // Create enhanced user response with roles and permissions
+        UserWithAuthorizationResponse userWithAuth = userAuthorizationMapper.toUserWithAuthorizationResponse(
+                savedUser, userRoles, userPermissions);
 
         return authResponseMapper.toAuthenticationResponse(
                 accessToken,
                 refreshToken.getToken(),
                 jwtUtil.getAccessTokenExpiration() / 1000,
-                userMapper.toUserResponse(savedUser)
+                userWithAuth
         );
     }
 
@@ -74,14 +92,25 @@ public class AuthenticationService {
             User user = userRepository.findById(userPrincipal.getId())
                     .orElseThrow(() -> UserNotFoundException.byId(userPrincipal.getId().toString()));
 
-            String accessToken = jwtUtil.generateAccessToken(userPrincipal);
+            // Fetch user roles and permissions
+            List<Role> userRoles = authorizationService.getUserRoles(user.getId());
+            List<Permission> userPermissions = authorizationService.getUserPermissions(user.getId());
+
+            // Create UserPrincipal with roles and permissions for JWT
+            UserPrincipal enhancedUserPrincipal = UserPrincipal.create(user, userRoles, userPermissions);
+
+            String accessToken = jwtUtil.generateAccessToken(enhancedUserPrincipal);
             RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
+
+            // Create enhanced user response with roles and permissions
+            UserWithAuthorizationResponse userWithAuth = userAuthorizationMapper.toUserWithAuthorizationResponse(
+                    user, userRoles, userPermissions);
 
             return authResponseMapper.toAuthenticationResponse(
                     accessToken,
                     refreshToken.getToken(),
                     jwtUtil.getAccessTokenExpiration() / 1000,
-                    userMapper.toUserResponse(user)
+                    userWithAuth
             );
         } catch (BadCredentialsException e) {
             throw InvalidCredentialsException.create();
@@ -153,15 +182,23 @@ public class AuthenticationService {
             user = userRepository.save(user);
         }
 
-        UserPrincipal userPrincipal = UserPrincipal.create(user);
+        // Fetch user roles and permissions
+        List<Role> userRoles = authorizationService.getUserRoles(user.getId());
+        List<Permission> userPermissions = authorizationService.getUserPermissions(user.getId());
+
+        UserPrincipal userPrincipal = UserPrincipal.create(user, userRoles, userPermissions);
         String accessToken = jwtUtil.generateAccessToken(userPrincipal);
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
+
+        // Create enhanced user response with roles and permissions
+        UserWithAuthorizationResponse userWithAuth = userAuthorizationMapper.toUserWithAuthorizationResponse(
+                user, userRoles, userPermissions);
 
         return authResponseMapper.toAuthenticationResponse(
                 accessToken,
                 refreshToken.getToken(),
                 jwtUtil.getAccessTokenExpiration() / 1000,
-                userMapper.toUserResponse(user)
+                userWithAuth
         );
     }
 

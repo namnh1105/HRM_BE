@@ -1,5 +1,7 @@
 package com.hainam.worksphere.auth.security;
 
+import com.hainam.worksphere.authorization.domain.Permission;
+import com.hainam.worksphere.authorization.domain.Role;
 import com.hainam.worksphere.user.domain.User;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -7,9 +9,8 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Data
 @AllArgsConstructor
@@ -22,6 +23,8 @@ public class UserPrincipal implements UserDetails {
     private String email;
     private String password;
     private boolean isEnabled;
+    private List<Role> roles;
+    private List<Permission> permissions;
 
     public static UserPrincipal create(User user) {
         return new UserPrincipal(
@@ -31,13 +34,50 @@ public class UserPrincipal implements UserDetails {
                 user.getName(),
                 user.getEmail(),
                 user.getPassword(),
-                user.getIsEnabled()
+                user.getIsEnabled(),
+                new ArrayList<>(),
+                new ArrayList<>()
+        );
+    }
+
+    public static UserPrincipal create(User user, List<Role> roles, List<Permission> permissions) {
+        return new UserPrincipal(
+                user.getId(),
+                user.getGivenName(),
+                user.getFamilyName(),
+                user.getName(),
+                user.getEmail(),
+                user.getPassword(),
+                user.getIsEnabled(),
+                roles != null ? roles : new ArrayList<>(),
+                permissions != null ? permissions : new ArrayList<>()
         );
     }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"));
+        Set<GrantedAuthority> authorities = new HashSet<>();
+
+        // Add role-based authorities
+        if (roles != null) {
+            for (Role role : roles) {
+                authorities.add(new SimpleGrantedAuthority("ROLE_" + role.getCode()));
+            }
+        }
+
+        // Add permission-based authorities
+        if (permissions != null) {
+            for (Permission permission : permissions) {
+                authorities.add(new SimpleGrantedAuthority(permission.getCode()));
+            }
+        }
+
+        // Fallback to default if no roles/permissions
+        if (authorities.isEmpty()) {
+            authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
+        }
+
+        return authorities;
     }
 
     @Override

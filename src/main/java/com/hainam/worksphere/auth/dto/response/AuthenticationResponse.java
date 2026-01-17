@@ -2,6 +2,7 @@ package com.hainam.worksphere.auth.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.hainam.worksphere.user.dto.response.UserResponse;
+import com.hainam.worksphere.user.dto.response.UserWithAuthorizationResponse;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -27,5 +28,5 @@ public class AuthenticationResponse {
     private Long expiresIn;
 
     @JsonProperty("user")
-    private UserResponse user;
+    private UserWithAuthorizationResponse user;
 }

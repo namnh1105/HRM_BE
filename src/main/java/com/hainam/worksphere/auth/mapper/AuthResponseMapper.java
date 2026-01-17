@@ -3,6 +3,7 @@ package com.hainam.worksphere.auth.mapper;
 import com.hainam.worksphere.auth.dto.response.AuthenticationResponse;
 import com.hainam.worksphere.auth.dto.response.TokenResponse;
 import com.hainam.worksphere.user.dto.response.UserResponse;
+import com.hainam.worksphere.user.dto.response.UserWithAuthorizationResponse;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
@@ -15,7 +16,7 @@ public interface AuthResponseMapper {
             String accessToken,
             String refreshToken,
             Long expiresIn,
-            UserResponse user
+            UserWithAuthorizationResponse user
     );
 
     @Mapping(target = "tokenType", constant = "Bearer")
