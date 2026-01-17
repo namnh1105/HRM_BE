@@ -50,7 +50,7 @@ public class AuthenticationService {
 
     @Transactional
     public AuthenticationResponse register(RegisterRequest request) {
-        if (userRepository.existsByEmail(request.getEmail())) {
+        if (userRepository.existsActiveByEmail(request.getEmail())) {
             throw EmailAlreadyExistsException.withEmail(request.getEmail());
         }
 
@@ -59,7 +59,9 @@ public class AuthenticationService {
 
         User savedUser = userRepository.save(user);
 
-        // Fetch user roles and permissions (new users might have default roles)
+        savedUser.setCreatedBy(savedUser.getId());
+        savedUser = userRepository.save(savedUser);
+
         List<Role> userRoles = authorizationService.getUserRoles(savedUser.getId());
         List<Permission> userPermissions = authorizationService.getUserPermissions(savedUser.getId());
 
@@ -68,7 +70,6 @@ public class AuthenticationService {
         String accessToken = jwtUtil.generateAccessToken(userPrincipal);
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(savedUser);
 
-        // Create enhanced user response with roles and permissions
         UserWithAuthorizationResponse userWithAuth = userAuthorizationMapper.toUserWithAuthorizationResponse(
                 savedUser, userRoles, userPermissions);
 
@@ -89,20 +90,17 @@ public class AuthenticationService {
             );
 
             UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-            User user = userRepository.findById(userPrincipal.getId())
+            User user = userRepository.findActiveById(userPrincipal.getId())
                     .orElseThrow(() -> UserNotFoundException.byId(userPrincipal.getId().toString()));
 
-            // Fetch user roles and permissions
             List<Role> userRoles = authorizationService.getUserRoles(user.getId());
             List<Permission> userPermissions = authorizationService.getUserPermissions(user.getId());
 
-            // Create UserPrincipal with roles and permissions for JWT
             UserPrincipal enhancedUserPrincipal = UserPrincipal.create(user, userRoles, userPermissions);
 
             String accessToken = jwtUtil.generateAccessToken(enhancedUserPrincipal);
             RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
 
-            // Create enhanced user response with roles and permissions
             UserWithAuthorizationResponse userWithAuth = userAuthorizationMapper.toUserWithAuthorizationResponse(
                     user, userRoles, userPermissions);
 
@@ -123,7 +121,13 @@ public class AuthenticationService {
                 .map(refreshTokenService::verifyExpiration)
                 .map(RefreshToken::getUser)
                 .map(user -> {
-                    UserPrincipal userPrincipal = UserPrincipal.create(user);
+                    User activeUser = userRepository.findActiveById(user.getId())
+                            .orElseThrow(() -> new RefreshTokenException("User has been deactivated or deleted"));
+
+                    List<Role> userRoles = authorizationService.getUserRoles(activeUser.getId());
+                    List<Permission> userPermissions = authorizationService.getUserPermissions(activeUser.getId());
+
+                    UserPrincipal userPrincipal = UserPrincipal.create(activeUser, userRoles, userPermissions);
                     String accessToken = jwtUtil.generateAccessToken(userPrincipal);
                     return authResponseMapper.toTokenResponse(
                             accessToken,
@@ -141,7 +145,7 @@ public class AuthenticationService {
 
     @Transactional
     public void logoutAll(UserPrincipal userPrincipal) {
-        User user = userRepository.findById(userPrincipal.getId())
+        User user = userRepository.findActiveById(userPrincipal.getId())
                 .orElseThrow(() -> UserNotFoundException.byId(userPrincipal.getId().toString()));
         refreshTokenService.revokeByUser(user);
     }
@@ -164,7 +168,7 @@ public class AuthenticationService {
             throw new IllegalArgumentException("Family name is required for Google OAuth2 login");
         }
 
-        User user = userRepository.findByEmail(email)
+        User user = userRepository.findActiveByEmail(email)
                 .orElseGet(() -> {
                     User newUser = User.builder()
                             .email(email)
@@ -174,7 +178,9 @@ public class AuthenticationService {
                             .googleId(googleId)
                             .isEnabled(true)
                             .build();
-                    return userRepository.save(newUser);
+                    User savedUser = userRepository.save(newUser);
+                    savedUser.setCreatedBy(savedUser.getId());
+                    return userRepository.save(savedUser);
                 });
 
         if (user.getGoogleId() == null || !user.getGoogleId().equals(googleId)) {
@@ -182,7 +188,6 @@ public class AuthenticationService {
             user = userRepository.save(user);
         }
 
-        // Fetch user roles and permissions
         List<Role> userRoles = authorizationService.getUserRoles(user.getId());
         List<Permission> userPermissions = authorizationService.getUserPermissions(user.getId());
 
@@ -190,7 +195,6 @@ public class AuthenticationService {
         String accessToken = jwtUtil.generateAccessToken(userPrincipal);
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
 
-        // Create enhanced user response with roles and permissions
         UserWithAuthorizationResponse userWithAuth = userAuthorizationMapper.toUserWithAuthorizationResponse(
                 user, userRoles, userPermissions);
 
@@ -202,19 +206,22 @@ public class AuthenticationService {
         );
     }
 
-    public User validateAccessToken(String token) {
+    public UserPrincipal validateAccessToken(String token) {
         String email = jwtUtil.extractUsername(token);
 
-        User user = userRepository.findByEmail(email)
+        User user = userRepository.findActiveByEmail(email)
                 .orElseThrow(() -> UserNotFoundException.byEmail(email));
 
-        UserPrincipal userPrincipal = UserPrincipal.create(user);
+        List<Role> userRoles = authorizationService.getUserRoles(user.getId());
+        List<Permission> userPermissions = authorizationService.getUserPermissions(user.getId());
+
+        UserPrincipal userPrincipal = UserPrincipal.create(user, userRoles, userPermissions);
 
         if (!jwtUtil.isTokenValid(token, userPrincipal)) {
             throw new RuntimeException("Token is invalid");
         }
 
-        return user;
+        return userPrincipal;
     }
 }
 

@@ -1,6 +1,8 @@
 package com.hainam.worksphere.user.controller;
 
 import com.hainam.worksphere.auth.security.UserPrincipal;
+import com.hainam.worksphere.authorization.security.RequirePermission;
+import com.hainam.worksphere.shared.constant.PermissionType;
 import com.hainam.worksphere.shared.dto.ApiResponse;
 import com.hainam.worksphere.user.dto.request.ChangePasswordRequest;
 import com.hainam.worksphere.user.dto.request.UpdateProfileRequest;
@@ -12,10 +14,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -27,9 +29,17 @@ public class UserController {
 
     private final UserService userService;
 
+    @GetMapping
+    @Operation(summary = "Get all active users")
+    @RequirePermission(PermissionType.VIEW_USER)
+    public ResponseEntity<ApiResponse<List<UserResponse>>> getAllUsers() {
+        List<UserResponse> response = userService.getAllActiveUsers();
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
     @GetMapping("/me")
     @Operation(summary = "Get current user profile")
-    @PreAuthorize("hasAuthority('VIEW_PROFILE')")
+    @RequirePermission(PermissionType.VIEW_PROFILE)
     public ResponseEntity<ApiResponse<UserResponse>> getCurrentUser(
             @AuthenticationPrincipal UserPrincipal userPrincipal
     ) {
@@ -39,7 +49,7 @@ public class UserController {
 
     @GetMapping("/{userId}")
     @Operation(summary = "Get user by ID")
-    @PreAuthorize("hasAuthority('MANAGE_USER')")
+    @RequirePermission(PermissionType.VIEW_USER)
     public ResponseEntity<ApiResponse<UserResponse>> getUserById(
             @PathVariable UUID userId
     ) {
@@ -49,7 +59,7 @@ public class UserController {
 
     @PutMapping("/profile")
     @Operation(summary = "Update user profile")
-    @PreAuthorize("hasAuthority('UPDATE_PROFILE')")
+    @RequirePermission(PermissionType.UPDATE_PROFILE)
     public ResponseEntity<ApiResponse<UserResponse>> updateProfile(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
             @Valid @RequestBody UpdateProfileRequest request
@@ -60,7 +70,7 @@ public class UserController {
 
     @PutMapping("/change-password")
     @Operation(summary = "Change password")
-    @PreAuthorize("hasAuthority('UPDATE_PROFILE')")
+    @RequirePermission(PermissionType.UPDATE_PROFILE)
     public ResponseEntity<ApiResponse<Void>> changePassword(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
             @Valid @RequestBody ChangePasswordRequest request
@@ -71,11 +81,54 @@ public class UserController {
 
     @DeleteMapping("/deactivate")
     @Operation(summary = "Deactivate account")
-    @PreAuthorize("hasAuthority('UPDATE_PROFILE')")
+    @RequirePermission(PermissionType.UPDATE_PROFILE)
     public ResponseEntity<ApiResponse<Void>> deactivateAccount(
             @AuthenticationPrincipal UserPrincipal userPrincipal
     ) {
         userService.deactivateAccount(userPrincipal);
         return ResponseEntity.ok(ApiResponse.success("Account deactivated successfully", null));
+    }
+
+    // Soft Delete APIs
+    @DeleteMapping("/me")
+    @Operation(summary = "Soft delete current user account")
+    @RequirePermission(PermissionType.DELETE_PROFILE)
+    public ResponseEntity<ApiResponse<Void>> deleteMyAccount(
+            @AuthenticationPrincipal UserPrincipal userPrincipal
+    ) {
+        userService.softDeleteCurrentUser(userPrincipal);
+        return ResponseEntity.ok(ApiResponse.success("Account deleted successfully", null));
+    }
+
+    @DeleteMapping("/{userId}")
+    @Operation(summary = "Soft delete user by ID")
+    @RequirePermission(PermissionType.DELETE_USER)
+    public ResponseEntity<ApiResponse<Void>> deleteUser(
+            @PathVariable UUID userId,
+            @AuthenticationPrincipal UserPrincipal userPrincipal
+    ) {
+        userService.softDeleteUser(userId, userPrincipal.getId());
+        return ResponseEntity.ok(ApiResponse.success("User deleted successfully", null));
+    }
+
+    @PostMapping("/{userId}/restore")
+    @Operation(summary = "Restore soft deleted user")
+    @RequirePermission(PermissionType.RESTORE_USER)
+    public ResponseEntity<ApiResponse<UserResponse>> restoreUser(
+            @PathVariable UUID userId,
+            @AuthenticationPrincipal UserPrincipal userPrincipal
+    ) {
+        UserResponse response = userService.restoreUser(userId, userPrincipal.getId());
+        return ResponseEntity.ok(ApiResponse.success("User restored successfully", response));
+    }
+
+    @DeleteMapping("/{userId}/permanent")
+    @Operation(summary = "Permanently delete user")
+    @RequirePermission(PermissionType.PERMANENT_DELETE_USER)
+    public ResponseEntity<ApiResponse<Void>> permanentDeleteUser(
+            @PathVariable UUID userId
+    ) {
+        userService.permanentDeleteUser(userId);
+        return ResponseEntity.ok(ApiResponse.success("User permanently deleted", null));
     }
 }

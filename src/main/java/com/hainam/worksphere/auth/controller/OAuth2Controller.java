@@ -21,11 +21,11 @@ public class OAuth2Controller {
     @GetMapping("/validate-token")
     public ApiResponse<Object> validateToken(@RequestParam("token") String token) {
         try {
-            var user = authenticationService.validateAccessToken(token);
+            var userPrincipal = authenticationService.validateAccessToken(token);
             return ApiResponse.builder()
                     .success(true)
                     .message("Token is valid")
-                    .data(user)
+                    .data(userPrincipal)
                     .build();
         } catch (Exception e) {
             return ApiResponse.builder()

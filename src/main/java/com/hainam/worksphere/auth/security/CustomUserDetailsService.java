@@ -23,7 +23,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        User user = userRepository.findByEmailAndIsEnabledTrue(email)
+        User user = userRepository.findActiveByEmailAndEnabled(email)
                 .orElseThrow(() -> UserNotFoundException.byEmail(email));
 
         List<Role> userRoles = authorizationService.getUserRoles(user.getId());

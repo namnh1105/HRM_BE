@@ -16,5 +16,10 @@ public interface UserMapper {
     @Mapping(target = "isActive", source = "isEnabled")
     @Mapping(target = "createdAt", source = "createdAt")
     @Mapping(target = "updatedAt", source = "updatedAt")
+    @Mapping(target = "createdBy", source = "createdBy")
+    @Mapping(target = "updatedBy", source = "updatedBy")
+    @Mapping(target = "isDeleted", source = "isDeleted")
+    @Mapping(target = "deletedAt", source = "deletedAt")
+    @Mapping(target = "deletedBy", source = "deletedBy")
     UserResponse toUserResponse(User user);
 }

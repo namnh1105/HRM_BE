@@ -4,13 +4,14 @@ import com.hainam.worksphere.authorization.domain.UserRole;
 import com.hainam.worksphere.authorization.dto.request.AssignRolesRequest;
 import com.hainam.worksphere.authorization.dto.response.UserRoleResponse;
 import com.hainam.worksphere.authorization.mapper.UserRoleMapper;
+import com.hainam.worksphere.authorization.security.RequirePermission;
 import com.hainam.worksphere.authorization.service.UserRoleService;
+import com.hainam.worksphere.shared.constant.PermissionType;
 import com.hainam.worksphere.shared.dto.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -26,7 +27,7 @@ public class UserRoleController {
     private final UserRoleMapper userRoleMapper;
 
     @PostMapping("/assign")
-    @PreAuthorize("hasAuthority('MANAGE_USER_ROLE')")
+    @RequirePermission(PermissionType.MANAGE_USER_ROLE)
     public ResponseEntity<ApiResponse<Void>> assignRolesToUser(@Valid @RequestBody AssignRolesRequest request) {
         userRoleService.assignRolesToUser(request.getUserId(), request.getRoleIds());
 
@@ -34,7 +35,7 @@ public class UserRoleController {
     }
 
     @PostMapping("/remove")
-    @PreAuthorize("hasAuthority('MANAGE_USER_ROLE')")
+    @RequirePermission(PermissionType.MANAGE_USER_ROLE)
     public ResponseEntity<ApiResponse<Void>> removeRolesFromUser(@Valid @RequestBody AssignRolesRequest request) {
         userRoleService.removeRolesFromUser(request.getUserId(), request.getRoleIds());
 
@@ -42,7 +43,7 @@ public class UserRoleController {
     }
 
     @PostMapping("/replace")
-    @PreAuthorize("hasAuthority('MANAGE_USER_ROLE')")
+    @RequirePermission(PermissionType.MANAGE_USER_ROLE)
     public ResponseEntity<ApiResponse<Void>> replaceUserRoles(@Valid @RequestBody AssignRolesRequest request) {
         userRoleService.replaceUserRoles(request.getUserId(), request.getRoleIds());
 
@@ -50,7 +51,7 @@ public class UserRoleController {
     }
 
     @GetMapping("/user/{userId}")
-    @PreAuthorize("hasAuthority('READ_USER_ROLE')")
+    @RequirePermission(PermissionType.READ_USER_ROLE)
     public ResponseEntity<ApiResponse<List<UserRoleResponse>>> getUserRoles(@PathVariable UUID userId) {
         List<UserRole> userRoles = userRoleService.getActiveUserRolesByUserId(userId);
         List<UserRoleResponse> response = userRoles.stream()
@@ -61,7 +62,7 @@ public class UserRoleController {
     }
 
     @GetMapping("/role/{roleId}")
-    @PreAuthorize("hasAuthority('READ_USER_ROLE')")
+    @RequirePermission(PermissionType.READ_USER_ROLE)
     public ResponseEntity<ApiResponse<List<UserRoleResponse>>> getUsersByRole(@PathVariable UUID roleId) {
         List<UserRole> userRoles = userRoleService.getActiveUserRolesByRoleId(roleId);
         List<UserRoleResponse> response = userRoles.stream()
@@ -72,7 +73,7 @@ public class UserRoleController {
     }
 
     @PostMapping("/user/{userId}/role/{roleId}")
-    @PreAuthorize("hasAuthority('MANAGE_USER_ROLE')")
+    @RequirePermission(PermissionType.MANAGE_USER_ROLE)
     public ResponseEntity<ApiResponse<Void>> assignRoleToUser(
             @PathVariable UUID userId,
             @PathVariable UUID roleId) {
@@ -82,7 +83,7 @@ public class UserRoleController {
     }
 
     @DeleteMapping("/user/{userId}/role/{roleId}")
-    @PreAuthorize("hasAuthority('MANAGE_USER_ROLE')")
+    @RequirePermission(PermissionType.MANAGE_USER_ROLE)
     public ResponseEntity<ApiResponse<Void>> removeRoleFromUser(
             @PathVariable UUID userId,
             @PathVariable UUID roleId) {
@@ -92,7 +93,7 @@ public class UserRoleController {
     }
 
     @GetMapping("/user/{userId}/role/{roleId}/check")
-    @PreAuthorize("hasAuthority('READ_USER_ROLE')")
+    @RequirePermission(PermissionType.READ_USER_ROLE)
     public ResponseEntity<ApiResponse<Boolean>> checkUserHasRole(
             @PathVariable UUID userId,
             @PathVariable UUID roleId) {

@@ -2,8 +2,11 @@ package com.hainam.worksphere.user.repository;
 
 import com.hainam.worksphere.user.domain.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -17,4 +20,23 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByEmailAndIsEnabledTrue(String email);
 
     Optional<User> findByGoogleId(String googleId);
+
+    @Query("SELECT u FROM User u WHERE u.isDeleted = false")
+    List<User> findAllActive();
+
+    @Query("SELECT u FROM User u WHERE u.id = :id AND u.isDeleted = false")
+    Optional<User> findActiveById(@Param("id") UUID id);
+
+    @Query("SELECT u FROM User u WHERE u.email = :email AND u.isDeleted = false")
+    Optional<User> findActiveByEmail(@Param("email") String email);
+
+    @Query("SELECT u FROM User u WHERE u.email = :email AND u.isEnabled = true AND u.isDeleted = false")
+    Optional<User> findActiveByEmailAndEnabled(@Param("email") String email);
+
+    @Query("SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END FROM User u WHERE u.email = :email AND u.isDeleted = false")
+    boolean existsActiveByEmail(@Param("email") String email);
+
+    @Query("SELECT u FROM User u WHERE u.id = :id AND u.isDeleted = true")
+    Optional<User> findDeletedById(@Param("id") UUID id);
 }
+

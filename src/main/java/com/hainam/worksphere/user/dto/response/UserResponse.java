@@ -38,4 +38,19 @@ public class UserResponse {
 
     @JsonProperty("updated_at")
     private LocalDateTime updatedAt;
+
+    @JsonProperty("created_by")
+    private UUID createdBy;
+
+    @JsonProperty("updated_by")
+    private UUID updatedBy;
+
+    @JsonProperty("is_deleted")
+    private Boolean isDeleted;
+
+    @JsonProperty("deleted_at")
+    private LocalDateTime deletedAt;
+
+    @JsonProperty("deleted_by")
+    private UUID deletedBy;
 }

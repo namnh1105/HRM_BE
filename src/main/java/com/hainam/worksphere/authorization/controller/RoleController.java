@@ -6,8 +6,10 @@ import com.hainam.worksphere.authorization.dto.request.CreateRoleRequest;
 import com.hainam.worksphere.authorization.dto.request.UpdateRoleRequest;
 import com.hainam.worksphere.authorization.dto.response.RoleResponse;
 import com.hainam.worksphere.authorization.mapper.RoleMapper;
+import com.hainam.worksphere.authorization.security.RequirePermission;
 import com.hainam.worksphere.authorization.service.RolePermissionService;
 import com.hainam.worksphere.authorization.service.RoleService;
+import com.hainam.worksphere.shared.constant.PermissionType;
 import com.hainam.worksphere.shared.dto.ApiResponse;
 import com.hainam.worksphere.shared.dto.PaginatedApiResponse;
 import jakarta.validation.Valid;
@@ -18,7 +20,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -35,7 +36,7 @@ public class RoleController {
     private final RoleMapper roleMapper;
 
     @PostMapping
-    @PreAuthorize("hasAuthority('MANAGE_ROLE')")
+    @RequirePermission(PermissionType.MANAGE_ROLES)
     public ResponseEntity<ApiResponse<RoleResponse>> createRole(@Valid @RequestBody CreateRoleRequest request) {
         log.info("Creating role: {}", request.getCode());
 
@@ -48,7 +49,7 @@ public class RoleController {
     }
 
     @GetMapping("/{roleId}")
-    @PreAuthorize("hasAuthority('MANAGE_ROLE')")
+    @RequirePermission(PermissionType.MANAGE_ROLES)
     public ResponseEntity<ApiResponse<RoleResponse>> getRole(@PathVariable UUID roleId) {
         log.info("Fetching role with ID: {}", roleId);
 
@@ -59,7 +60,7 @@ public class RoleController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('MANAGE_ROLE')")
+    @RequirePermission(PermissionType.MANAGE_ROLES)
     public ResponseEntity<PaginatedApiResponse<RoleResponse>> getAllRoles(
             @PageableDefault(size = 20) Pageable pageable) {
         log.info("Fetching all roles");
@@ -71,7 +72,7 @@ public class RoleController {
     }
 
     @GetMapping("/active")
-    @PreAuthorize("hasAuthority('MANAGE_ROLE')")
+    @RequirePermission(PermissionType.MANAGE_ROLES)
     public ResponseEntity<ApiResponse<List<RoleResponse>>> getActiveRoles() {
         log.info("Fetching active roles");
 
@@ -84,7 +85,7 @@ public class RoleController {
     }
 
     @PutMapping("/{roleId}")
-    @PreAuthorize("hasAuthority('MANAGE_ROLE')")
+    @RequirePermission(PermissionType.MANAGE_ROLES)
     public ResponseEntity<ApiResponse<RoleResponse>> updateRole(
             @PathVariable UUID roleId,
             @Valid @RequestBody UpdateRoleRequest request) {
@@ -99,7 +100,7 @@ public class RoleController {
     }
 
     @DeleteMapping("/{roleId}")
-    @PreAuthorize("hasAuthority('MANAGE_ROLE')")
+    @RequirePermission(PermissionType.MANAGE_ROLES)
     public ResponseEntity<ApiResponse<Void>> deleteRole(@PathVariable UUID roleId) {
         log.info("Deleting role with ID: {}", roleId);
 
@@ -109,7 +110,7 @@ public class RoleController {
     }
 
     @PostMapping("/{roleId}/activate")
-    @PreAuthorize("hasAuthority('MANAGE_ROLE')")
+    @RequirePermission(PermissionType.MANAGE_ROLES)
     public ResponseEntity<ApiResponse<Void>> activateRole(@PathVariable UUID roleId) {
         log.info("Activating role with ID: {}", roleId);
 
@@ -119,7 +120,7 @@ public class RoleController {
     }
 
     @PostMapping("/{roleId}/deactivate")
-    @PreAuthorize("hasAuthority('MANAGE_ROLE')")
+    @RequirePermission(PermissionType.MANAGE_ROLES)
     public ResponseEntity<ApiResponse<Void>> deactivateRole(@PathVariable UUID roleId) {
         log.info("Deactivating role with ID: {}", roleId);
 
@@ -129,7 +130,7 @@ public class RoleController {
     }
 
     @PostMapping("/{roleId}/permissions")
-    @PreAuthorize("hasAuthority('MANAGE_ROLE')")
+    @RequirePermission(PermissionType.MANAGE_ROLES)
     public ResponseEntity<ApiResponse<Void>> assignPermissionsToRole(
             @PathVariable UUID roleId,
             @Valid @RequestBody AssignPermissionsToRoleRequest request) {
@@ -141,7 +142,7 @@ public class RoleController {
     }
 
     @DeleteMapping("/{roleId}/permissions")
-    @PreAuthorize("hasAuthority('MANAGE_ROLE')")
+    @RequirePermission(PermissionType.MANAGE_ROLES)
     public ResponseEntity<ApiResponse<Void>> removePermissionsFromRole(
             @PathVariable UUID roleId,
             @RequestBody List<UUID> permissionIds) {
@@ -153,7 +154,7 @@ public class RoleController {
     }
 
     @GetMapping("/search")
-    @PreAuthorize("hasAuthority('MANAGE_ROLE')")
+    @RequirePermission(PermissionType.MANAGE_ROLES)
     public ResponseEntity<ApiResponse<List<RoleResponse>>> searchRoles(@RequestParam String query) {
         log.info("Searching roles with query: {}", query);
 
