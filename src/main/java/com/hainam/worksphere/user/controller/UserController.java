@@ -2,6 +2,7 @@ package com.hainam.worksphere.user.controller;
 
 import com.hainam.worksphere.auth.security.UserPrincipal;
 import com.hainam.worksphere.authorization.security.RequirePermission;
+import com.hainam.worksphere.shared.audit.annotation.Auditable;
 import com.hainam.worksphere.shared.constant.PermissionType;
 import com.hainam.worksphere.shared.dto.ApiResponse;
 import com.hainam.worksphere.user.dto.request.ChangePasswordRequest;
@@ -87,17 +88,6 @@ public class UserController {
     ) {
         userService.deactivateAccount(userPrincipal);
         return ResponseEntity.ok(ApiResponse.success("Account deactivated successfully", null));
-    }
-
-    // Soft Delete APIs
-    @DeleteMapping("/me")
-    @Operation(summary = "Soft delete current user account")
-    @RequirePermission(PermissionType.DELETE_PROFILE)
-    public ResponseEntity<ApiResponse<Void>> deleteMyAccount(
-            @AuthenticationPrincipal UserPrincipal userPrincipal
-    ) {
-        userService.softDeleteCurrentUser(userPrincipal);
-        return ResponseEntity.ok(ApiResponse.success("Account deleted successfully", null));
     }
 
     @DeleteMapping("/{userId}")

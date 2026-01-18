@@ -1,5 +1,6 @@
 package com.hainam.worksphere.user.domain;
 
+import com.hainam.worksphere.shared.audit.annotation.AuditableEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -13,6 +14,17 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "users")
+@AuditableEntity(ignoreFields = {
+    "id",
+    "password",
+    "updatedAt",
+    "updatedBy",
+    "createdAt",
+    "createdBy",
+    "isDeleted",
+    "deletedAt",
+    "deletedBy"
+})
 @Data
 @Builder
 @NoArgsConstructor

@@ -29,7 +29,11 @@ public enum PermissionType {
 
     // System administration
     SYSTEM_ADMIN("System administration privileges"),
-    SUPER_ADMIN("Super administrator privileges");
+    SUPER_ADMIN("Super administrator privileges"),
+
+    // Audit logging permissions
+    VIEW_AUDIT_LOGS("View audit logs"),
+    MANAGE_AUDIT_LOGS("Manage audit logs");
 
     private final String description;
 

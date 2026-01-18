@@ -1,6 +1,8 @@
 package com.hainam.worksphere.user.service;
 
 import com.hainam.worksphere.auth.security.UserPrincipal;
+import com.hainam.worksphere.shared.audit.util.AuditDiffUtil;
+import com.hainam.worksphere.shared.audit.util.RequestContextUtil;
 import com.hainam.worksphere.shared.exception.UserNotFoundException;
 import com.hainam.worksphere.shared.exception.ValidationException;
 import com.hainam.worksphere.user.domain.User;
@@ -28,6 +30,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
     private final UserUpdateMapper userUpdateMapper;
+    private final AuditDiffUtil auditDiffUtil;
 
     public UserResponse getCurrentUser(UserPrincipal userPrincipal) {
         User user = userRepository.findActiveById(userPrincipal.getId())
@@ -50,14 +53,50 @@ public class UserService {
 
     @Transactional
     public UserResponse updateProfile(UserPrincipal userPrincipal, UpdateProfileRequest request) {
-        User user = userRepository.findActiveById(userPrincipal.getId())
+        User userBefore = userRepository.findActiveById(userPrincipal.getId())
                 .orElseThrow(() -> UserNotFoundException.byId(userPrincipal.getId().toString()));
 
-        userUpdateMapper.updateUserFromRequest(request, user);
-        user.setUpdatedBy(userPrincipal.getId());
+        User originalUser = createUserCopy(userBefore);
 
-        User updatedUser = userRepository.save(user);
-        return userMapper.toUserResponse(updatedUser);
+        userUpdateMapper.updateUserFromRequest(request, userBefore);
+        userBefore.setUpdatedBy(userPrincipal.getId());
+        User userAfter = userRepository.save(userBefore);
+
+        String requestId = RequestContextUtil.getRequestId();
+        auditDiffUtil.auditAllChanges(
+            "UPDATE_PROFILE",
+            "USER",
+            userAfter.getId().toString(),
+            originalUser,
+            userAfter,
+            requestId
+        );
+
+        return userMapper.toUserResponse(userAfter);
+    }
+
+    /**
+     * Create a copy of user entity for audit comparison
+     */
+    private User createUserCopy(User original) {
+        return User.builder()
+                .id(original.getId())
+                .email(original.getEmail())
+                .name(original.getName())
+                .givenName(original.getGivenName())
+                .familyName(original.getFamilyName())
+                .avatarUrl(original.getAvatarUrl())
+                .googleId(original.getGoogleId())
+                .isEnabled(original.getIsEnabled())
+                .createdAt(original.getCreatedAt())
+                .updatedAt(original.getUpdatedAt())
+                .createdBy(original.getCreatedBy())
+                .updatedBy(original.getUpdatedBy())
+                .isDeleted(original.getIsDeleted())
+                .deletedAt(original.getDeletedAt())
+                .deletedBy(original.getDeletedBy())
+                .password(original.getPassword())
+                .build();
     }
 
     @Transactional

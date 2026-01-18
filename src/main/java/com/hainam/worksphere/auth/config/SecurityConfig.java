@@ -5,6 +5,7 @@ import com.hainam.worksphere.auth.security.CustomAuthenticationEntryPoint;
 import com.hainam.worksphere.auth.security.CustomUserDetailsService;
 import com.hainam.worksphere.auth.security.JwtAuthenticationFilter;
 import com.hainam.worksphere.auth.security.OAuth2AuthenticationSuccessHandler;
+import com.hainam.worksphere.shared.config.SecurityProperties;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -37,11 +38,12 @@ public class SecurityConfig {
     private final CustomAccessDeniedHandler accessDeniedHandler;
     private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
     private final PasswordEncoder passwordEncoder;
+    private final SecurityProperties securityProperties;
 
     @Bean
     public AuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider(userDetailsService);
-        authProvider.setPasswordEncoder(passwordEncoder);
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider(passwordEncoder);
+        authProvider.setUserDetailsService(userDetailsService);
         return authProvider;
     }
 
@@ -62,21 +64,20 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        // Get public endpoints from properties
+        List<String> publicEndpoints = securityProperties.getPublicEndpointsList();
+        String[] publicEndpointsArray = publicEndpoints.toArray(new String[0]);
+
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(authz -> authz
-                        .requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/refresh-token").permitAll()
-                        .requestMatchers("/api/auth/google/**", "/api/auth/google").permitAll()
-                        .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
-                        .requestMatchers("/api/test/**").permitAll() // For testing endpoints
-                        .requestMatchers("/error", "/favicon.ico", "/static/**", "/css/**", "/js/**", "/images/**").permitAll() // Static resources
+                        // Public endpoints from configuration
+                        .requestMatchers(publicEndpointsArray).permitAll()
+                        // Additional static resources and console access
+                        .requestMatchers("/favicon.ico", "/static/**", "/css/**", "/js/**", "/images/**").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
-                        .requestMatchers("/actuator/**").permitAll()
-                        .requestMatchers("/api/health/**").permitAll()
-                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
-                        // Authorization endpoints - secured by method-level security
-                        .requestMatchers("/api/roles/**", "/api/permissions/**", "/api/user-roles/**").authenticated()
+                        // All other requests require authentication
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2
