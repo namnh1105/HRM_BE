@@ -1,5 +1,9 @@
 package com.hainam.worksphere.shared.audit.dto;
 
+import com.hainam.worksphere.shared.audit.domain.ActionType;
+import com.hainam.worksphere.shared.domain.EntityType;
+import com.hainam.worksphere.shared.audit.domain.AuditStatus;
+import com.hainam.worksphere.shared.web.HttpMethod;
 import lombok.Data;
 import org.springframework.format.annotation.DateTimeFormat;
 
@@ -9,10 +13,14 @@ import java.time.LocalDateTime;
 public class AuditLogSearchRequest {
     private String userId;
     private String username;
-    private String action;
-    private String entityType;
+
+    private ActionType actionType;
+    private String actionCode;
+    private EntityType entityType;
+    private AuditStatus status;
+    private HttpMethod requestMethod;
+
     private String entityId;
-    private String status;
 
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     private LocalDateTime startDate;
@@ -21,5 +29,8 @@ public class AuditLogSearchRequest {
     private LocalDateTime endDate;
 
     private String ipAddress;
-    private String requestMethod;
+
+    private String fieldName;
+    private String oldValue;
+    private String newValue;
 }

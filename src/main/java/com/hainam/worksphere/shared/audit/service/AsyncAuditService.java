@@ -2,6 +2,10 @@ package com.hainam.worksphere.shared.audit.service;
 
 import com.hainam.worksphere.shared.audit.config.AuditProperties;
 import com.hainam.worksphere.shared.audit.domain.AuditLog;
+import com.hainam.worksphere.shared.audit.domain.ActionType;
+import com.hainam.worksphere.shared.audit.domain.AuditStatus;
+import com.hainam.worksphere.shared.domain.EntityType;
+import com.hainam.worksphere.shared.web.HttpMethod;
 import com.hainam.worksphere.shared.audit.repository.AuditLogRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -41,18 +45,17 @@ public class AsyncAuditService {
 
         try {
             AuditLog auditLog = AuditLog.builder()
-                    .action(action)
-                    .entityType(entityType)
+                    .actionType(parseActionType(action))
+                    .actionCode(action)
+                    .entityType(parseEntityType(entityType))
                     .entityId(entityId)
-                    .oldValue(truncateValue(serializeObject(oldValue)))
-                    .newValue(truncateValue(serializeObject(newValue)))
-                    .status(status != null ? status : "SUCCESS")
+                    .status(parseAuditStatus(status != null ? status : "SUCCESS"))
                     .errorMessage(errorMessage)
                     .userId(userId)
                     .username(username)
                     .ipAddress(ipAddress)
                     .userAgent(userAgent)
-                    .requestMethod(requestMethod)
+                    .requestMethod(parseHttpMethod(requestMethod))
                     .requestUrl(requestUrl)
                     .timestamp(LocalDateTime.now())
                     .build();
@@ -158,5 +161,75 @@ public class AsyncAuditService {
         }
 
         return request.getRemoteAddr();
+    }
+
+    /**
+     * Parse ActionType from legacy action string
+     */
+    private ActionType parseActionType(String action) {
+        if (action == null) {
+            return ActionType.CREATE;
+        }
+
+        String upperAction = action.toUpperCase();
+        if (upperAction.contains("CREATE") || upperAction.contains("REGISTER") || upperAction.contains("ADD")) {
+            return ActionType.CREATE;
+        } else if (upperAction.contains("UPDATE") || upperAction.contains("EDIT") || upperAction.contains("MODIFY") || upperAction.contains("ASSIGN")) {
+            return ActionType.UPDATE;
+        } else if (upperAction.contains("DELETE") || upperAction.contains("REMOVE")) {
+            return ActionType.DELETE;
+        } else if (upperAction.contains("READ") || upperAction.contains("VIEW") || upperAction.contains("GET") || upperAction.contains("LOGIN")) {
+            return ActionType.READ;
+        }
+
+        return ActionType.CREATE;
+    }
+
+    /**
+     * Parse EntityType from legacy entity type string
+     */
+    private EntityType parseEntityType(String entityType) {
+        if (entityType == null) {
+            return EntityType.USER;
+        }
+
+        try {
+            return EntityType.valueOf(entityType.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            log.warn("Unknown entity type: {}, defaulting to USER", entityType);
+            return EntityType.USER;
+        }
+    }
+
+    /**
+     * Parse AuditStatus from legacy status string
+     */
+    private AuditStatus parseAuditStatus(String status) {
+        if (status == null) {
+            return AuditStatus.SUCCESS;
+        }
+
+        try {
+            return AuditStatus.valueOf(status.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            log.warn("Unknown audit status: {}, defaulting to SUCCESS", status);
+            return AuditStatus.SUCCESS;
+        }
+    }
+
+    /**
+     * Parse HttpMethod from method string
+     */
+    private HttpMethod parseHttpMethod(String method) {
+        if (method == null) {
+            return HttpMethod.GET;
+        }
+
+        try {
+            return HttpMethod.valueOf(method.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            log.warn("Unknown HTTP method: {}, defaulting to GET", method);
+            return HttpMethod.GET;
+        }
     }
 }

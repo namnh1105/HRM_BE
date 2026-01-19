@@ -1,10 +1,17 @@
 package com.hainam.worksphere.shared.audit.service;
 
 import com.hainam.worksphere.shared.audit.domain.AuditLog;
+import com.hainam.worksphere.shared.audit.domain.AuditLogDetail;
+import com.hainam.worksphere.shared.audit.domain.ActionType;
+import com.hainam.worksphere.shared.audit.domain.AuditStatus;
+import com.hainam.worksphere.shared.domain.EntityType;
+import com.hainam.worksphere.shared.web.HttpMethod;
 import com.hainam.worksphere.shared.audit.dto.AuditLogDto;
+import com.hainam.worksphere.shared.audit.dto.AuditLogDetailDto;
 import com.hainam.worksphere.shared.audit.dto.AuditLogSearchRequest;
 import com.hainam.worksphere.shared.audit.dto.AuditStatisticDto;
 import com.hainam.worksphere.shared.audit.repository.AuditLogRepository;
+import com.hainam.worksphere.shared.audit.repository.AuditLogDetailRepository;
 import com.hainam.worksphere.shared.audit.config.AuditProperties;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -30,11 +37,75 @@ import java.util.stream.Collectors;
 public class AuditService {
 
     private final AuditLogRepository auditLogRepository;
+    private final AuditLogDetailRepository auditLogDetailRepository;
     private final ObjectMapper objectMapper;
     private final AuditProperties auditProperties;
 
     /**
-     * Create audit log
+     * Create audit log (new version with enums)
+     */
+    @Transactional
+    public void createAuditLog(ActionType actionType, String actionCode, EntityType entityType, String entityId,
+                              Object oldValue, Object newValue) {
+        createAuditLog(actionType, actionCode, entityType, entityId, oldValue, newValue, AuditStatus.SUCCESS, null);
+    }
+
+    /**
+     * Create audit log with status (new version with enums)
+     */
+    @Transactional
+    public void createAuditLog(ActionType actionType, String actionCode, EntityType entityType, String entityId,
+                              Object oldValue, Object newValue,
+                              AuditStatus status, String errorMessage) {
+        createAuditLog(actionType, actionCode, entityType, entityId, null, oldValue, newValue,
+                      status, errorMessage, null);
+    }
+
+    /**
+     * Create comprehensive audit log with all fields (new version with enums)
+     */
+    @Transactional
+    public void createAuditLog(ActionType actionType, String actionCode, EntityType entityType, String entityId, String fieldName,
+                              Object oldValue, Object newValue,
+                              AuditStatus status, String errorMessage, String requestId) {
+        if (!auditProperties.isEnabled()) {
+            return;
+        }
+
+        try {
+            // Create header record
+            AuditLog auditLog = AuditLog.builder()
+                    .actionType(actionType)
+                    .actionCode(actionCode)
+                    .entityType(entityType)
+                    .entityId(entityId)
+                    .status(status)
+                    .errorMessage(errorMessage)
+                    .requestId(requestId)
+                    .build();
+
+            enrichWithContextData(auditLog);
+            AuditLog savedAuditLog = auditLogRepository.save(auditLog);
+
+            // Create detail record if field-level change
+            if (fieldName != null) {
+                AuditLogDetail detail = AuditLogDetail.builder()
+                        .auditLogId(savedAuditLog.getId())
+                        .fieldName(fieldName)
+                        .oldValue(truncateValue(serializeObject(oldValue)))
+                        .newValue(truncateValue(serializeObject(newValue)))
+                        .build();
+
+                auditLogDetailRepository.save(detail);
+            }
+        } catch (Exception e) {
+            log.error("Failed to create audit log for actionType: {}, actionCode: {}, entityType: {}, entityId: {}",
+                     actionType, actionCode, entityType, entityId, e);
+        }
+    }
+
+    /**
+     * Create audit log (backward compatibility)
      */
     @Transactional
     public void createAuditLog(String action, String entityType, String entityId,
@@ -43,7 +114,7 @@ public class AuditService {
     }
 
     /**
-     * Create audit log with status
+     * Create audit log with status (backward compatibility)
      */
     @Transactional
     public void createAuditLog(String action, String entityType, String entityId,
@@ -54,7 +125,7 @@ public class AuditService {
     }
 
     /**
-     * Create comprehensive audit log with all fields
+     * Create comprehensive audit log with all fields (backward compatibility)
      */
     @Transactional
     public void createAuditLog(String action, String entityType, String entityId, String fieldName,
@@ -64,25 +135,15 @@ public class AuditService {
             return;
         }
 
-        try {
-            AuditLog auditLog = AuditLog.builder()
-                    .action(action)
-                    .entityType(entityType)
-                    .entityId(entityId)
-                    .fieldName(fieldName)
-                    .oldValue(truncateValue(serializeObject(oldValue)))
-                    .newValue(truncateValue(serializeObject(newValue)))
-                    .status(status)
-                    .errorMessage(errorMessage)
-                    .requestId(requestId)
-                    .build();
+        // Parse the legacy action to determine actionType and actionCode
+        ActionType actionType = parseActionType(action);
+        String actionCode = action; // The full action becomes the actionCode
+        EntityType entityTypeEnum = parseEntityType(entityType);
+        AuditStatus statusEnum = parseAuditStatus(status);
 
-            enrichWithContextData(auditLog);
-            auditLogRepository.save(auditLog);
-        } catch (Exception e) {
-            log.error("Failed to create audit log for action: {}, entityType: {}, entityId: {}",
-                     action, entityType, entityId, e);
-        }
+        // Delegate to new method
+        createAuditLog(actionType, actionCode, entityTypeEnum, entityId, fieldName,
+                      oldValue, newValue, statusEnum, errorMessage, requestId);
     }
 
     /**
@@ -113,18 +174,97 @@ public class AuditService {
     }
 
     /**
+     * Create audit log with multiple field changes (new version with enums)
+     */
+    @Transactional
+    public void createAuditLogWithDetails(ActionType actionType, String actionCode, EntityType entityType, String entityId,
+                                         List<AuditLogDetailDto> fieldChanges, String requestId) {
+        if (!auditProperties.isEnabled()) {
+            return;
+        }
+
+        try {
+            // Create header record
+            AuditLog auditLog = AuditLog.builder()
+                    .actionType(actionType)
+                    .actionCode(actionCode)
+                    .entityType(entityType)
+                    .entityId(entityId)
+                    .status(AuditStatus.SUCCESS)
+                    .requestId(requestId)
+                    .build();
+
+            enrichWithContextData(auditLog);
+            AuditLog savedAuditLog = auditLogRepository.save(auditLog);
+
+            // Create detail records for each field change
+            if (fieldChanges != null && !fieldChanges.isEmpty()) {
+                List<AuditLogDetail> details = fieldChanges.stream()
+                        .map(dto -> AuditLogDetail.builder()
+                                .auditLogId(savedAuditLog.getId())
+                                .fieldName(dto.getFieldName())
+                                .oldValue(truncateValue(dto.getOldValue()))
+                                .newValue(truncateValue(dto.getNewValue()))
+                                .build())
+                        .collect(Collectors.toList());
+
+                auditLogDetailRepository.saveAll(details);
+            }
+        } catch (Exception e) {
+            log.error("Failed to create audit log with details for actionType: {}, actionCode: {}, entityType: {}, entityId: {}",
+                     actionType, actionCode, entityType, entityId, e);
+        }
+    }
+
+    /**
+     * Create audit log with multiple field changes (backward compatibility)
+     */
+    @Transactional
+    public void createAuditLogWithDetails(String action, String entityType, String entityId,
+                                         List<AuditLogDetailDto> fieldChanges, String requestId) {
+        ActionType actionType = parseActionType(action);
+        String actionCode = action;
+        EntityType entityTypeEnum = parseEntityType(entityType);
+
+        createAuditLogWithDetails(actionType, actionCode, entityTypeEnum, entityId, fieldChanges, requestId);
+    }
+
+    /**
      * Search audit logs
      */
     @Transactional(readOnly = true)
     public Page<AuditLogDto> searchAuditLogs(AuditLogSearchRequest request, Pageable pageable) {
-        Page<AuditLog> auditLogs = auditLogRepository.findByCriteria(
-                request.getUserId(),
-                request.getAction(),
-                request.getEntityType(),
-                request.getStartDate(),
-                request.getEndDate(),
-                pageable
-        );
+        Page<AuditLog> auditLogs;
+
+        // Check if field-level search is needed
+        boolean hasFieldSearch = request.getFieldName() != null ||
+                                request.getOldValue() != null ||
+                                request.getNewValue() != null;
+
+        if (hasFieldSearch) {
+            auditLogs = auditLogRepository.findByAllCriteria(
+                    request.getUserId(),
+                    request.getActionType(),
+                    request.getActionCode(),
+                    request.getEntityType(),
+                    request.getStartDate(),
+                    request.getEndDate(),
+                    request.getFieldName(),
+                    request.getOldValue(),
+                    request.getNewValue(),
+                    pageable
+            );
+        } else {
+            auditLogs = auditLogRepository.findByCriteria(
+                    request.getUserId(),
+                    request.getActionType(),
+                    request.getActionCode(),
+                    request.getEntityType(),
+                    request.getStartDate(),
+                    request.getEndDate(),
+                    pageable
+            );
+        }
 
         return auditLogs.map(this::convertToDto);
     }
@@ -139,26 +279,57 @@ public class AuditService {
     }
 
     /**
-     * Get audit logs by entity
+     * Get audit logs by entity (new version with enum)
      */
     @Transactional(readOnly = true)
-    public Page<AuditLogDto> getAuditLogsByEntity(String entityType, String entityId, Pageable pageable) {
+    public Page<AuditLogDto> getAuditLogsByEntity(EntityType entityType, String entityId, Pageable pageable) {
         return auditLogRepository.findByEntityTypeAndEntityIdOrderByTimestampDesc(entityType, entityId, pageable)
                 .map(this::convertToDto);
     }
 
     /**
-     * Get audit statistics
+     * Get audit logs by entity (backward compatibility)
      */
     @Transactional(readOnly = true)
-    public List<AuditStatisticDto> getAuditStatistics(LocalDateTime startDate) {
-        List<Object[]> statistics = auditLogRepository.getAuditStatistics(startDate);
+    public Page<AuditLogDto> getAuditLogsByEntity(String entityType, String entityId, Pageable pageable) {
+        EntityType entityTypeEnum = parseEntityType(entityType);
+        return getAuditLogsByEntity(entityTypeEnum, entityId, pageable);
+    }
+
+    /**
+     * Get audit statistics by action type
+     */
+    @Transactional(readOnly = true)
+    public List<AuditStatisticDto> getAuditStatisticsByActionType(LocalDateTime startDate) {
+        List<Object[]> statistics = auditLogRepository.getAuditStatisticsByActionType(startDate);
         return statistics.stream()
                 .map(row -> AuditStatisticDto.builder()
-                        .action((String) row[0])
+                        .actionCode(row[0].toString()) // ActionType enum
                         .count((Long) row[1])
                         .build())
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Get audit statistics by action code
+     */
+    @Transactional(readOnly = true)
+    public List<AuditStatisticDto> getAuditStatisticsByActionCode(LocalDateTime startDate) {
+        List<Object[]> statistics = auditLogRepository.getAuditStatisticsByActionCode(startDate);
+        return statistics.stream()
+                .map(row -> AuditStatisticDto.builder()
+                        .actionCode((String) row[0]) // ActionCode string
+                        .count((Long) row[1])
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Get audit statistics (backward compatibility - uses action code)
+     */
+    @Transactional(readOnly = true)
+    public List<AuditStatisticDto> getAuditStatistics(LocalDateTime startDate) {
+        return getAuditStatisticsByActionCode(startDate);
     }
 
     /**
@@ -166,7 +337,7 @@ public class AuditService {
      */
     @Transactional(readOnly = true)
     public Page<AuditLogDto> getFailedAuditLogs(Pageable pageable) {
-        return auditLogRepository.findByStatusOrderByTimestampDesc("FAILED", pageable)
+        return auditLogRepository.findByStatusOrderByTimestampDesc(AuditStatus.FAILED, pageable)
                 .map(this::convertToDto);
     }
 
@@ -189,7 +360,7 @@ public class AuditService {
             HttpServletRequest request = attributes.getRequest();
             auditLog.setIpAddress(getClientIpAddress(request));
             auditLog.setUserAgent(request.getHeader("User-Agent"));
-            auditLog.setRequestMethod(request.getMethod());
+            auditLog.setRequestMethod(parseHttpMethod(request.getMethod()));
             auditLog.setRequestUrl(request.getRequestURL().toString());
 
             // Generate request ID if not already set
@@ -277,14 +448,41 @@ public class AuditService {
      * Convert AuditLog to DTO
      */
     private AuditLogDto convertToDto(AuditLog auditLog) {
+        // Load details if not already loaded
+        List<AuditLogDetail> details = auditLog.getDetails();
+        if (details == null) {
+            details = auditLogDetailRepository.findByAuditLogIdOrderByIdAsc(auditLog.getId());
+        }
+
+        // Convert details to DTOs
+        List<AuditLogDetailDto> detailDtos = details.stream()
+                .map(detail -> AuditLogDetailDto.builder()
+                        .id(detail.getId())
+                        .auditLogId(detail.getAuditLogId())
+                        .fieldName(detail.getFieldName())
+                        .oldValue(detail.getOldValue())
+                        .newValue(detail.getNewValue())
+                        .build())
+                .collect(Collectors.toList());
+
+        // For backward compatibility, populate field-level properties from first detail
+        String fieldName = null;
+        String oldValue = null;
+        String newValue = null;
+        if (!detailDtos.isEmpty()) {
+            AuditLogDetailDto firstDetail = detailDtos.get(0);
+            fieldName = firstDetail.getFieldName();
+            oldValue = firstDetail.getOldValue();
+            newValue = firstDetail.getNewValue();
+        }
+
         return AuditLogDto.builder()
                 .id(auditLog.getId())
-                .action(auditLog.getAction())
+                .actionType(auditLog.getActionType())
+                .actionCode(auditLog.getActionCode())
                 .entityType(auditLog.getEntityType())
                 .entityId(auditLog.getEntityId())
-                .fieldName(auditLog.getFieldName())
-                .oldValue(auditLog.getOldValue())
-                .newValue(auditLog.getNewValue())
+                .details(detailDtos)
                 .userId(auditLog.getUserId())
                 .username(auditLog.getUsername())
                 .ipAddress(auditLog.getIpAddress())
@@ -295,6 +493,80 @@ public class AuditService {
                 .timestamp(auditLog.getTimestamp())
                 .status(auditLog.getStatus())
                 .errorMessage(auditLog.getErrorMessage())
+                // Backward compatibility fields
+                .fieldName(fieldName)
+                .oldValue(oldValue)
+                .newValue(newValue)
                 .build();
+    }
+
+    /**
+     * Parse ActionType from legacy action string
+     */
+    private ActionType parseActionType(String action) {
+        if (action == null) {
+            return ActionType.CREATE; // default
+        }
+
+        String upperAction = action.toUpperCase();
+        if (upperAction.contains("CREATE") || upperAction.contains("REGISTER") || upperAction.contains("ADD")) {
+            return ActionType.CREATE;
+        } else if (upperAction.contains("UPDATE") || upperAction.contains("EDIT") || upperAction.contains("MODIFY") || upperAction.contains("ASSIGN")) {
+            return ActionType.UPDATE;
+        } else if (upperAction.contains("DELETE") || upperAction.contains("REMOVE")) {
+            return ActionType.DELETE;
+        } else if (upperAction.contains("READ") || upperAction.contains("VIEW") || upperAction.contains("GET") || upperAction.contains("LOGIN")) {
+            return ActionType.READ;
+        }
+
+        return ActionType.CREATE; // default fallback
+    }
+
+    /**
+     * Parse EntityType from legacy entity type string
+     */
+    private EntityType parseEntityType(String entityType) {
+        if (entityType == null) {
+            return EntityType.USER; // default
+        }
+
+        try {
+            return EntityType.valueOf(entityType.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            log.warn("Unknown entity type: {}, defaulting to USER", entityType);
+            return EntityType.USER;
+        }
+    }
+
+    /**
+     * Parse AuditStatus from legacy status string
+     */
+    private AuditStatus parseAuditStatus(String status) {
+        if (status == null) {
+            return AuditStatus.SUCCESS; // default
+        }
+
+        try {
+            return AuditStatus.valueOf(status.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            log.warn("Unknown audit status: {}, defaulting to SUCCESS", status);
+            return AuditStatus.SUCCESS;
+        }
+    }
+
+    /**
+     * Parse HttpMethod from method string
+     */
+    private HttpMethod parseHttpMethod(String method) {
+        if (method == null) {
+            return HttpMethod.GET; // default
+        }
+
+        try {
+            return HttpMethod.valueOf(method.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            log.warn("Unknown HTTP method: {}, defaulting to GET", method);
+            return HttpMethod.GET;
+        }
     }
 }

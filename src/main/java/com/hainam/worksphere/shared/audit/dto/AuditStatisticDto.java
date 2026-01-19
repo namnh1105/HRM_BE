@@ -6,7 +6,7 @@ import lombok.Data;
 @Data
 @Builder
 public class AuditStatisticDto {
-    private String action;
+    private String actionCode; // Changed from 'action' to 'actionCode' for clarity
     private Long count;
     private String period;
 }

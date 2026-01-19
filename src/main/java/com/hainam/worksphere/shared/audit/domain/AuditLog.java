@@ -1,12 +1,17 @@
 package com.hainam.worksphere.shared.audit.domain;
 
+import com.hainam.worksphere.shared.domain.EntityType;
+import com.hainam.worksphere.shared.web.HttpMethod;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.UuidGenerator;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(
@@ -14,8 +19,8 @@ import java.time.LocalDateTime;
     indexes = {
         @Index(name = "idx_audit_entity", columnList = "entityType, entityId"),
         @Index(name = "idx_audit_user", columnList = "userId"),
-        @Index(name = "idx_audit_field", columnList = "fieldName"),
-        @Index(name = "idx_audit_action", columnList = "action"),
+        @Index(name = "idx_audit_action_type", columnList = "actionType"),
+        @Index(name = "idx_audit_action_code", columnList = "actionCode"),
         @Index(name = "idx_audit_request", columnList = "requestId"),
         @Index(name = "idx_audit_timestamp", columnList = "timestamp")
     }
@@ -27,33 +32,33 @@ import java.time.LocalDateTime;
 public class AuditLog {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @UuidGenerator
+    @Column(name = "id", columnDefinition = "uuid")
+    private UUID id;
 
     /* ========= Business context ========= */
 
-    @Column(nullable = false, length = 50)
-    private String action;
-    // CREATE, UPDATE, DELETE, UPDATE_PROFILE, ASSIGN_ROLE...
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private ActionType actionType;
+    // CREATE, READ, UPDATE, DELETE
 
     @Column(nullable = false, length = 100)
-    private String entityType;
+    private String actionCode;
+    // UPDATE_PROFILE, ASSIGN_ROLE, LOGIN, LOGOUT...
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 50)
+    private EntityType entityType;
     // USER, EMPLOYEE, ROLE...
 
-    @Column(nullable = false, length = 100)
+    @Column(length = 100)
     private String entityId;
 
-    @Column(length = 100)
-    private String fieldName;
-    // given_name, is_active, salary...
+    /* ========= Audit Details ========= */
 
-    /* ========= Value change ========= */
-
-    @Column(columnDefinition = "TEXT")
-    private String oldValue;
-
-    @Column(columnDefinition = "TEXT")
-    private String newValue;
+    @OneToMany(mappedBy = "auditLog", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<AuditLogDetail> details;
 
     /* ========= Actor ========= */
 
@@ -75,8 +80,9 @@ public class AuditLog {
     private String requestId;
     // dùng để group nhiều audit trong 1 request
 
-    @Column(length = 100)
-    private String requestMethod;
+    @Enumerated(EnumType.STRING)
+    @Column(length = 10)
+    private HttpMethod requestMethod;
 
     @Column(length = 500)
     private String requestUrl;
@@ -86,9 +92,10 @@ public class AuditLog {
     @Column(nullable = false)
     private LocalDateTime timestamp;
 
+    @Enumerated(EnumType.STRING)
     @Column(length = 20)
-    private String status;
-    // SUCCESS, FAILED
+    private AuditStatus status;
+    // SUCCESS, FAILED, PARTIAL_SUCCESS, CANCELLED
 
     @Column(length = 1000)
     private String errorMessage;
@@ -102,7 +109,7 @@ public class AuditLog {
             timestamp = LocalDateTime.now();
         }
         if (status == null) {
-            status = "SUCCESS";
+            status = AuditStatus.SUCCESS;
         }
     }
 }

@@ -1,15 +1,14 @@
 package com.hainam.worksphere.shared.audit.util;
 
 import com.hainam.worksphere.shared.audit.annotation.AuditableEntity;
+import com.hainam.worksphere.shared.audit.dto.AuditLogDetailDto;
 import com.hainam.worksphere.shared.audit.service.AuditService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Field;
-import java.util.Collection;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 @Slf4j
 @Component
@@ -60,6 +59,8 @@ public class AuditDiffUtil {
         Set<String> ignoreFields = Set.of(auditable.ignoreFields());
         log.debug("Auditing entity {} with ignored fields: {}", clazz.getSimpleName(), ignoreFields);
 
+        List<AuditLogDetailDto> fieldChanges = new ArrayList<>();
+
         try {
             for (Field field : clazz.getDeclaredFields()) {
                 String fieldName = field.getName();
@@ -78,19 +79,26 @@ public class AuditDiffUtil {
                     if (!Objects.equals(oldValue, newValue)) {
                         log.debug("Field {} changed from {} to {}", fieldName, oldValue, newValue);
 
-                        auditService.auditField(
-                            action,
-                            entityType,
-                            entityId,
-                            convertFieldName(fieldName),
-                            serializeValue(oldValue),
-                            serializeValue(newValue),
-                            requestId
-                        );
+                        fieldChanges.add(AuditLogDetailDto.builder()
+                                .fieldName(convertFieldName(fieldName))
+                                .oldValue(String.valueOf(serializeValue(oldValue)))
+                                .newValue(String.valueOf(serializeValue(newValue)))
+                                .build());
                     }
                 } catch (IllegalAccessException e) {
                     log.warn("Cannot access field {}: {}", fieldName, e.getMessage());
                 }
+            }
+
+            // Create single audit record with all field changes
+            if (!fieldChanges.isEmpty()) {
+                auditService.createAuditLogWithDetails(
+                    action,
+                    entityType,
+                    entityId,
+                    fieldChanges,
+                    requestId
+                );
             }
         } catch (Exception e) {
             log.error("Failed to audit all changes for entityType: {}, entityId: {}",
