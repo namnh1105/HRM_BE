@@ -12,10 +12,7 @@ import com.hainam.worksphere.auth.util.JwtUtil;
 import com.hainam.worksphere.authorization.domain.Permission;
 import com.hainam.worksphere.authorization.domain.Role;
 import com.hainam.worksphere.authorization.service.AuthorizationService;
-import com.hainam.worksphere.shared.exception.EmailAlreadyExistsException;
-import com.hainam.worksphere.shared.exception.InvalidCredentialsException;
-import com.hainam.worksphere.shared.exception.RefreshTokenException;
-import com.hainam.worksphere.shared.exception.UserNotFoundException;
+import com.hainam.worksphere.shared.exception.*;
 import com.hainam.worksphere.user.domain.User;
 import com.hainam.worksphere.user.dto.response.UserWithAuthorizationResponse;
 import com.hainam.worksphere.user.mapper.UserMapper;
@@ -153,19 +150,19 @@ public class AuthenticationService {
     @Transactional
     public AuthenticationResponse processGoogleOAuth2Login(String email, String name, String googleId, String givenName, String familyName) {
         if (email == null || email.trim().isEmpty()) {
-            throw new IllegalArgumentException("Email is required for Google OAuth2 login");
+            throw new OAuth2ValidationException("Email is required for Google OAuth2 login");
         }
         if (name == null || name.trim().isEmpty()) {
-            throw new IllegalArgumentException("Name is required for Google OAuth2 login");
+            throw new OAuth2ValidationException("Name is required for Google OAuth2 login");
         }
         if (googleId == null || googleId.trim().isEmpty()) {
-            throw new IllegalArgumentException("Google ID is required for Google OAuth2 login");
+            throw new OAuth2ValidationException("Google ID is required for Google OAuth2 login");
         }
         if (givenName == null || givenName.trim().isEmpty()) {
-            throw new IllegalArgumentException("Given name is required for Google OAuth2 login");
+            throw new OAuth2ValidationException("Given name is required for Google OAuth2 login");
         }
         if (familyName == null || familyName.trim().isEmpty()) {
-            throw new IllegalArgumentException("Family name is required for Google OAuth2 login");
+            throw new OAuth2ValidationException("Family name is required for Google OAuth2 login");
         }
 
         User user = userRepository.findActiveByEmail(email)
@@ -218,7 +215,7 @@ public class AuthenticationService {
         UserPrincipal userPrincipal = UserPrincipal.create(user, userRoles, userPermissions);
 
         if (!jwtUtil.isTokenValid(token, userPrincipal)) {
-            throw new RuntimeException("Token is invalid");
+            throw new InvalidTokenException("Token is invalid");
         }
 
         return userPrincipal;

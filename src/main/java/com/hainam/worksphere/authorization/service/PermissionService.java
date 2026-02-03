@@ -3,6 +3,8 @@ package com.hainam.worksphere.authorization.service;
 import com.hainam.worksphere.authorization.domain.Permission;
 import com.hainam.worksphere.authorization.repository.PermissionRepository;
 import com.hainam.worksphere.shared.config.CacheConfig;
+import com.hainam.worksphere.shared.exception.BusinessRuleViolationException;
+import com.hainam.worksphere.shared.exception.DuplicateResourceException;
 import com.hainam.worksphere.shared.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,7 +33,7 @@ public class PermissionService {
     @CacheEvict(value = {CacheConfig.PERMISSION_CACHE, CacheConfig.PERMISSION_BY_CODE_CACHE, CacheConfig.ACTIVE_PERMISSIONS_CACHE, CacheConfig.SYSTEM_PERMISSIONS_CACHE}, allEntries = true)
     public Permission createPermission(Permission permission) {
         if (permissionRepository.existsByCode(permission.getCode())) {
-            throw new IllegalArgumentException("Permission with code '" + permission.getCode() + "' already exists");
+            throw new DuplicateResourceException("Permission with code '" + permission.getCode() + "' already exists");
         }
 
         return permissionRepository.save(permission);
@@ -49,7 +51,7 @@ public class PermissionService {
 
         if (!existingPermission.getCode().equals(permissionUpdate.getCode()) &&
             permissionRepository.existsByCode(permissionUpdate.getCode())) {
-            throw new IllegalArgumentException("Permission with code '" + permissionUpdate.getCode() + "' already exists");
+            throw new DuplicateResourceException("Permission with code '" + permissionUpdate.getCode() + "' already exists");
         }
 
         existingPermission.setCode(permissionUpdate.getCode());
@@ -130,7 +132,7 @@ public class PermissionService {
         Permission permission = getPermissionById(permissionId);
 
         if (permission.getIsSystem()) {
-            throw new IllegalArgumentException("Cannot delete system permission: " + permission.getCode());
+            throw new BusinessRuleViolationException("Cannot delete system permission: " + permission.getCode());
         }
 
         permission.setIsActive(false);

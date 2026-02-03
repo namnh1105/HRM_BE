@@ -74,6 +74,14 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error(ex.getMessage()));
     }
 
+    @ExceptionHandler(RateLimitBannedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleRateLimitBannedException(RateLimitBannedException ex) {
+        log.warn("Rate limit ban active: {} - Key: {}", ex.getMessage(), ex.getBannedKey());
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .header("Retry-After", String.valueOf(ex.getRetryAfterSeconds()))
+                .body(ApiResponse.error(ex.getMessage()));
+    }
+
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ApiResponse<Void>> handleRuntimeException(RuntimeException ex) {
         log.error("Runtime exception: ", ex);

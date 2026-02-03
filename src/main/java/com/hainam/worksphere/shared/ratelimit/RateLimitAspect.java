@@ -1,6 +1,7 @@
 package com.hainam.worksphere.shared.ratelimit;
 
 import com.hainam.worksphere.shared.config.RateLimitProperties;
+import com.hainam.worksphere.shared.exception.RateLimitBannedException;
 import com.hainam.worksphere.shared.exception.RateLimitExceededException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -43,12 +44,15 @@ public class RateLimitAspect {
 
         if (!rateLimitService.isAllowed(key, rateLimit.type())) {
             long remainingBanTime = rateLimitService.getRemainingBanTime(key);
-            String message = remainingBanTime > 0
-                    ? String.format("Rate limit exceeded. You are banned for %d more seconds.", remainingBanTime)
-                    : "Rate limit exceeded. Please try again later.";
-
             log.warn("Rate limit exceeded for method {} - Key: {}", method.getName(), key);
-            throw new RateLimitExceededException(message, remainingBanTime);
+
+            if (remainingBanTime > 0) {
+                String message = String.format("You are temporarily banned for %d more seconds due to excessive rate limit violations.", remainingBanTime);
+                throw new RateLimitBannedException(message, key, remainingBanTime);
+            } else {
+                String message = "Rate limit exceeded. Please try again later.";
+                throw new RateLimitExceededException(message, 60);
+            }
         }
 
         return joinPoint.proceed();

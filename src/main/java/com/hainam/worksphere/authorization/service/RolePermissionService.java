@@ -5,6 +5,8 @@ import com.hainam.worksphere.authorization.domain.Role;
 import com.hainam.worksphere.authorization.domain.RolePermission;
 import com.hainam.worksphere.authorization.repository.RolePermissionRepository;
 import com.hainam.worksphere.shared.config.CacheConfig;
+import com.hainam.worksphere.shared.exception.DuplicateResourceException;
+import com.hainam.worksphere.shared.exception.ResourceNotFoundException;
 import com.hainam.worksphere.shared.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,7 +41,7 @@ public class RolePermissionService {
         Optional<RolePermission> existing = rolePermissionRepository.findByRoleIdAndPermissionId(roleId, permissionId);
         if (existing.isPresent()) {
             if (existing.get().getIsActive()) {
-                throw new IllegalArgumentException("Permission is already assigned to role");
+                throw new DuplicateResourceException("Permission is already assigned to role");
             } else {
                 existing.get().setIsActive(true);
                 return rolePermissionRepository.save(existing.get());

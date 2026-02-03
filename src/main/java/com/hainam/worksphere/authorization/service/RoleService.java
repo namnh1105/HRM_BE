@@ -3,6 +3,8 @@ package com.hainam.worksphere.authorization.service;
 import com.hainam.worksphere.authorization.domain.Role;
 import com.hainam.worksphere.authorization.repository.RoleRepository;
 import com.hainam.worksphere.shared.config.CacheConfig;
+import com.hainam.worksphere.shared.exception.BusinessRuleViolationException;
+import com.hainam.worksphere.shared.exception.DuplicateResourceException;
 import com.hainam.worksphere.shared.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,7 +33,7 @@ public class RoleService {
     @CacheEvict(value = {CacheConfig.ROLE_CACHE, CacheConfig.ROLE_BY_CODE_CACHE, CacheConfig.ACTIVE_ROLES_CACHE, CacheConfig.SYSTEM_ROLES_CACHE}, allEntries = true)
     public Role createRole(Role role) {
         if (roleRepository.existsByCode(role.getCode())) {
-            throw new IllegalArgumentException("Role with code '" + role.getCode() + "' already exists");
+            throw new DuplicateResourceException("Role with code '" + role.getCode() + "' already exists");
         }
 
         return roleRepository.save(role);
@@ -47,7 +49,7 @@ public class RoleService {
         Role existingRole = getRoleById(roleId);
         if (!existingRole.getCode().equals(roleUpdate.getCode()) &&
             roleRepository.existsByCode(roleUpdate.getCode())) {
-            throw new IllegalArgumentException("Role with code '" + roleUpdate.getCode() + "' already exists");
+            throw new DuplicateResourceException("Role with code '" + roleUpdate.getCode() + "' already exists");
         }
 
         existingRole.setCode(roleUpdate.getCode());
@@ -117,7 +119,7 @@ public class RoleService {
         Role role = getRoleById(roleId);
 
         if (role.getIsSystem()) {
-            throw new IllegalArgumentException("Cannot delete system role: " + role.getCode());
+            throw new BusinessRuleViolationException("Cannot delete system role: " + role.getCode());
         }
 
         role.setIsActive(false);

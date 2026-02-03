@@ -4,6 +4,8 @@ import com.hainam.worksphere.authorization.domain.Role;
 import com.hainam.worksphere.authorization.domain.UserRole;
 import com.hainam.worksphere.authorization.repository.UserRoleRepository;
 import com.hainam.worksphere.shared.config.CacheConfig;
+import com.hainam.worksphere.shared.exception.DuplicateResourceException;
+import com.hainam.worksphere.shared.exception.ResourceNotFoundException;
 import com.hainam.worksphere.shared.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,7 +38,7 @@ public class UserRoleService {
         Optional<UserRole> existing = userRoleRepository.findByUserIdAndRoleId(userId, roleId);
         if (existing.isPresent()) {
             if (existing.get().getIsActive()) {
-                throw new IllegalArgumentException("Role is already assigned to user");
+                throw new DuplicateResourceException("Role is already assigned to user");
             } else {
                 existing.get().setIsActive(true);
                 return userRoleRepository.save(existing.get());
