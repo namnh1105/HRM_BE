@@ -2,9 +2,13 @@ package com.hainam.worksphere.authorization.service;
 
 import com.hainam.worksphere.authorization.domain.Role;
 import com.hainam.worksphere.authorization.repository.RoleRepository;
+import com.hainam.worksphere.shared.config.CacheConfig;
 import com.hainam.worksphere.shared.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -24,6 +28,7 @@ public class RoleService {
     private final RoleRepository roleRepository;
 
     @Transactional
+    @CacheEvict(value = {CacheConfig.ROLE_CACHE, CacheConfig.ROLE_BY_CODE_CACHE, CacheConfig.ACTIVE_ROLES_CACHE, CacheConfig.SYSTEM_ROLES_CACHE}, allEntries = true)
     public Role createRole(Role role) {
         if (roleRepository.existsByCode(role.getCode())) {
             throw new IllegalArgumentException("Role with code '" + role.getCode() + "' already exists");
@@ -33,6 +38,11 @@ public class RoleService {
     }
 
     @Transactional
+    @Caching(evict = {
+        @CacheEvict(value = CacheConfig.ROLE_CACHE, key = "#roleId.toString()"),
+        @CacheEvict(value = CacheConfig.ROLE_BY_CODE_CACHE, allEntries = true),
+        @CacheEvict(value = CacheConfig.USER_ROLES_CACHE, allEntries = true)
+    })
     public Role updateRole(UUID roleId, Role roleUpdate) {
         Role existingRole = getRoleById(roleId);
         if (!existingRole.getCode().equals(roleUpdate.getCode()) &&
@@ -48,11 +58,13 @@ public class RoleService {
         return roleRepository.save(existingRole);
     }
 
+    @Cacheable(value = CacheConfig.ROLE_CACHE, key = "#roleId.toString()")
     public Role getRoleById(UUID roleId) {
         return roleRepository.findById(roleId)
                 .orElseThrow(() -> new ResourceNotFoundException("Role not found with ID: " + roleId));
     }
 
+    @Cacheable(value = CacheConfig.ROLE_BY_CODE_CACHE, key = "#code")
     public Optional<Role> getRoleByCode(String code) {
         return roleRepository.findByCode(code);
     }
@@ -69,6 +81,7 @@ public class RoleService {
         return roleRepository.findByIsSystemTrue();
     }
 
+    @Cacheable(value = CacheConfig.USER_ROLES_CACHE, key = "#userId.toString()")
     public List<Role> getRolesByUserId(UUID userId) {
         return roleRepository.findByUserId(userId);
     }
@@ -95,6 +108,11 @@ public class RoleService {
     }
 
     @Transactional
+    @Caching(evict = {
+        @CacheEvict(value = CacheConfig.ROLE_CACHE, key = "#roleId.toString()"),
+        @CacheEvict(value = CacheConfig.ROLE_BY_CODE_CACHE, allEntries = true),
+        @CacheEvict(value = CacheConfig.USER_ROLES_CACHE, allEntries = true)
+    })
     public void deleteRole(UUID roleId) {
         Role role = getRoleById(roleId);
 
@@ -107,15 +125,25 @@ public class RoleService {
     }
 
     @Transactional
+    @Caching(evict = {
+        @CacheEvict(value = CacheConfig.ROLE_CACHE, key = "#roleId.toString()"),
+        @CacheEvict(value = CacheConfig.USER_ROLES_CACHE, allEntries = true)
+    })
     public void activateRole(UUID roleId) {
-        Role role = getRoleById(roleId);
+        Role role = roleRepository.findById(roleId)
+                .orElseThrow(() -> new ResourceNotFoundException("Role not found with ID: " + roleId));
         role.setIsActive(true);
         roleRepository.save(role);
     }
 
     @Transactional
+    @Caching(evict = {
+        @CacheEvict(value = CacheConfig.ROLE_CACHE, key = "#roleId.toString()"),
+        @CacheEvict(value = CacheConfig.USER_ROLES_CACHE, allEntries = true)
+    })
     public void deactivateRole(UUID roleId) {
-        Role role = getRoleById(roleId);
+        Role role = roleRepository.findById(roleId)
+                .orElseThrow(() -> new ResourceNotFoundException("Role not found with ID: " + roleId));
         role.setIsActive(false);
         roleRepository.save(role);
     }

@@ -3,6 +3,7 @@ package com.hainam.worksphere.user.service;
 import com.hainam.worksphere.auth.security.UserPrincipal;
 import com.hainam.worksphere.shared.audit.util.AuditDiffUtil;
 import com.hainam.worksphere.shared.audit.util.RequestContextUtil;
+import com.hainam.worksphere.shared.config.CacheConfig;
 import com.hainam.worksphere.shared.exception.UserNotFoundException;
 import com.hainam.worksphere.shared.exception.ValidationException;
 import com.hainam.worksphere.user.domain.User;
@@ -13,6 +14,9 @@ import com.hainam.worksphere.user.mapper.UserMapper;
 import com.hainam.worksphere.user.mapper.UserUpdateMapper;
 import com.hainam.worksphere.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,6 +42,7 @@ public class UserService {
         return userMapper.toUserResponse(user);
     }
 
+    @Cacheable(value = CacheConfig.USER_CACHE, key = "#userId.toString()")
     public UserResponse getUserById(UUID userId) {
         User user = userRepository.findActiveById(userId)
                 .orElseThrow(() -> UserNotFoundException.byId(userId.toString()));
@@ -52,6 +57,10 @@ public class UserService {
     }
 
     @Transactional
+    @Caching(evict = {
+        @CacheEvict(value = CacheConfig.USER_CACHE, key = "#userPrincipal.id.toString()"),
+        @CacheEvict(value = CacheConfig.USER_BY_EMAIL_CACHE, allEntries = true)
+    })
     public UserResponse updateProfile(UserPrincipal userPrincipal, UpdateProfileRequest request) {
         User userBefore = userRepository.findActiveById(userPrincipal.getId())
                 .orElseThrow(() -> UserNotFoundException.byId(userPrincipal.getId().toString()));
@@ -100,6 +109,7 @@ public class UserService {
     }
 
     @Transactional
+    @CacheEvict(value = CacheConfig.USER_CACHE, key = "#userPrincipal.id.toString()")
     public void changePassword(UserPrincipal userPrincipal, ChangePasswordRequest request) {
         User user = userRepository.findActiveById(userPrincipal.getId())
                 .orElseThrow(() -> UserNotFoundException.byId(userPrincipal.getId().toString()));
@@ -114,6 +124,7 @@ public class UserService {
     }
 
     @Transactional
+    @CacheEvict(value = CacheConfig.USER_CACHE, key = "#userPrincipal.id.toString()")
     public void deactivateAccount(UserPrincipal userPrincipal) {
         User user = userRepository.findActiveById(userPrincipal.getId())
                 .orElseThrow(() -> UserNotFoundException.byId(userPrincipal.getId().toString()));
@@ -125,6 +136,11 @@ public class UserService {
 
     // Soft Delete Methods
     @Transactional
+    @Caching(evict = {
+        @CacheEvict(value = CacheConfig.USER_CACHE, key = "#userId.toString()"),
+        @CacheEvict(value = CacheConfig.USER_ROLES_CACHE, key = "#userId.toString()"),
+        @CacheEvict(value = CacheConfig.USER_PERMISSIONS_CACHE, key = "#userId.toString()")
+    })
     public void softDeleteUser(UUID userId, UUID deletedBy) {
         User user = userRepository.findActiveById(userId)
                 .orElseThrow(() -> UserNotFoundException.byId(userId.toString()));
@@ -143,6 +159,11 @@ public class UserService {
     }
 
     @Transactional
+    @Caching(evict = {
+        @CacheEvict(value = CacheConfig.USER_CACHE, key = "#userId.toString()"),
+        @CacheEvict(value = CacheConfig.USER_ROLES_CACHE, key = "#userId.toString()"),
+        @CacheEvict(value = CacheConfig.USER_PERMISSIONS_CACHE, key = "#userId.toString()")
+    })
     public UserResponse restoreUser(UUID userId, UUID restoredBy) {
         User user = userRepository.findDeletedById(userId)
                 .orElseThrow(() -> new ValidationException("User not found or not deleted"));
@@ -157,6 +178,7 @@ public class UserService {
     }
 
     @Transactional
+    @CacheEvict(value = CacheConfig.USER_CACHE, key = "#userId.toString()")
     public void permanentDeleteUser(UUID userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> UserNotFoundException.byId(userId.toString()));

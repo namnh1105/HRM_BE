@@ -6,6 +6,7 @@ import com.hainam.worksphere.auth.security.CustomUserDetailsService;
 import com.hainam.worksphere.auth.security.JwtAuthenticationFilter;
 import com.hainam.worksphere.auth.security.OAuth2AuthenticationSuccessHandler;
 import com.hainam.worksphere.shared.config.SecurityProperties;
+import com.hainam.worksphere.shared.ratelimit.RateLimitFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -39,6 +40,7 @@ public class SecurityConfig {
     private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
     private final PasswordEncoder passwordEncoder;
     private final SecurityProperties securityProperties;
+    private final RateLimitFilter rateLimitFilter;
 
     @Bean
     public AuthenticationProvider authenticationProvider() {
@@ -91,6 +93,7 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authenticationProvider(authenticationProvider())
+                .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable())); // For H2 console
 
