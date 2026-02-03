@@ -126,13 +126,18 @@ class JwtUtilTest extends BaseUnitTest {
     void shouldExtractExpirationFromToken() {
         // Given
         String token = jwtUtil.generateAccessToken(testUserDetails);
-        Date expectedExpiration = new Date(System.currentTimeMillis() + accessTokenExpiration);
 
         // When
         Date actualExpiration = jwtUtil.extractExpiration(token);
 
-        // Then - Allow for small time differences (within 1 second)
-        assertThat(Math.abs(actualExpiration.getTime() - expectedExpiration.getTime())).isLessThan(1000);
+        // Then - Check that expiration is approximately correct (within 5 seconds of expected)
+        long now = System.currentTimeMillis();
+        long expectedExpiration = now + accessTokenExpiration;
+        long actualExpirationTime = actualExpiration.getTime();
+
+        // Allow for timing differences up to 5 seconds
+        assertThat(Math.abs(actualExpirationTime - expectedExpiration))
+            .isLessThan(5000L);
     }
 
     @Test

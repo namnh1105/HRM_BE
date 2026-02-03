@@ -210,6 +210,33 @@ src/main/java/com/hainam/worksphere/
 - **Swagger/OpenAPI** - API documentation
 - **Lombok** - Code generation
 - **Gradle** - Build tool
+- **Testcontainers** - Integration testing
+
+## Testing
+
+### Unit Tests
+Run unit tests (default):
+```bash
+./gradlew test
+```
+
+### Integration Tests
+Integration tests require Docker to be running. They use Testcontainers to spin up real Redis instances.
+
+**Prerequisites:**
+1. Install Docker Desktop
+2. Ensure Docker is running
+
+**Run integration tests:**
+```bash
+# Run all integration tests
+./gradlew integrationTest
+
+# Or manually enable integration tests
+./gradlew test -Dintegration.tests.enabled=true
+```
+
+**Note:** If Docker is not available, integration tests will be automatically skipped with a warning message.
 
 ## Contributing
 
