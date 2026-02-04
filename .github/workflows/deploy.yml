@@ -123,13 +123,44 @@ jobs:
           echo "jar_file=$JAR_FILE" >> $GITHUB_OUTPUT
           echo "jar_name=$(basename $JAR_FILE)" >> $GITHUB_OUTPUT
 
+      - name: Verify secrets
+        run: |
+          if [ -z "${{ secrets.VPS_SSH_KEY }}" ]; then
+            echo "❌ Error: VPS_SSH_KEY secret is not set"
+            exit 1
+          fi
+          
+          if [ -z "${{ secrets.VPS_HOST }}" ]; then
+            echo "❌ Error: VPS_HOST secret is not set"
+            exit 1
+          fi
+          
+          if [ -z "${{ secrets.VPS_USER }}" ]; then
+            echo "❌ Error: VPS_USER secret is not set"
+            exit 1
+          fi
+          
+          if [ -z "${{ secrets.APP_PORT }}" ]; then
+            echo "❌ Error: APP_PORT secret is not set"
+            exit 1
+          fi
+          
+          echo "✅ All required secrets are configured"
+
       - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
           echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+          
+          # Add VPS host to known hosts
+          if [ -n "${{ secrets.VPS_HOST }}" ]; then
+            ssh-keyscan -H "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null || echo "Warning: Could not add host key"
+          else
+            echo "Error: VPS_HOST secret is not set"
+            exit 1
+          fi
 
 
       - name: Create deployment directory on VPS
