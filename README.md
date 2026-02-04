@@ -113,18 +113,6 @@ The application supports different stages with specific logging and configuratio
 - **JPA**: SQL queries and parameters logged
 - **Purpose**: Local development and debugging
 
-### Testing Stage (`STAGE=testing`)
-- **Logging**: INFO level for application, WARN for frameworks
-- **Console**: Simple format for test output
-- **JPA**: SQL logging disabled for cleaner test output
-- **Purpose**: Unit and integration testing
-
-### Staging Stage (`STAGE=staging`)
-- **Logging**: INFO level for application, WARN for root
-- **Files**: Logs to `logs/worksphere-staging.log` with rotation
-- **Console**: Structured format for monitoring
-- **Purpose**: Pre-production testing environment
-
 ### Production Stage (`STAGE=production`)
 - **Logging**: WARN level for application, ERROR for root
 - **Files**: 
@@ -137,8 +125,6 @@ The application supports different stages with specific logging and configuratio
 
 - `application.properties` - Base configuration
 - `application-development.properties` - Development overrides
-- `application-testing.properties` - Testing overrides  
-- `application-staging.properties` - Staging overrides
 - `application-production.properties` - Production overrides
 - `logback-spring.xml` - Advanced logging configuration
 

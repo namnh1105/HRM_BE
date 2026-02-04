@@ -1,0 +1,204 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+
+env:
+  JAVA_VERSION: '17'
+  JAVA_DISTRIBUTION: 'temurin'
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Run tests
+        run: ./gradlew test --no-daemon
+        env:
+          SPRING_PROFILES_ACTIVE: development
+          JWT_SECRET: test-secret-key-for-ci-testing-purposes-only-32chars
+          JWT_ACCESS_TOKEN_EXPIRATION: 3600000
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
+          REDIS_PASSWORD: ""
+          GOOGLE_OAUTH2_CLIENT_ID: test-client-id
+          GOOGLE_OAUTH2_CLIENT_SECRET: test-client-secret
+          GOOGLE_OAUTH2_REDIRECT_URI: http://localhost:8080/login/oauth2/code/google
+          SERVER_PORT: 8080
+          FRONTEND_URL: http://localhost:3000
+          OAUTH_SUCCESS_REDIRECT_PATH: /oauth/callback
+
+  build:
+    name: Build Application
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build with Gradle
+        run: ./gradlew bootJar --no-daemon
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: worksphere-jar
+          path: build/libs/*.jar
+          retention-days: 1
+
+  deploy:
+    name: Deploy to VPS
+    runs-on: ubuntu-latest
+    needs: build
+    environment: production
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: worksphere-jar
+          path: build/libs
+
+      - name: Get JAR filename
+        id: jar
+        run: |
+          JAR_FILE=$(ls build/libs/*.jar | grep -v plain | head -1)
+          echo "jar_file=$JAR_FILE" >> $GITHUB_OUTPUT
+          echo "jar_name=$(basename $JAR_FILE)" >> $GITHUB_OUTPUT
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Create deployment directory on VPS
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
+            mkdir -p /opt/worksphere/backup
+            mkdir -p /opt/worksphere/logs
+          EOF
+
+      - name: Backup current JAR
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
+            if [ -f /opt/worksphere/worksphere.jar ]; then
+              cp /opt/worksphere/worksphere.jar /opt/worksphere/backup/worksphere-$(date +%Y%m%d_%H%M%S).jar
+              # Keep only last 5 backups
+              cd /opt/worksphere/backup && ls -t | tail -n +6 | xargs -r rm --
+            fi
+          EOF
+
+      - name: Copy JAR to VPS
+        run: |
+          scp -o StrictHostKeyChecking=no ${{ steps.jar.outputs.jar_file }} ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/opt/worksphere/worksphere.jar
+
+      - name: Deploy application
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
+            # Stop the existing application
+            if systemctl is-active --quiet worksphere; then
+              sudo systemctl stop worksphere
+            fi
+            
+            # Wait for the application to stop
+            sleep 5
+            
+            # Start the application
+            sudo systemctl start worksphere
+            
+            # Wait for application to start
+            sleep 10
+            
+            # Check if application is running
+            if systemctl is-active --quiet worksphere; then
+              echo "✅ Application deployed successfully!"
+            else
+              echo "❌ Application failed to start!"
+              sudo journalctl -u worksphere -n 50 --no-pager
+              exit 1
+            fi
+          EOF
+
+      - name: Health check
+        run: |
+          sleep 15
+          ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
+            # Perform health check
+            HEALTH_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:${{ secrets.APP_PORT }}/actuator/health || echo "000")
+            
+            if [ "$HEALTH_STATUS" = "200" ]; then
+              echo "✅ Health check passed!"
+            else
+              echo "⚠️ Health check returned status: $HEALTH_STATUS"
+              echo "Application may still be starting up..."
+            fi
+          EOF
+
+      - name: Notify deployment status
+        if: always()
+        run: |
+          if [ "${{ job.status }}" = "success" ]; then
+            echo "🚀 Deployment to production completed successfully!"
+          else
+            echo "❌ Deployment failed!"
+          fi
+
