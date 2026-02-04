@@ -149,49 +149,45 @@ jobs:
             fi
           EOF
 
-      - name: Copy JAR to VPS
+      - name: Deploy to VPS
         run: |
+          # Copy JAR to VPS
           scp -o StrictHostKeyChecking=no ${{ steps.jar.outputs.jar_file }} ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/opt/worksphere/worksphere.jar
-
-      - name: Deploy application
-        run: |
+          
+          # Deploy and restart application
           ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
-            # Stop the existing application
-            if systemctl is-active --quiet worksphere; then
-              sudo systemctl stop worksphere
-            fi
+            echo "🚀 Starting deployment..."
             
-            # Wait for the application to stop
-            sleep 5
-            
-            # Start the application
-            sudo systemctl start worksphere
+            # Restart the application service
+            sudo systemctl restart worksphere
             
             # Wait for application to start
-            sleep 10
+            echo "⏳ Waiting for application to start..."
+            sleep 15
             
             # Check if application is running
             if systemctl is-active --quiet worksphere; then
-              echo "✅ Application deployed successfully!"
+              echo "✅ Application deployed and restarted successfully!"
             else
               echo "❌ Application failed to start!"
-              sudo journalctl -u worksphere -n 50 --no-pager
+              echo "📋 Recent logs:"
+              sudo journalctl -u worksphere -n 30 --no-pager
               exit 1
             fi
           EOF
 
-      - name: Health check
+      - name: Final health check
         run: |
-          sleep 15
           ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
-            # Perform health check
+            echo "🔍 Performing final health check..."
             HEALTH_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:${{ secrets.APP_PORT }}/actuator/health || echo "000")
             
             if [ "$HEALTH_STATUS" = "200" ]; then
-              echo "✅ Health check passed!"
+              echo "✅ Health check passed! Application is running properly."
             else
               echo "⚠️ Health check returned status: $HEALTH_STATUS"
-              echo "Application may still be starting up..."
+              echo "🔧 Application may still be starting up or there might be an issue..."
+              sudo journalctl -u worksphere -n 20 --no-pager
             fi
           EOF
 
