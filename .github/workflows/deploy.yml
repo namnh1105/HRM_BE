@@ -27,7 +27,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up JDK ${{ env.JAVA_VERSION }}
+      - name: Set up JDK
         uses: actions/setup-java@v4
         with:
           java-version: ${{ env.JAVA_VERSION }}
@@ -40,8 +40,6 @@ jobs:
             ~/.gradle/caches
             ~/.gradle/wrapper
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
@@ -71,7 +69,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up JDK ${{ env.JAVA_VERSION }}
+      - name: Set up JDK
         uses: actions/setup-java@v4
         with:
           java-version: ${{ env.JAVA_VERSION }}
@@ -84,8 +82,6 @@ jobs:
             ~/.gradle/caches
             ~/.gradle/wrapper
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
@@ -124,110 +120,79 @@ jobs:
           echo "jar_name=$(basename $JAR_FILE)" >> $GITHUB_OUTPUT
 
       - name: Verify secrets
+        env:
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          APP_PORT: ${{ secrets.APP_PORT }}
         run: |
-          if [ -z "${{ secrets.VPS_SSH_KEY }}" ]; then
-            echo "❌ Error: VPS_SSH_KEY secret is not set"
-            exit 1
-          fi
-          
-          if [ -z "${{ secrets.VPS_HOST }}" ]; then
-            echo "❌ Error: VPS_HOST secret is not set"
-            exit 1
-          fi
-          
-          if [ -z "${{ secrets.VPS_USER }}" ]; then
-            echo "❌ Error: VPS_USER secret is not set"
-            exit 1
-          fi
-          
-          if [ -z "${{ secrets.APP_PORT }}" ]; then
-            echo "❌ Error: APP_PORT secret is not set"
-            exit 1
-          fi
-          
+          for var in VPS_SSH_KEY VPS_HOST VPS_USER APP_PORT; do
+            if [ -z "${!var}" ]; then
+              echo "❌ Secret $var is not set"
+              exit 1
+            fi
+          done
           echo "✅ All required secrets are configured"
 
       - name: Setup SSH
+        env:
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
         run: |
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
-          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_ed25519
+          echo "$VPS_SSH_KEY" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
-          
-          # Add VPS host to known hosts
-          if [ -n "${{ secrets.VPS_HOST }}" ]; then
-            ssh-keyscan -H "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null || echo "Warning: Could not add host key"
-          else
-            echo "Error: VPS_HOST secret is not set"
-            exit 1
-          fi
-
+          ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
 
       - name: Create deployment directory on VPS
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
-            mkdir -p /opt/worksphere/backup
-            mkdir -p /opt/worksphere/logs
+          ssh $VPS_USER@$VPS_HOST << 'EOF'
+            mkdir -p /opt/worksphere/backup /opt/worksphere/logs
           EOF
 
       - name: Backup current JAR
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
+          ssh $VPS_USER@$VPS_HOST << 'EOF'
             if [ -f /opt/worksphere/worksphere.jar ]; then
-              cp /opt/worksphere/worksphere.jar /opt/worksphere/backup/worksphere-$(date +%Y%m%d_%H%M%S).jar
-              # Keep only last 5 backups
+              cp /opt/worksphere/worksphere.jar \
+                 /opt/worksphere/backup/worksphere-$(date +%Y%m%d_%H%M%S).jar
               cd /opt/worksphere/backup && ls -t | tail -n +6 | xargs -r rm --
             fi
           EOF
 
       - name: Deploy to VPS
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
         run: |
-          # Copy JAR to VPS
-          scp -o StrictHostKeyChecking=no ${{ steps.jar.outputs.jar_file }} ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/opt/worksphere/worksphere.jar
-          
-          # Deploy and restart application
-          ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
-            echo "🚀 Starting deployment..."
-            
-            # Restart the application service
+          scp ${{ steps.jar.outputs.jar_file }} \
+            $VPS_USER@$VPS_HOST:/opt/worksphere/worksphere.jar
+
+          ssh $VPS_USER@$VPS_HOST << 'EOF'
             sudo systemctl restart worksphere
-            
-            # Wait for application to start
-            echo "⏳ Waiting for application to start..."
             sleep 15
-            
-            # Check if application is running
-            if systemctl is-active --quiet worksphere; then
-              echo "✅ Application deployed and restarted successfully!"
-            else
-              echo "❌ Application failed to start!"
-              echo "📋 Recent logs:"
-              sudo journalctl -u worksphere -n 30 --no-pager
-              exit 1
-            fi
+            systemctl is-active --quiet worksphere || exit 1
           EOF
 
       - name: Final health check
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          APP_PORT: ${{ secrets.APP_PORT }}
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
-            echo "🔍 Performing final health check..."
-            HEALTH_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:${{ secrets.APP_PORT }}/actuator/health || echo "000")
-            
-            if [ "$HEALTH_STATUS" = "200" ]; then
-              echo "✅ Health check passed! Application is running properly."
-            else
-              echo "⚠️ Health check returned status: $HEALTH_STATUS"
-              echo "🔧 Application may still be starting up or there might be an issue..."
-              sudo journalctl -u worksphere -n 20 --no-pager
-            fi
+          ssh $VPS_USER@$VPS_HOST << EOF
+            STATUS=\$(curl -s -o /dev/null -w "%{http_code}" http://localhost:$APP_PORT/actuator/health || echo 000)
+            [ "\$STATUS" = "200" ] || exit 1
           EOF
 
       - name: Notify deployment status
         if: always()
         run: |
-          if [ "${{ job.status }}" = "success" ]; then
-            echo "🚀 Deployment to production completed successfully!"
-          else
-            echo "❌ Deployment failed!"
-          fi
-
+          echo "Job status: ${{ job.status }}"
