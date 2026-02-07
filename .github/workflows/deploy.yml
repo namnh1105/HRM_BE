@@ -138,7 +138,7 @@ jobs:
           VPS_USER: ${{ secrets.VPS_USER }}
         run: |
           ssh $VPS_USER@$VPS_HOST << 'EOF'
-            mkdir -p /opt/worksphere/backup /opt/worksphere/logs
+            sudo mkdir -p /opt/worksphere/backup
           EOF
 
       - name: Backup current Docker image
@@ -195,7 +195,7 @@ jobs:
           VPS_USER: ${{ secrets.VPS_USER }}
           APP_PORT: ${{ secrets.APP_PORT }}
         run: |
-          ssh $VPS_USER@$VPS_HOST << EOF
+          ssh -T $VPS_USER@$VPS_HOST << EOF
             STATUS=\$(curl -s -o /dev/null -w "%{http_code}" http://localhost:$APP_PORT/actuator/health || echo 000)
             [ "\$STATUS" = "200" ] || exit 1
           EOF
