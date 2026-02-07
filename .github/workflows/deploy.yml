@@ -160,34 +160,42 @@ jobs:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
         run: |
-          # Copy Docker image to VPS
-          scp /tmp/worksphere-image.tar $VPS_USER@$VPS_HOST:/home/$VPS_USER/
+          # Copy Docker image
+          scp /tmp/worksphere-image.tar $VPS_USER@$VPS_HOST:/tmp/
           
-          # Copy production docker-compose file to VPS
-          scp docker-compose.prod.yml $VPS_USER@$VPS_HOST:/home/$VPS_USER/docker-compose.yml
-          scp init-db.sql $VPS_USER@$VPS_HOST:/home/$VPS_USER/
+          # Copy compose + init sql
+          scp docker-compose.prod.yml $VPS_USER@$VPS_HOST:/tmp/docker-compose.yml
+          scp init-db.sql $VPS_USER@$VPS_HOST:/tmp/
           
           ssh -T $VPS_USER@$VPS_HOST << 'EOF'
-            # Load the new Docker image
-            docker load -i ~/worksphere-image.tar
-            
-            # Move files to deployment directory
-            sudo mv ~/docker-compose.yml /opt/worksphere/
-            sudo mv ~/init-db.sql /opt/worksphere/
-            
-            # Stop current containers
+            set -e
+          
+            echo "▶ Ensure Docker is running"
+            sudo systemctl start docker
+          
+            echo "▶ Load Docker image"
+            sudo docker load -i /tmp/worksphere-image.tar
+          
+            echo "▶ Prepare app directory"
+            sudo mkdir -p /opt/worksphere/logs
+            sudo chown -R $USER:$USER /opt/worksphere
+          
+            echo "▶ Move deployment files"
+            mv /tmp/docker-compose.yml /opt/worksphere/docker-compose.yml
+            mv /tmp/init-db.sql /opt/worksphere/
+          
             cd /opt/worksphere
-            sudo docker-compose down 2>/dev/null || true
-            
-            # Start new containers
-            sudo docker-compose up -d
-            
-            # Wait for application to start
-            sleep 45
-            
-            # Clean up downloaded files
-            rm -f ~/worksphere-image.tar
+          
+            echo "▶ Stop old containers"
+            sudo docker compose down || true
+          
+            echo "▶ Start new containers"
+            sudo docker compose up -d
+          
+            echo "▶ Cleanup"
+            rm -f /tmp/worksphere-image.tar
           EOF
+
 
       - name: Final health check
         env:
@@ -197,10 +205,6 @@ jobs:
         run: |
           ssh -T $VPS_USER@$VPS_HOST << EOF
             STATUS=\$(curl -s -o /dev/null -w "%{http_code}" http://localhost:$APP_PORT/actuator/health || echo 000)
-            [ "\$STATUS" = "200" ] || exit 1
+            echo "Health check status: \$STATUS"
+            [ "\$STATUS" = "200" ]
           EOF
-
-      - name: Notify deployment status
-        if: always()
-        run: |
-          echo "Job status: ${{ job.status }}"
