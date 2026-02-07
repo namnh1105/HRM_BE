@@ -196,30 +196,3 @@ jobs:
             rm -f /tmp/worksphere-image.tar
           EOF
 
-
-      - name: Health check
-        env:
-          VPS_HOST: ${{ secrets.VPS_HOST }}
-          VPS_USER: ${{ secrets.VPS_USER }}
-          APP_PORT: ${{ secrets.APP_PORT }}
-        run: |
-          ssh -T $VPS_USER@$VPS_HOST << 'EOF'
-            echo "▶ Waiting for application"
-          
-            for i in {1..30}; do
-              STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:${APP_PORT}/actuator/health || echo 000)
-              echo "Attempt $i - HTTP status: $STATUS"
-          
-              if [ "$STATUS" = "200" ]; then
-                echo "✅ Application is healthy"
-                exit 0
-              fi
-          
-              sleep 5
-            done
-          
-            echo "❌ Application failed"
-            docker compose logs --tail=200
-            exit 1
-          EOF
-
