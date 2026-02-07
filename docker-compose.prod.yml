@@ -1,0 +1,104 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: worksphere_postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-worksphere}
+      POSTGRES_USER: ${POSTGRES_USER:-worksphere}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-worksphere123}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    restart: unless-stopped
+    networks:
+      - worksphere-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-worksphere} -d ${POSTGRES_DB:-worksphere}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: worksphere_redis
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    networks:
+      - worksphere-network
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Worksphere Application
+  worksphere:
+    build: .
+    container_name: worksphere_app
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=production
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_ACCESS_TOKEN_EXPIRATION=${JWT_ACCESS_TOKEN_EXPIRATION:-3600000}
+      - JWT_REFRESH_TOKEN_EXPIRATION=${JWT_REFRESH_TOKEN_EXPIRATION:-604800000}
+
+      # Database Configuration
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${POSTGRES_DB:-worksphere}
+      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER:-worksphere}
+      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD:-worksphere123}
+
+      # Redis Configuration
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+
+      # OAuth2 Configuration
+      - GOOGLE_OAUTH2_CLIENT_ID=${GOOGLE_OAUTH2_CLIENT_ID}
+      - GOOGLE_OAUTH2_CLIENT_SECRET=${GOOGLE_OAUTH2_CLIENT_SECRET}
+      - GOOGLE_OAUTH2_REDIRECT_URI=${GOOGLE_OAUTH2_REDIRECT_URI}
+
+      # Server Configuration
+      - SERVER_PORT=8080
+      - FRONTEND_URL=${FRONTEND_URL}
+      - OAUTH_SUCCESS_REDIRECT_PATH=${OAUTH_SUCCESS_REDIRECT_PATH:-/oauth/callback}
+
+      # JPA Configuration
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=${DDL_AUTO:-update}
+      - SPRING_JPA_SHOW_SQL=${SHOW_SQL:-false}
+      - SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL=${FORMAT_SQL:-false}
+
+    volumes:
+      - ./logs:/opt/worksphere/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - worksphere-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 3
+
+networks:
+  worksphere-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
+  redis-data:

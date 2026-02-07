@@ -61,7 +61,7 @@ jobs:
           OAUTH_SUCCESS_REDIRECT_PATH: /oauth/callback
 
   build:
-    name: Build Application
+    name: Build Docker Image
     runs-on: ubuntu-latest
     needs: test
 
@@ -69,31 +69,25 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up JDK
-        uses: actions/setup-java@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v5
         with:
-          java-version: ${{ env.JAVA_VERSION }}
-          distribution: ${{ env.JAVA_DISTRIBUTION }}
+          context: .
+          file: ./Dockerfile
+          push: false
+          outputs: type=docker,dest=/tmp/worksphere-image.tar
+          tags: worksphere:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
-      - name: Cache Gradle packages
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
-
-      - name: Build with Gradle
-        run: ./gradlew bootJar --no-daemon
-
-      - name: Upload artifact
+      - name: Upload Docker image artifact
         uses: actions/upload-artifact@v4
         with:
-          name: worksphere-jar
-          path: build/libs/*.jar
+          name: worksphere-docker-image
+          path: /tmp/worksphere-image.tar
           retention-days: 1
 
   deploy:
@@ -106,18 +100,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Download artifact
+      - name: Download Docker image artifact
         uses: actions/download-artifact@v4
         with:
-          name: worksphere-jar
-          path: build/libs
-
-      - name: Get JAR filename
-        id: jar
-        run: |
-          JAR_FILE=$(ls build/libs/*.jar | grep -v plain | head -1)
-          echo "jar_file=$JAR_FILE" >> $GITHUB_OUTPUT
-          echo "jar_name=$(basename $JAR_FILE)" >> $GITHUB_OUTPUT
+          name: worksphere-docker-image
+          path: /tmp
 
       - name: Verify secrets
         env:
@@ -154,31 +141,52 @@ jobs:
             mkdir -p /opt/worksphere/backup /opt/worksphere/logs
           EOF
 
-      - name: Backup current JAR
+      - name: Backup current Docker image
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
         run: |
           ssh $VPS_USER@$VPS_HOST << 'EOF'
-            if [ -f /opt/worksphere/worksphere.jar ]; then
-              cp /opt/worksphere/worksphere.jar \
-                 /opt/worksphere/backup/worksphere-$(date +%Y%m%d_%H%M%S).jar
-              cd /opt/worksphere/backup && ls -t | tail -n +6 | xargs -r rm --
+            cd /opt/worksphere
+            if docker images | grep -q worksphere; then
+              docker tag worksphere:latest worksphere:backup-$(date +%Y%m%d_%H%M%S) 2>/dev/null || true
+              # Clean up old backup images (keep only 3 most recent)
+              docker images worksphere --format "table {{.Tag}}" | grep backup | sort -r | tail -n +4 | xargs -r -I {} docker rmi worksphere:{} 2>/dev/null || true
             fi
           EOF
 
-      - name: Deploy to VPS
+      - name: Deploy Docker image to VPS
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
         run: |
-          scp ${{ steps.jar.outputs.jar_file }} \
-            $VPS_USER@$VPS_HOST:/opt/worksphere/worksphere.jar
-
-          ssh $VPS_USER@$VPS_HOST << 'EOF'
-            sudo systemctl restart worksphere
-            sleep 15
-            systemctl is-active --quiet worksphere || exit 1
+          # Copy Docker image to VPS
+          scp /tmp/worksphere-image.tar $VPS_USER@$VPS_HOST:/home/$VPS_USER/
+          
+          # Copy production docker-compose file to VPS
+          scp docker-compose.prod.yml $VPS_USER@$VPS_HOST:/home/$VPS_USER/docker-compose.yml
+          scp init-db.sql $VPS_USER@$VPS_HOST:/home/$VPS_USER/
+          
+          ssh -T $VPS_USER@$VPS_HOST << 'EOF'
+            # Load the new Docker image
+            docker load -i ~/worksphere-image.tar
+            
+            # Move files to deployment directory
+            sudo mv ~/docker-compose.yml /opt/worksphere/
+            sudo mv ~/init-db.sql /opt/worksphere/
+            
+            # Stop current containers
+            cd /opt/worksphere
+            sudo docker-compose down 2>/dev/null || true
+            
+            # Start new containers
+            sudo docker-compose up -d
+            
+            # Wait for application to start
+            sleep 45
+            
+            # Clean up downloaded files
+            rm -f ~/worksphere-image.tar
           EOF
 
       - name: Final health check

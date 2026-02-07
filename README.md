@@ -169,33 +169,77 @@ src/main/java/com/hainam/worksphere/
 
 ## Development
 
-### Build
+### Traditional Setup
+
+#### Build
 ```bash
 ./gradlew build
 ```
 
-### Test
+#### Test
 ```bash
 ./gradlew test
 ```
 
-### Clean Build
+#### Clean Build
 ```bash
 ./gradlew clean build
 ```
 
+### Docker Setup
+
+#### Prerequisites
+- Docker and Docker Compose installed
+
+#### Quick Start with Docker
+```bash
+# Copy environment file and configure it
+cp .env.example .env
+
+# Build and run with Docker Compose
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop services
+docker-compose down
+```
+
+#### Build Docker Image Only
+```bash
+# Build the Docker image
+docker build -t worksphere:latest .
+
+# Run the container
+docker run -p 8080:8080 \
+  -e JWT_SECRET=your-secret \
+  -e GOOGLE_OAUTH2_CLIENT_ID=your-client-id \
+  worksphere:latest
+```
+
+#### Development with Docker
+```bash
+# Run in development mode
+docker-compose -f docker-compose.yml up -d
+
+# Access application at http://localhost:8080
+# Access Redis at localhost:6379
+```
+
 ## Technologies Used
 
-- **Spring Boot 4.0.1** - Framework
+- **Spring Boot 3.2.11** - Framework
 - **Spring Security** - Authentication & Authorization
 - **Spring Data JPA** - Data persistence
 - **PostgreSQL** - Primary database
-- **Redis** - Caching (optional)
+- **Redis** - Caching and session storage
 - **JWT (jsonwebtoken)** - Token-based auth
 - **MapStruct** - Object mapping
 - **Swagger/OpenAPI** - API documentation
 - **Lombok** - Code generation
 - **Gradle** - Build tool
+- **Docker & Docker Compose** - Containerization
 - **Testcontainers** - Integration testing
 
 ## Testing
