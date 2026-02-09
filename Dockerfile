@@ -27,7 +27,9 @@ RUN addgroup -g 1001 -S worksphere && \
 
 # Create application directory
 RUN mkdir -p /opt/worksphere/logs && \
-    chown -R worksphere:worksphere /opt/worksphere
+    chown -R worksphere:worksphere /opt/worksphere && \
+    chmod -R 755 /opt/worksphere && \
+    chmod -R 775 /opt/worksphere/logs
 
 WORKDIR /opt/worksphere
 

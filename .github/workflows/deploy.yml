@@ -179,6 +179,14 @@ jobs:
             echo "▶ Prepare app directory"
             sudo mkdir -p /opt/worksphere/logs
             sudo chown -R $USER:$USER /opt/worksphere
+            # Set correct permissions for container user (UID 1001)
+            sudo chown -R 1001:1001 /opt/worksphere/logs
+            # Pre-create log files with correct permissions  
+            sudo touch /opt/worksphere/logs/worksphere-production.log
+            sudo touch /opt/worksphere/logs/worksphere-errors.log
+            sudo chown 1001:1001 /opt/worksphere/logs/worksphere-production.log
+            sudo chown 1001:1001 /opt/worksphere/logs/worksphere-errors.log
+            sudo chmod 664 /opt/worksphere/logs/*.log
           
             echo "▶ Move deployment files"
             mv /tmp/docker-compose.yml /opt/worksphere/docker-compose.yml
