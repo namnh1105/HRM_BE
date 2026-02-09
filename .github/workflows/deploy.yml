@@ -186,7 +186,8 @@ jobs:
             sudo touch /opt/worksphere/logs/worksphere-errors.log
             sudo chown 1001:1001 /opt/worksphere/logs/worksphere-production.log
             sudo chown 1001:1001 /opt/worksphere/logs/worksphere-errors.log
-            sudo chmod 664 /opt/worksphere/logs/*.log
+            sudo chmod 664 /opt/worksphere/logs/worksphere-production.log
+            sudo chmod 664 /opt/worksphere/logs/worksphere-errors.log
           
             echo "▶ Move deployment files"
             mv /tmp/docker-compose.yml /opt/worksphere/docker-compose.yml
