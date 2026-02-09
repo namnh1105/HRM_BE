@@ -16,5 +16,11 @@ public enum EntityType {
     ATTENDANCE,
     LEAVE_REQUEST,
     PAYROLL,
+    CONTRACT,
+    WORK_SHIFT,
+    INSURANCE,
+    INSURANCE_REGISTRATION,
+    DEGREE,
+    RELATIVE,
     SETTING
 }

@@ -1,0 +1,130 @@
+package com.hainam.worksphere.department.service;
+
+import com.hainam.worksphere.department.domain.Department;
+import com.hainam.worksphere.department.dto.request.CreateDepartmentRequest;
+import com.hainam.worksphere.department.dto.request.UpdateDepartmentRequest;
+import com.hainam.worksphere.department.dto.response.DepartmentResponse;
+import com.hainam.worksphere.department.mapper.DepartmentMapper;
+import com.hainam.worksphere.department.repository.DepartmentRepository;
+import com.hainam.worksphere.employee.domain.Employee;
+import com.hainam.worksphere.employee.repository.EmployeeRepository;
+import com.hainam.worksphere.shared.config.CacheConfig;
+import com.hainam.worksphere.shared.exception.DepartmentNotFoundException;
+import com.hainam.worksphere.shared.exception.EmployeeNotFoundException;
+import com.hainam.worksphere.shared.exception.ValidationException;
+import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+public class DepartmentService {
+
+    private final DepartmentRepository departmentRepository;
+    private final EmployeeRepository employeeRepository;
+    private final DepartmentMapper departmentMapper;
+
+    @Cacheable(value = CacheConfig.DEPARTMENT_CACHE, key = "#departmentId.toString()")
+    public DepartmentResponse getDepartmentById(UUID departmentId) {
+        Department department = departmentRepository.findActiveById(departmentId)
+                .orElseThrow(() -> DepartmentNotFoundException.byId(departmentId.toString()));
+        return departmentMapper.toDepartmentResponse(department);
+    }
+
+    public List<DepartmentResponse> getAllActiveDepartments() {
+        return departmentRepository.findAllActive()
+                .stream()
+                .map(departmentMapper::toDepartmentResponse)
+                .collect(Collectors.toList());
+    }
+
+    public List<DepartmentResponse> getSubDepartments(UUID parentId) {
+        return departmentRepository.findActiveByParentDepartmentId(parentId)
+                .stream()
+                .map(departmentMapper::toDepartmentResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    @CacheEvict(value = CacheConfig.DEPARTMENT_CACHE, allEntries = true)
+    public DepartmentResponse createDepartment(CreateDepartmentRequest request, UUID createdBy) {
+        if (departmentRepository.existsActiveByCode(request.getCode())) {
+            throw ValidationException.duplicateField("code", request.getCode());
+        }
+
+        Department department = departmentMapper.toEntity(request);
+        department.setCreatedBy(createdBy);
+
+        if (request.getManagerId() != null) {
+            Employee manager = employeeRepository.findActiveById(request.getManagerId())
+                    .orElseThrow(() -> EmployeeNotFoundException.byId(request.getManagerId().toString()));
+            department.setManager(manager);
+        }
+
+        if (request.getParentDepartmentId() != null) {
+            Department parent = departmentRepository.findActiveById(request.getParentDepartmentId())
+                    .orElseThrow(() -> DepartmentNotFoundException.byId(request.getParentDepartmentId().toString()));
+            department.setParentDepartment(parent);
+        }
+
+        Department saved = departmentRepository.save(department);
+        return departmentMapper.toDepartmentResponse(saved);
+    }
+
+    @Transactional
+    @CacheEvict(value = CacheConfig.DEPARTMENT_CACHE, allEntries = true)
+    public DepartmentResponse updateDepartment(UUID departmentId, UpdateDepartmentRequest request, UUID updatedBy) {
+        Department department = departmentRepository.findActiveById(departmentId)
+                .orElseThrow(() -> DepartmentNotFoundException.byId(departmentId.toString()));
+
+        if (request.getName() != null) {
+            department.setName(request.getName());
+        }
+        if (request.getDescription() != null) {
+            department.setDescription(request.getDescription());
+        }
+        if (request.getPhone() != null) {
+            department.setPhone(request.getPhone());
+        }
+        if (request.getEmail() != null) {
+            department.setEmail(request.getEmail());
+        }
+        if (request.getIsActive() != null) {
+            department.setIsActive(request.getIsActive());
+        }
+        if (request.getManagerId() != null) {
+            Employee manager = employeeRepository.findActiveById(request.getManagerId())
+                    .orElseThrow(() -> EmployeeNotFoundException.byId(request.getManagerId().toString()));
+            department.setManager(manager);
+        }
+        if (request.getParentDepartmentId() != null) {
+            Department parent = departmentRepository.findActiveById(request.getParentDepartmentId())
+                    .orElseThrow(() -> DepartmentNotFoundException.byId(request.getParentDepartmentId().toString()));
+            department.setParentDepartment(parent);
+        }
+
+        department.setUpdatedBy(updatedBy);
+        Department saved = departmentRepository.save(department);
+        return departmentMapper.toDepartmentResponse(saved);
+    }
+
+    @Transactional
+    @CacheEvict(value = CacheConfig.DEPARTMENT_CACHE, allEntries = true)
+    public void softDeleteDepartment(UUID departmentId, UUID deletedBy) {
+        Department department = departmentRepository.findActiveById(departmentId)
+                .orElseThrow(() -> DepartmentNotFoundException.byId(departmentId.toString()));
+
+        department.setIsDeleted(true);
+        department.setDeletedAt(LocalDateTime.now());
+        department.setDeletedBy(deletedBy);
+        departmentRepository.save(department);
+    }
+}

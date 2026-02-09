@@ -33,6 +33,16 @@ public class CacheConfig {
     public static final String ACTIVE_PERMISSIONS_CACHE = "activePermissions";
     public static final String SYSTEM_ROLES_CACHE = "systemRoles";
     public static final String SYSTEM_PERMISSIONS_CACHE = "systemPermissions";
+    public static final String DEPARTMENT_CACHE = "departments";
+    public static final String EMPLOYEE_CACHE = "employees";
+    public static final String ATTENDANCE_CACHE = "attendances";
+    public static final String WORK_SHIFT_CACHE = "workShifts";
+    public static final String CONTRACT_CACHE = "contracts";
+    public static final String LEAVE_REQUEST_CACHE = "leaveRequests";
+    public static final String PAYROLL_CACHE = "payrolls";
+    public static final String INSURANCE_CACHE = "insurances";
+    public static final String DEGREE_CACHE = "degrees";
+    public static final String RELATIVE_CACHE = "relatives";
 
     @Bean
     public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
@@ -78,6 +88,36 @@ public class CacheConfig {
         cacheConfigurations.put(ACTIVE_PERMISSIONS_CACHE, defaultConfig.entryTtl(Duration.ofHours(1)));
         cacheConfigurations.put(SYSTEM_ROLES_CACHE, defaultConfig.entryTtl(Duration.ofHours(2)));
         cacheConfigurations.put(SYSTEM_PERMISSIONS_CACHE, defaultConfig.entryTtl(Duration.ofHours(2)));
+
+        // Department cache - 1 hour TTL
+        cacheConfigurations.put(DEPARTMENT_CACHE, defaultConfig.entryTtl(Duration.ofHours(1)));
+
+        // Employee cache - 30 minutes TTL
+        cacheConfigurations.put(EMPLOYEE_CACHE, defaultConfig.entryTtl(Duration.ofMinutes(30)));
+
+        // Attendance cache - 10 minutes TTL
+        cacheConfigurations.put(ATTENDANCE_CACHE, defaultConfig.entryTtl(Duration.ofMinutes(10)));
+
+        // Work shift cache - 1 hour TTL
+        cacheConfigurations.put(WORK_SHIFT_CACHE, defaultConfig.entryTtl(Duration.ofHours(1)));
+
+        // Contract cache - 30 minutes TTL
+        cacheConfigurations.put(CONTRACT_CACHE, defaultConfig.entryTtl(Duration.ofMinutes(30)));
+
+        // Leave request cache - 15 minutes TTL
+        cacheConfigurations.put(LEAVE_REQUEST_CACHE, defaultConfig.entryTtl(Duration.ofMinutes(15)));
+
+        // Payroll cache - 30 minutes TTL
+        cacheConfigurations.put(PAYROLL_CACHE, defaultConfig.entryTtl(Duration.ofMinutes(30)));
+
+        // Insurance cache - 30 minutes TTL
+        cacheConfigurations.put(INSURANCE_CACHE, defaultConfig.entryTtl(Duration.ofMinutes(30)));
+
+        // Degree cache - 30 minutes TTL
+        cacheConfigurations.put(DEGREE_CACHE, defaultConfig.entryTtl(Duration.ofMinutes(30)));
+
+        // Relative cache - 30 minutes TTL
+        cacheConfigurations.put(RELATIVE_CACHE, defaultConfig.entryTtl(Duration.ofMinutes(30)));
 
         return RedisCacheManager.builder(connectionFactory)
                 .cacheDefaults(defaultConfig)

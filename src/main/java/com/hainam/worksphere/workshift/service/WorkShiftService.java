@@ -1,0 +1,128 @@
+package com.hainam.worksphere.workshift.service;
+
+import com.hainam.worksphere.shared.config.CacheConfig;
+import com.hainam.worksphere.shared.exception.ValidationException;
+import com.hainam.worksphere.shared.exception.WorkShiftNotFoundException;
+import com.hainam.worksphere.workshift.domain.WorkShift;
+import com.hainam.worksphere.workshift.dto.request.CreateWorkShiftRequest;
+import com.hainam.worksphere.workshift.dto.request.UpdateWorkShiftRequest;
+import com.hainam.worksphere.workshift.dto.response.WorkShiftResponse;
+import com.hainam.worksphere.workshift.mapper.WorkShiftMapper;
+import com.hainam.worksphere.workshift.repository.WorkShiftRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+public class WorkShiftService {
+
+    private final WorkShiftRepository workShiftRepository;
+    private final WorkShiftMapper workShiftMapper;
+
+    @Cacheable(value = CacheConfig.WORK_SHIFT_CACHE, key = "#workShiftId.toString()")
+    public WorkShiftResponse getWorkShiftById(UUID workShiftId) {
+        WorkShift workShift = workShiftRepository.findActiveById(workShiftId)
+                .orElseThrow(() -> WorkShiftNotFoundException.byId(workShiftId.toString()));
+        return workShiftMapper.toWorkShiftResponse(workShift);
+    }
+
+    public List<WorkShiftResponse> getAllActiveWorkShifts() {
+        return workShiftRepository.findAllActive()
+                .stream()
+                .map(workShiftMapper::toWorkShiftResponse)
+                .collect(Collectors.toList());
+    }
+
+    public List<WorkShiftResponse> getAllActiveAndEnabledWorkShifts() {
+        return workShiftRepository.findAllActiveAndEnabled()
+                .stream()
+                .map(workShiftMapper::toWorkShiftResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    @CacheEvict(value = CacheConfig.WORK_SHIFT_CACHE, allEntries = true)
+    public WorkShiftResponse createWorkShift(CreateWorkShiftRequest request, UUID createdBy) {
+        if (workShiftRepository.existsActiveByCode(request.getCode())) {
+            throw ValidationException.duplicateField("code", request.getCode());
+        }
+
+        WorkShift workShift = workShiftMapper.toEntity(request);
+        workShift.setCreatedBy(createdBy);
+        workShift.setTotalHours(calculateTotalHours(workShift));
+
+        WorkShift saved = workShiftRepository.save(workShift);
+        return workShiftMapper.toWorkShiftResponse(saved);
+    }
+
+    @Transactional
+    @CacheEvict(value = CacheConfig.WORK_SHIFT_CACHE, allEntries = true)
+    public WorkShiftResponse updateWorkShift(UUID workShiftId, UpdateWorkShiftRequest request, UUID updatedBy) {
+        WorkShift workShift = workShiftRepository.findActiveById(workShiftId)
+                .orElseThrow(() -> WorkShiftNotFoundException.byId(workShiftId.toString()));
+
+        if (request.getName() != null) {
+            workShift.setName(request.getName());
+        }
+        if (request.getStartTime() != null) {
+            workShift.setStartTime(request.getStartTime());
+        }
+        if (request.getEndTime() != null) {
+            workShift.setEndTime(request.getEndTime());
+        }
+        if (request.getBreakDuration() != null) {
+            workShift.setBreakDuration(request.getBreakDuration());
+        }
+        if (request.getDescription() != null) {
+            workShift.setDescription(request.getDescription());
+        }
+        if (request.getIsActive() != null) {
+            workShift.setIsActive(request.getIsActive());
+        }
+        if (request.getIsNightShift() != null) {
+            workShift.setIsNightShift(request.getIsNightShift());
+        }
+
+        workShift.setTotalHours(calculateTotalHours(workShift));
+        workShift.setUpdatedBy(updatedBy);
+
+        WorkShift saved = workShiftRepository.save(workShift);
+        return workShiftMapper.toWorkShiftResponse(saved);
+    }
+
+    @Transactional
+    @CacheEvict(value = CacheConfig.WORK_SHIFT_CACHE, allEntries = true)
+    public void softDeleteWorkShift(UUID workShiftId, UUID deletedBy) {
+        WorkShift workShift = workShiftRepository.findActiveById(workShiftId)
+                .orElseThrow(() -> WorkShiftNotFoundException.byId(workShiftId.toString()));
+
+        workShift.setIsDeleted(true);
+        workShift.setDeletedAt(LocalDateTime.now());
+        workShift.setDeletedBy(deletedBy);
+        workShiftRepository.save(workShift);
+    }
+
+    private Double calculateTotalHours(WorkShift workShift) {
+        double startMinutes = workShift.getStartTime().getHour() * 60.0 + workShift.getStartTime().getMinute();
+        double endMinutes = workShift.getEndTime().getHour() * 60.0 + workShift.getEndTime().getMinute();
+
+        double totalMinutes;
+        if (endMinutes > startMinutes) {
+            totalMinutes = endMinutes - startMinutes;
+        } else {
+            // Night shift: crosses midnight
+            totalMinutes = (24 * 60) - startMinutes + endMinutes;
+        }
+
+        double breakDuration = workShift.getBreakDuration() != null ? workShift.getBreakDuration() : 1.0;
+        return Math.round((totalMinutes / 60.0 - breakDuration) * 100.0) / 100.0;
+    }
+}

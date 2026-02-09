@@ -1,0 +1,34 @@
+package com.hainam.worksphere.attendance.repository;
+
+import com.hainam.worksphere.attendance.domain.Attendance;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+@Repository
+public interface AttendanceRepository extends JpaRepository<Attendance, UUID> {
+
+    @Query("SELECT a FROM Attendance a WHERE a.isDeleted = false")
+    List<Attendance> findAllActive();
+
+    @Query("SELECT a FROM Attendance a WHERE a.id = :id AND a.isDeleted = false")
+    Optional<Attendance> findActiveById(@Param("id") UUID id);
+
+    @Query("SELECT a FROM Attendance a WHERE a.employee.id = :employeeId AND a.isDeleted = false")
+    List<Attendance> findActiveByEmployeeId(@Param("employeeId") UUID employeeId);
+
+    @Query("SELECT a FROM Attendance a WHERE a.employee.id = :employeeId AND a.workDate = :workDate AND a.isDeleted = false")
+    Optional<Attendance> findActiveByEmployeeIdAndWorkDate(@Param("employeeId") UUID employeeId, @Param("workDate") LocalDate workDate);
+
+    @Query("SELECT a FROM Attendance a WHERE a.employee.id = :employeeId AND a.workDate BETWEEN :startDate AND :endDate AND a.isDeleted = false")
+    List<Attendance> findActiveByEmployeeIdAndWorkDateBetween(@Param("employeeId") UUID employeeId, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+
+    @Query("SELECT CASE WHEN COUNT(a) > 0 THEN true ELSE false END FROM Attendance a WHERE a.employee.id = :employeeId AND a.workDate = :workDate AND a.isDeleted = false")
+    boolean existsActiveByEmployeeIdAndWorkDate(@Param("employeeId") UUID employeeId, @Param("workDate") LocalDate workDate);
+}

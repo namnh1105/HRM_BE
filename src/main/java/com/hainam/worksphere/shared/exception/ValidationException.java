@@ -21,4 +21,8 @@ public class ValidationException extends BaseException {
     public static ValidationException passwordMismatch() {
         return new ValidationException("Current password is incorrect");
     }
+
+    public static ValidationException duplicateField(String field, String value) {
+        return new ValidationException("Duplicate value '" + value + "' for field '" + field + "'");
+    }
 }

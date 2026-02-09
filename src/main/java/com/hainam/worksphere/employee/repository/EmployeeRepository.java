@@ -1,0 +1,43 @@
+package com.hainam.worksphere.employee.repository;
+
+import com.hainam.worksphere.employee.domain.Employee;
+import com.hainam.worksphere.employee.domain.EmploymentStatus;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+@Repository
+public interface EmployeeRepository extends JpaRepository<Employee, UUID> {
+
+    @Query("SELECT e FROM Employee e WHERE e.isDeleted = false")
+    List<Employee> findAllActive();
+
+    @Query("SELECT e FROM Employee e WHERE e.id = :id AND e.isDeleted = false")
+    Optional<Employee> findActiveById(@Param("id") UUID id);
+
+    @Query("SELECT e FROM Employee e WHERE e.employeeCode = :code AND e.isDeleted = false")
+    Optional<Employee> findActiveByEmployeeCode(@Param("code") String code);
+
+    @Query("SELECT e FROM Employee e WHERE e.email = :email AND e.isDeleted = false")
+    Optional<Employee> findActiveByEmail(@Param("email") String email);
+
+    @Query("SELECT e FROM Employee e WHERE e.user.id = :userId AND e.isDeleted = false")
+    Optional<Employee> findActiveByUserId(@Param("userId") UUID userId);
+
+    @Query("SELECT CASE WHEN COUNT(e) > 0 THEN true ELSE false END FROM Employee e WHERE e.employeeCode = :code AND e.isDeleted = false")
+    boolean existsActiveByEmployeeCode(@Param("code") String code);
+
+    @Query("SELECT CASE WHEN COUNT(e) > 0 THEN true ELSE false END FROM Employee e WHERE e.email = :email AND e.isDeleted = false")
+    boolean existsActiveByEmail(@Param("email") String email);
+
+    @Query("SELECT e FROM Employee e WHERE e.department.id = :departmentId AND e.isDeleted = false")
+    List<Employee> findActiveByDepartmentId(@Param("departmentId") UUID departmentId);
+
+    @Query("SELECT e FROM Employee e WHERE e.employmentStatus = :status AND e.isDeleted = false")
+    List<Employee> findActiveByEmploymentStatus(@Param("status") EmploymentStatus status);
+}
