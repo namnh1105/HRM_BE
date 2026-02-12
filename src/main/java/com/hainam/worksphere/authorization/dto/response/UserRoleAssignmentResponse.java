@@ -1,4 +1,4 @@
-package com.hainam.worksphere.auth.dto.response;
+package com.hainam.worksphere.authorization.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
@@ -12,20 +12,14 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserPermissionInfo {
+public class UserRoleAssignmentResponse {
 
     private UUID id;
 
-    private String code;
+    @JsonProperty("user_id")
+    private UUID userId;
 
-    @JsonProperty("display_name")
-    private String displayName;
-
-    private String description;
-
-    private String resource;
-
-    private String action;
+    private RoleResponse role;
 
     @JsonProperty("is_active")
     private Boolean isActive;

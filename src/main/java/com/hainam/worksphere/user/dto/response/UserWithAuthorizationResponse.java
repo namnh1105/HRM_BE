@@ -2,8 +2,6 @@ package com.hainam.worksphere.user.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.hainam.worksphere.auth.dto.response.UserPermissionInfo;
-import com.hainam.worksphere.auth.dto.response.UserRoleInfo;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -63,7 +61,7 @@ public class UserWithAuthorizationResponse {
     @JsonProperty("deleted_by")
     private UUID deletedBy;
 
-    private List<UserRoleInfo> roles;
+    private List<String> roles;
 
-    private List<UserPermissionInfo> permissions;
+    private List<String> permissions;
 }

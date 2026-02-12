@@ -2,7 +2,7 @@ package com.hainam.worksphere.authorization.controller;
 
 import com.hainam.worksphere.authorization.domain.UserRole;
 import com.hainam.worksphere.authorization.dto.request.AssignRolesRequest;
-import com.hainam.worksphere.authorization.dto.response.UserRoleResponse;
+import com.hainam.worksphere.authorization.dto.response.UserRoleAssignmentResponse;
 import com.hainam.worksphere.authorization.mapper.UserRoleMapper;
 import com.hainam.worksphere.authorization.security.RequirePermission;
 import com.hainam.worksphere.authorization.service.UserRoleService;
@@ -18,61 +18,26 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/user-roles")
 @RequiredArgsConstructor
 @Slf4j
+@RequestMapping("/api/v1")
 public class UserRoleController {
 
     private final UserRoleService userRoleService;
     private final UserRoleMapper userRoleMapper;
 
-    @PostMapping("/assign")
-    @RequirePermission(PermissionType.MANAGE_USER_ROLE)
-    public ResponseEntity<ApiResponse<Void>> assignRolesToUser(@Valid @RequestBody AssignRolesRequest request) {
-        userRoleService.assignRolesToUser(request.getUserId(), request.getRoleIds());
-
-        return ResponseEntity.ok(ApiResponse.success("Roles assigned to user successfully", null));
-    }
-
-    @PostMapping("/remove")
-    @RequirePermission(PermissionType.MANAGE_USER_ROLE)
-    public ResponseEntity<ApiResponse<Void>> removeRolesFromUser(@Valid @RequestBody AssignRolesRequest request) {
-        userRoleService.removeRolesFromUser(request.getUserId(), request.getRoleIds());
-
-        return ResponseEntity.ok(ApiResponse.success("Roles removed from user successfully", null));
-    }
-
-    @PostMapping("/replace")
-    @RequirePermission(PermissionType.MANAGE_USER_ROLE)
-    public ResponseEntity<ApiResponse<Void>> replaceUserRoles(@Valid @RequestBody AssignRolesRequest request) {
-        userRoleService.replaceUserRoles(request.getUserId(), request.getRoleIds());
-
-        return ResponseEntity.ok(ApiResponse.success("User roles replaced successfully", null));
-    }
-
-    @GetMapping("/user/{userId}")
+    @GetMapping("/users/{userId}/roles")
     @RequirePermission(PermissionType.READ_USER_ROLE)
-    public ResponseEntity<ApiResponse<List<UserRoleResponse>>> getUserRoles(@PathVariable UUID userId) {
+    public ResponseEntity<ApiResponse<List<UserRoleAssignmentResponse>>> getUserRoles(@PathVariable UUID userId) {
         List<UserRole> userRoles = userRoleService.getActiveUserRolesByUserId(userId);
-        List<UserRoleResponse> response = userRoles.stream()
+        List<UserRoleAssignmentResponse> response = userRoles.stream()
                 .map(userRoleMapper::toResponse)
                 .toList();
 
         return ResponseEntity.ok(ApiResponse.success("User roles retrieved successfully", response));
     }
 
-    @GetMapping("/role/{roleId}")
-    @RequirePermission(PermissionType.READ_USER_ROLE)
-    public ResponseEntity<ApiResponse<List<UserRoleResponse>>> getUsersByRole(@PathVariable UUID roleId) {
-        List<UserRole> userRoles = userRoleService.getActiveUserRolesByRoleId(roleId);
-        List<UserRoleResponse> response = userRoles.stream()
-                .map(userRoleMapper::toResponse)
-                .toList();
-
-        return ResponseEntity.ok(ApiResponse.success("Role users retrieved successfully", response));
-    }
-
-    @PostMapping("/user/{userId}/role/{roleId}")
+    @PostMapping("/users/{userId}/roles/{roleId}")
     @RequirePermission(PermissionType.MANAGE_USER_ROLE)
     public ResponseEntity<ApiResponse<Void>> assignRoleToUser(
             @PathVariable UUID userId,
@@ -82,7 +47,7 @@ public class UserRoleController {
         return ResponseEntity.ok(ApiResponse.success("Role assigned to user successfully", null));
     }
 
-    @DeleteMapping("/user/{userId}/role/{roleId}")
+    @DeleteMapping("/users/{userId}/roles/{roleId}")
     @RequirePermission(PermissionType.MANAGE_USER_ROLE)
     public ResponseEntity<ApiResponse<Void>> removeRoleFromUser(
             @PathVariable UUID userId,
@@ -92,7 +57,48 @@ public class UserRoleController {
         return ResponseEntity.ok(ApiResponse.success("Role removed from user successfully", null));
     }
 
-    @GetMapping("/user/{userId}/role/{roleId}/check")
+    @PutMapping("/users/{userId}/roles")
+    @RequirePermission(PermissionType.MANAGE_USER_ROLE)
+    public ResponseEntity<ApiResponse<Void>> replaceUserRoles(
+            @PathVariable UUID userId,
+            @Valid @RequestBody AssignRolesRequest request) {
+        userRoleService.replaceUserRoles(userId, request.getRoleIds());
+
+        return ResponseEntity.ok(ApiResponse.success("User roles replaced successfully", null));
+    }
+
+    @PostMapping("/users/{userId}/roles")
+    @RequirePermission(PermissionType.MANAGE_USER_ROLE)
+    public ResponseEntity<ApiResponse<Void>> assignRolesToUser(
+            @PathVariable UUID userId,
+            @Valid @RequestBody AssignRolesRequest request) {
+        userRoleService.assignRolesToUser(userId, request.getRoleIds());
+
+        return ResponseEntity.ok(ApiResponse.success("Roles assigned to user successfully", null));
+    }
+
+    @DeleteMapping("/users/{userId}/roles")
+    @RequirePermission(PermissionType.MANAGE_USER_ROLE)
+    public ResponseEntity<ApiResponse<Void>> removeRolesFromUser(
+            @PathVariable UUID userId,
+            @Valid @RequestBody AssignRolesRequest request) {
+        userRoleService.removeRolesFromUser(userId, request.getRoleIds());
+
+        return ResponseEntity.ok(ApiResponse.success("Roles removed from user successfully", null));
+    }
+
+    @GetMapping("/roles/{roleId}/users")
+    @RequirePermission(PermissionType.READ_USER_ROLE)
+    public ResponseEntity<ApiResponse<List<UserRoleAssignmentResponse>>> getUsersByRole(@PathVariable UUID roleId) {
+        List<UserRole> userRoles = userRoleService.getActiveUserRolesByRoleId(roleId);
+        List<UserRoleAssignmentResponse> response = userRoles.stream()
+                .map(userRoleMapper::toResponse)
+                .toList();
+
+        return ResponseEntity.ok(ApiResponse.success("Role users retrieved successfully", response));
+    }
+
+    @GetMapping("/users/{userId}/roles/{roleId}")
     @RequirePermission(PermissionType.READ_USER_ROLE)
     public ResponseEntity<ApiResponse<Boolean>> checkUserHasRole(
             @PathVariable UUID userId,

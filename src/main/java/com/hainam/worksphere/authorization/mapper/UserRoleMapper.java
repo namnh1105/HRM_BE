@@ -1,7 +1,7 @@
 package com.hainam.worksphere.authorization.mapper;
 
 import com.hainam.worksphere.authorization.domain.UserRole;
-import com.hainam.worksphere.authorization.dto.response.UserRoleResponse;
+import com.hainam.worksphere.authorization.dto.response.UserRoleAssignmentResponse;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
@@ -10,5 +10,5 @@ import org.mapstruct.MappingConstants;
 public interface UserRoleMapper {
 
     @Mapping(target = "role", source = "role", qualifiedByName = "toSimpleResponse")
-    UserRoleResponse toResponse(UserRole entity);
+    UserRoleAssignmentResponse toResponse(UserRole entity);
 }
