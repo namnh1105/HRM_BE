@@ -1,9 +1,15 @@
 package com.hainam.worksphere.shared.config;
 
+import com.hainam.worksphere.shared.cache.FallbackCacheManager;
+import com.hainam.worksphere.shared.config.properties.CacheFallbackProperties;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -18,7 +24,11 @@ import java.util.Map;
 
 @Configuration
 @EnableCaching
+@RequiredArgsConstructor
+@Slf4j
 public class CacheConfig {
+
+    private final CacheFallbackProperties fallbackProperties;
 
     public static final String USER_CACHE = "users";
     public static final String USER_BY_EMAIL_CACHE = "usersByEmail";
@@ -56,14 +66,34 @@ public class CacheConfig {
         return template;
     }
 
-    @Bean
-    public CacheManager cacheManager(RedisConnectionFactory connectionFactory) {
+    @Bean("redisCacheManager")
+    public RedisCacheManager redisCacheManager(RedisConnectionFactory connectionFactory) {
         RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
                 .entryTtl(Duration.ofMinutes(30))
                 .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
                 .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new GenericJackson2JsonRedisSerializer()))
                 .disableCachingNullValues();
 
+        Map<String, RedisCacheConfiguration> cacheConfigurations = getCacheConfigurations(defaultConfig);
+
+        return RedisCacheManager.builder(connectionFactory)
+                .cacheDefaults(defaultConfig)
+                .withInitialCacheConfigurations(cacheConfigurations)
+                .transactionAware()
+                .build();
+    }
+
+    @Bean
+    @Primary
+    public CacheManager cacheManager(RedisCacheManager redisCacheManager) {
+        log.info("Initializing cache manager with fallback enabled: {}", fallbackProperties.isEnabled());
+        return new FallbackCacheManager(redisCacheManager, fallbackProperties.isEnabled());
+    }
+
+    /**
+     * Configure individual cache settings
+     */
+    private Map<String, RedisCacheConfiguration> getCacheConfigurations(RedisCacheConfiguration defaultConfig) {
         Map<String, RedisCacheConfiguration> cacheConfigurations = new HashMap<>();
 
         // User cache - 30 minutes TTL
@@ -119,11 +149,17 @@ public class CacheConfig {
         // Relative cache - 30 minutes TTL
         cacheConfigurations.put(RELATIVE_CACHE, defaultConfig.entryTtl(Duration.ofMinutes(30)));
 
-        return RedisCacheManager.builder(connectionFactory)
-                .cacheDefaults(defaultConfig)
-                .withInitialCacheConfigurations(cacheConfigurations)
-                .transactionAware()
-                .build();
+        return cacheConfigurations;
+    }
+
+    /**
+     * Fallback cache manager that disables caching when Redis is unavailable
+     */
+    @Bean("noOpCacheManager")
+    @ConditionalOnProperty(name = "app.cache.fallback.enabled", havingValue = "false")
+    public CacheManager noOpCacheManager() {
+        log.warn("Cache fallback is disabled. Application will fail if Redis is unavailable.");
+        return new org.springframework.cache.support.NoOpCacheManager();
     }
 }
 

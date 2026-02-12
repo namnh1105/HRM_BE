@@ -36,7 +36,6 @@ public interface PermissionRepository extends JpaRepository<Permission, UUID> {
     @Query("SELECT DISTINCT p FROM Permission p " +
            "JOIN p.rolePermissions rp " +
            "JOIN rp.role r " +
-           "JOIN r.rolePermissions urp " +
            "JOIN UserRole ur ON ur.role.id = r.id " +
            "WHERE ur.userId = :userId AND ur.isActive = true AND rp.isActive = true AND p.isActive = true")
     List<Permission> findByUserId(@Param("userId") UUID userId);

@@ -4,85 +4,60 @@ import com.hainam.worksphere.authorization.domain.Role;
 import com.hainam.worksphere.authorization.dto.request.CreateRoleRequest;
 import com.hainam.worksphere.authorization.dto.request.UpdateRoleRequest;
 import com.hainam.worksphere.authorization.dto.response.RoleResponse;
-import org.springframework.stereotype.Component;
+import org.mapstruct.*;
 
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@Component
-public class RoleMapper {
+@Mapper(componentModel = MappingConstants.ComponentModel.SPRING, uses = PermissionMapper.class)
+public interface RoleMapper {
 
-    private final PermissionMapper permissionMapper;
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "isSystem", constant = "false")
+    @Mapping(target = "rolePermissions", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
+    Role toEntity(CreateRoleRequest request);
 
-    public RoleMapper(PermissionMapper permissionMapper) {
-        this.permissionMapper = permissionMapper;
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "isSystem", ignore = true)
+    @Mapping(target = "rolePermissions", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
+    void updateEntity(@MappingTarget Role entity, UpdateRoleRequest request);
+
+    @Mapping(target = "permissions", ignore = true)
+    RoleResponse toResponse(Role entity);
+
+    @AfterMapping
+    default void mapPermissions(@MappingTarget RoleResponse response, Role entity) {
+        if (entity.getRolePermissions() != null) {
+            Set<com.hainam.worksphere.authorization.dto.response.PermissionResponse> permissions = entity.getRolePermissions()
+                .stream()
+                .filter(rp -> rp.getIsActive())
+                .map(rp -> {
+                    // MapStruct will auto-inject the PermissionMapper instance
+                    return com.hainam.worksphere.authorization.dto.response.PermissionResponse.builder()
+                        .id(rp.getPermission().getId())
+                        .code(rp.getPermission().getCode())
+                        .displayName(rp.getPermission().getDisplayName())
+                        .description(rp.getPermission().getDescription())
+                        .resource(rp.getPermission().getResource())
+                        .action(rp.getPermission().getAction())
+                        .isSystem(rp.getPermission().getIsSystem())
+                        .isActive(rp.getPermission().getIsActive())
+                        .createdAt(rp.getPermission().getCreatedAt())
+                        .updatedAt(rp.getPermission().getUpdatedAt())
+                        .build();
+                })
+                .collect(Collectors.toSet());
+            response.setPermissions(permissions);
+        } else {
+            response.setPermissions(Set.of());
+        }
     }
 
-    public Role toEntity(CreateRoleRequest request) {
-        if (request == null) {
-            return null;
-        }
-
-        return Role.builder()
-                .code(request.getCode())
-                .displayName(request.getDisplayName())
-                .description(request.getDescription())
-                .isActive(request.getIsActive())
-                .isSystem(false) // New roles are not system roles by default
-                .build();
-    }
-
-    public Role updateEntity(Role entity, UpdateRoleRequest request) {
-        if (entity == null || request == null) {
-            return entity;
-        }
-
-        entity.setCode(request.getCode());
-        entity.setDisplayName(request.getDisplayName());
-        entity.setDescription(request.getDescription());
-        if (request.getIsActive() != null) {
-            entity.setIsActive(request.getIsActive());
-        }
-
-        return entity;
-    }
-
-    public RoleResponse toResponse(Role entity) {
-        if (entity == null) {
-            return null;
-        }
-
-        return RoleResponse.builder()
-                .id(entity.getId())
-                .code(entity.getCode())
-                .displayName(entity.getDisplayName())
-                .description(entity.getDescription())
-                .isSystem(entity.getIsSystem())
-                .isActive(entity.getIsActive())
-                .permissions(entity.getRolePermissions() != null ?
-                    entity.getRolePermissions().stream()
-                        .filter(rp -> rp.getIsActive())
-                        .map(rp -> permissionMapper.toResponse(rp.getPermission()))
-                        .collect(Collectors.toSet()) : Set.of())
-                .createdAt(entity.getCreatedAt())
-                .updatedAt(entity.getUpdatedAt())
-                .build();
-    }
-
-    public RoleResponse toSimpleResponse(Role entity) {
-        if (entity == null) {
-            return null;
-        }
-
-        return RoleResponse.builder()
-                .id(entity.getId())
-                .code(entity.getCode())
-                .displayName(entity.getDisplayName())
-                .description(entity.getDescription())
-                .isSystem(entity.getIsSystem())
-                .isActive(entity.getIsActive())
-                .createdAt(entity.getCreatedAt())
-                .updatedAt(entity.getUpdatedAt())
-                .build();
-    }
+    @Named("toSimpleResponse")
+    @Mapping(target = "permissions", ignore = true)
+    RoleResponse toSimpleResponse(Role entity);
 }

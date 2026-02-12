@@ -101,8 +101,8 @@ public class PermissionController {
             @PathVariable UUID permissionId,
             @Valid @RequestBody UpdatePermissionRequest request) {
         Permission existingPermission = permissionService.getPermissionById(permissionId);
-        Permission updatedPermission = permissionMapper.updateEntity(existingPermission, request);
-        Permission savedPermission = permissionService.updatePermission(permissionId, updatedPermission);
+        permissionMapper.updateEntity(existingPermission, request);
+        Permission savedPermission = permissionService.updatePermission(permissionId, existingPermission);
         PermissionResponse response = permissionMapper.toResponse(savedPermission);
 
         return ResponseEntity.ok(ApiResponse.success("Permission updated successfully", response));

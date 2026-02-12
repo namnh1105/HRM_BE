@@ -1,5 +1,6 @@
 package com.hainam.worksphere.user.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.hainam.worksphere.auth.dto.response.UserPermissionInfo;
 import com.hainam.worksphere.auth.dto.response.UserRoleInfo;
@@ -39,9 +40,11 @@ public class UserWithAuthorizationResponse {
     private Boolean isActive;
 
     @JsonProperty("created_at")
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS")
     private LocalDateTime createdAt;
 
     @JsonProperty("updated_at")
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS")
     private LocalDateTime updatedAt;
 
     @JsonProperty("created_by")
@@ -54,6 +57,7 @@ public class UserWithAuthorizationResponse {
     private Boolean isDeleted;
 
     @JsonProperty("deleted_at")
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS")
     private LocalDateTime deletedAt;
 
     @JsonProperty("deleted_by")

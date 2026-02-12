@@ -26,10 +26,7 @@ import static org.mockito.Mockito.*;
 class RateLimitServiceTest extends BaseUnitTest {
 
     @Mock
-    private RedisTemplate<String, Object> redisTemplate;
-
-    @Mock
-    private ValueOperations<String, Object> valueOperations;
+    private RedisRateLimitOperations redisRateLimitOperations;
 
     @Mock
     private RateLimitProperties rateLimitProperties;
@@ -38,8 +35,6 @@ class RateLimitServiceTest extends BaseUnitTest {
 
     @BeforeEach
     void setUp() {
-        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
-
         // Use lenient stubbing to avoid unnecessary stubbing exceptions
         lenient().when(rateLimitProperties.isEnabled()).thenReturn(true);
         lenient().when(rateLimitProperties.getDefaultRequestsPerMinute()).thenReturn(100);
@@ -50,7 +45,10 @@ class RateLimitServiceTest extends BaseUnitTest {
         lenient().when(rateLimitProperties.getBanDurationMinutes()).thenReturn(15);
         lenient().when(rateLimitProperties.getMaxViolationsBeforeBan()).thenReturn(5);
 
-        rateLimitService = new RateLimitService(rateLimitProperties, redisTemplate);
+        // Mock Redis availability
+        lenient().when(redisRateLimitOperations.isRedisAvailable()).thenReturn(true);
+
+        rateLimitService = new RateLimitService(rateLimitProperties, redisRateLimitOperations);
     }
 
     @Test
@@ -61,17 +59,17 @@ class RateLimitServiceTest extends BaseUnitTest {
         RateLimitType type = RateLimitType.AUTHENTICATED;
         String redisKey = "rate_limit_count:AUTHENTICATED:test-user";
 
-        when(valueOperations.increment(redisKey, 1)).thenReturn(1L); // First request
-        when(redisTemplate.hasKey("rate_limit_ban:test-user")).thenReturn(false);
-        when(redisTemplate.expire(redisKey, 60, TimeUnit.SECONDS)).thenReturn(true);
+        when(redisRateLimitOperations.increment(redisKey, 1)).thenReturn(1L); // First request
+        when(redisRateLimitOperations.hasKey("rate_limit_ban:test-user")).thenReturn(false);
+        when(redisRateLimitOperations.expire(redisKey, 60, TimeUnit.SECONDS)).thenReturn(true);
 
         // When
         boolean result = rateLimitService.isAllowed(key, type);
 
         // Then
         assertTrue(result);
-        verify(valueOperations).increment(redisKey, 1);
-        verify(redisTemplate).expire(redisKey, 60, TimeUnit.SECONDS);
+        verify(redisRateLimitOperations).increment(redisKey, 1);
+        verify(redisRateLimitOperations).expire(redisKey, 60, TimeUnit.SECONDS);
     }
 
     @Test
@@ -82,15 +80,15 @@ class RateLimitServiceTest extends BaseUnitTest {
         RateLimitType type = RateLimitType.LOGIN;
         String redisKey = "rate_limit_count:LOGIN:test-user";
 
-        when(valueOperations.increment(redisKey, 1)).thenReturn(15L);
-        when(redisTemplate.hasKey("rate_limit_ban:test-user")).thenReturn(false);
+        when(redisRateLimitOperations.increment(redisKey, 1)).thenReturn(15L);
+        when(redisRateLimitOperations.hasKey("rate_limit_ban:test-user")).thenReturn(false);
 
         // When
         boolean result = rateLimitService.isAllowed(key, type);
 
         // Then
         assertFalse(result);
-        verify(valueOperations).increment("rate_limit_violation:test-user", 1);
+        verify(redisRateLimitOperations).increment("rate_limit_violation:test-user", 1);
     }
 
     @Test
@@ -100,16 +98,16 @@ class RateLimitServiceTest extends BaseUnitTest {
         String key = "test-user";
         RateLimitType type = RateLimitType.AUTHENTICATED;
 
-        when(redisTemplate.hasKey("rate_limit_ban:test-user")).thenReturn(true);
+        when(redisRateLimitOperations.hasKey("rate_limit_ban:test-user")).thenReturn(true);
 
         // When
         boolean result = rateLimitService.isAllowed(key, type);
 
         // Then
         assertFalse(result);
-        verify(redisTemplate).hasKey("rate_limit_ban:test-user");
+        verify(redisRateLimitOperations).hasKey("rate_limit_ban:test-user");
         // Should not increment count when banned
-        verify(valueOperations, never()).increment(anyString(), anyLong());
+        verify(redisRateLimitOperations, never()).increment(anyString(), anyLong());
     }
 
     @Test
@@ -122,18 +120,18 @@ class RateLimitServiceTest extends BaseUnitTest {
         String banKey = "rate_limit_ban:test-user";
 
         // Mock rate limit exceeded
-        when(valueOperations.increment(redisKey, 1)).thenReturn(15L); // Exceeds limit of 10
-        when(redisTemplate.hasKey(banKey)).thenReturn(false);
-        when(valueOperations.increment(violationKey, 1)).thenReturn(5L); // Max violations reached
+        when(redisRateLimitOperations.increment(redisKey, 1)).thenReturn(15L); // Exceeds limit of 10
+        when(redisRateLimitOperations.hasKey(banKey)).thenReturn(false);
+        when(redisRateLimitOperations.increment(violationKey, 1)).thenReturn(5L); // Max violations reached
 
         // When
         boolean result = rateLimitService.isAllowed(key, RateLimitType.LOGIN);
 
         // Then
         assertFalse(result);
-        verify(valueOperations).increment(violationKey, 1);
-        verify(valueOperations).set(eq(banKey), eq("banned"), any(Duration.class));
-        verify(redisTemplate).delete(violationKey);
+        verify(redisRateLimitOperations).increment(violationKey, 1);
+        verify(redisRateLimitOperations).set(eq(banKey), eq("banned"), any(Duration.class));
+        verify(redisRateLimitOperations).delete(violationKey);
     }
 
     @Test
@@ -155,7 +153,7 @@ class RateLimitServiceTest extends BaseUnitTest {
         RateLimitType type = RateLimitType.AUTHENTICATED;
         String redisKey = "rate_limit_count:AUTHENTICATED:test-user";
 
-        when(valueOperations.get(redisKey)).thenReturn(25L);
+        when(redisRateLimitOperations.get(redisKey)).thenReturn(25L);
 
         // When
         long availableTokens = rateLimitService.getAvailableTokens(key, type);
@@ -172,7 +170,7 @@ class RateLimitServiceTest extends BaseUnitTest {
         RateLimitType type = RateLimitType.AUTHENTICATED;
         String redisKey = "rate_limit_count:AUTHENTICATED:new-user";
 
-        when(valueOperations.get(redisKey)).thenReturn(null);
+        when(redisRateLimitOperations.get(redisKey)).thenReturn(null);
 
         // When
         long availableTokens = rateLimitService.getAvailableTokens(key, type);
@@ -188,7 +186,7 @@ class RateLimitServiceTest extends BaseUnitTest {
         String key = "banned-user";
         String banKey = "rate_limit_ban:banned-user";
 
-        when(redisTemplate.getExpire(banKey, TimeUnit.SECONDS)).thenReturn(300L); // 5 minutes
+        when(redisRateLimitOperations.getExpire(banKey, TimeUnit.SECONDS)).thenReturn(300L); // 5 minutes
 
         // When
         long remainingTime = rateLimitService.getRemainingBanTime(key);
@@ -207,9 +205,9 @@ class RateLimitServiceTest extends BaseUnitTest {
         rateLimitService.resetRateLimit(key);
 
         // Then
-        verify(redisTemplate).delete("rate_limit_ban:test-user");
-        verify(redisTemplate).delete("rate_limit_violation:test-user");
-        verify(redisTemplate, times(7)).delete(anyString()); // Ban + Violation + 5 rate limit types = 7 total
+        verify(redisRateLimitOperations).delete("rate_limit_ban:test-user");
+        verify(redisRateLimitOperations).delete("rate_limit_violation:test-user");
+        verify(redisRateLimitOperations, times(7)).delete(anyString()); // Ban + Violation + 5 rate limit types = 7 total
     }
 
     @Test
@@ -222,7 +220,7 @@ class RateLimitServiceTest extends BaseUnitTest {
         rateLimitService.unbanKey(key);
 
         // Then
-        verify(redisTemplate).delete("rate_limit_ban:banned-user");
+        verify(redisRateLimitOperations).delete("rate_limit_ban:banned-user");
     }
 
     @Test
@@ -230,14 +228,14 @@ class RateLimitServiceTest extends BaseUnitTest {
     void shouldAllowAllRequestsWhenRateLimitingDisabled() {
         // Given
         when(rateLimitProperties.isEnabled()).thenReturn(false);
-        rateLimitService = new RateLimitService(rateLimitProperties, redisTemplate);
+        rateLimitService = new RateLimitService(rateLimitProperties, redisRateLimitOperations);
 
         // When
         boolean result = rateLimitService.isAllowed("any-key", RateLimitType.LOGIN);
 
         // Then
         assertTrue(result);
-        verify(redisTemplate, never()).opsForValue();
+        verify(redisRateLimitOperations, never()).increment(anyString(), anyLong());
     }
 
     @Test
@@ -247,8 +245,8 @@ class RateLimitServiceTest extends BaseUnitTest {
         String key = "test-user";
         RateLimitType type = RateLimitType.AUTHENTICATED;
 
-        when(redisTemplate.hasKey(anyString())).thenReturn(false);
-        when(valueOperations.increment(anyString(), anyLong())).thenThrow(new RuntimeException("Redis error"));
+        when(redisRateLimitOperations.hasKey(anyString())).thenReturn(false);
+        when(redisRateLimitOperations.increment(anyString(), anyLong())).thenReturn(null); // Redis unavailable
 
         // When
         boolean result = rateLimitService.isAllowed(key, type);
@@ -256,5 +254,7 @@ class RateLimitServiceTest extends BaseUnitTest {
         // Then
         // Should not throw exception and fallback to local bucket
         assertNotNull(result);
+        // Should still be true for first request even with Redis failure
+        assertTrue(result);
     }
 }

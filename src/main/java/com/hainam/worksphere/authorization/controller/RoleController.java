@@ -92,8 +92,8 @@ public class RoleController {
         log.info("Updating role with ID: {}", roleId);
 
         Role existingRole = roleService.getRoleById(roleId);
-        Role updatedRole = roleMapper.updateEntity(existingRole, request);
-        Role savedRole = roleService.updateRole(roleId, updatedRole);
+        roleMapper.updateEntity(existingRole, request);
+        Role savedRole = roleService.updateRole(roleId, existingRole);
         RoleResponse response = roleMapper.toResponse(savedRole);
 
         return ResponseEntity.ok(ApiResponse.success("Role updated successfully", response));
