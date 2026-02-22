@@ -57,6 +57,18 @@ public class Attendance {
     @Column(name = "check_out_location", length = 255)
     private String checkOutLocation;
 
+    @Column(name = "check_in_latitude")
+    private Double checkInLatitude;
+
+    @Column(name = "check_in_longitude")
+    private Double checkInLongitude;
+
+    @Column(name = "check_out_latitude")
+    private Double checkOutLatitude;
+
+    @Column(name = "check_out_longitude")
+    private Double checkOutLongitude;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 20)
     @Builder.Default
