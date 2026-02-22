@@ -4,6 +4,7 @@ import com.hainam.worksphere.BaseUnitTest;
 import com.hainam.worksphere.TestFixtures;
 import com.hainam.worksphere.employee.domain.Employee;
 import com.hainam.worksphere.employee.repository.EmployeeRepository;
+import com.hainam.worksphere.employee.repository.EmployeeSalaryRepository;
 import com.hainam.worksphere.payroll.domain.Payroll;
 import com.hainam.worksphere.payroll.domain.PayrollStatus;
 import com.hainam.worksphere.payroll.dto.request.CreatePayrollRequest;
@@ -39,6 +40,9 @@ class PayrollServiceTest extends BaseUnitTest {
 
     @Mock
     private EmployeeRepository employeeRepository;
+
+    @Mock
+    private EmployeeSalaryRepository employeeSalaryRepository;
 
     @Mock
     private PayrollMapper payrollMapper;

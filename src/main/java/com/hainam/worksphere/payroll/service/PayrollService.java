@@ -1,7 +1,9 @@
 package com.hainam.worksphere.payroll.service;
 
 import com.hainam.worksphere.employee.domain.Employee;
+import com.hainam.worksphere.employee.domain.EmployeeSalary;
 import com.hainam.worksphere.employee.repository.EmployeeRepository;
+import com.hainam.worksphere.employee.repository.EmployeeSalaryRepository;
 import com.hainam.worksphere.payroll.domain.Payroll;
 import com.hainam.worksphere.payroll.domain.PayrollStatus;
 import com.hainam.worksphere.payroll.dto.request.CreatePayrollRequest;
@@ -31,6 +33,7 @@ public class PayrollService {
     private final PayrollRepository payrollRepository;
     private final PayrollMapper payrollMapper;
     private final EmployeeRepository employeeRepository;
+    private final EmployeeSalaryRepository employeeSalaryRepository;
 
     @Cacheable(value = CacheConfig.PAYROLL_CACHE, key = "'all'")
     public List<PayrollResponse> getAllPayrolls() {
@@ -75,11 +78,19 @@ public class PayrollService {
             throw new ValidationException("Payroll already exists for this employee in " + request.getMonth() + "/" + request.getYear());
         });
 
+        // Resolve baseSalary: use provided value, or look up from employee_salaries
+        Double baseSalary = request.getBaseSalary();
+        if (baseSalary == null) {
+            baseSalary = employeeSalaryRepository.findCurrentByEmployeeId(request.getEmployeeId())
+                    .map(EmployeeSalary::getBaseSalary)
+                    .orElseThrow(() -> new ValidationException("No current salary found for employee. Please provide base_salary or create an employee salary record."));
+        }
+
         Payroll payroll = Payroll.builder()
                 .employee(employee)
                 .month(request.getMonth())
                 .year(request.getYear())
-                .baseSalary(request.getBaseSalary())
+                .baseSalary(baseSalary)
                 .salaryCoefficient(request.getSalaryCoefficient() != null ? request.getSalaryCoefficient() : 1.0)
                 .workingDays(request.getWorkingDays())
                 .actualWorkingDays(request.getActualWorkingDays())

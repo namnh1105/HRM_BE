@@ -111,8 +111,9 @@ public class Employee {
     @Column(name = "health_insurance_number", length = 20)
     private String healthInsuranceNumber;
 
-    @Column(name = "base_salary")
-    private Double baseSalary;
+    // Face embedding for face recognition
+    @Column(name = "embedding", columnDefinition = "jsonb")
+    private String embedding;
 
     @CreationTimestamp
     @Column(name = "created_at")

@@ -94,7 +94,4 @@ public class CreateEmployeeRequest {
     @JsonProperty("health_insurance_number")
     @Size(max = 20)
     private String healthInsuranceNumber;
-
-    @JsonProperty("base_salary")
-    private Double baseSalary;
 }

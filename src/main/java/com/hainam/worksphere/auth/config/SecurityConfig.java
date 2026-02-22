@@ -66,36 +66,12 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        // Get public endpoints from properties
-        List<String> publicEndpoints = securityProperties.getPublicEndpointsList();
-        String[] publicEndpointsArray = publicEndpoints.toArray(new String[0]);
-
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(authz -> authz
-                        // Public endpoints from configuration
-                        .requestMatchers(publicEndpointsArray).permitAll()
-                        // Additional static resources and console access
-                        .requestMatchers("/favicon.ico", "/static/**", "/css/**", "/js/**", "/images/**").permitAll()
-                        .requestMatchers("/h2-console/**").permitAll()
-                        // All other requests require authentication
-                        .anyRequest().authenticated()
-                )
-                .oauth2Login(oauth2 -> oauth2
-                        .successHandler(oAuth2AuthenticationSuccessHandler)
-                )
-                .exceptionHandling(exceptions -> exceptions
-                        .authenticationEntryPoint(authenticationEntryPoint)
-                        .accessDeniedHandler(accessDeniedHandler)
-                )
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
-                .authenticationProvider(authenticationProvider())
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterAfter(rateLimitFilter, JwtAuthenticationFilter.class)
-                .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable())); // For H2 console
+                        .anyRequest().permitAll()
+                );
 
         return http.build();
     }

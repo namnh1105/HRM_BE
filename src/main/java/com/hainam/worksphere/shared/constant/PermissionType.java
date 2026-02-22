@@ -29,6 +29,12 @@ public enum PermissionType {
     UPDATE_EMPLOYEE("Update employees"),
     DELETE_EMPLOYEE("Delete employees"),
 
+    // Employee salary management permissions
+    VIEW_EMPLOYEE_SALARY("View employee salaries"),
+    CREATE_EMPLOYEE_SALARY("Create employee salaries"),
+    UPDATE_EMPLOYEE_SALARY("Update employee salaries"),
+    DELETE_EMPLOYEE_SALARY("Delete employee salaries"),
+
     // Attendance management permissions
     VIEW_ATTENDANCE("View attendance records"),
     CREATE_ATTENDANCE("Create attendance records"),

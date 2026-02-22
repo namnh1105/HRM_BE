@@ -209,7 +209,6 @@ public class TestFixtures {
                 .position("Software Engineer")
                 .joinDate(LocalDate.of(2023, 1, 1))
                 .employmentStatus(EmploymentStatus.ACTIVE)
-                .baseSalary(15000000.0)
                 .isDeleted(false)
                 .createdAt(LocalDateTime.now())
                 .build();
@@ -229,7 +228,6 @@ public class TestFixtures {
                 .position("Software Engineer")
                 .joinDate(LocalDate.of(2023, 1, 1))
                 .employmentStatus(EmploymentStatus.ACTIVE)
-                .baseSalary(15000000.0)
                 .isDeleted(false)
                 .createdAt(LocalDateTime.now())
                 .build();

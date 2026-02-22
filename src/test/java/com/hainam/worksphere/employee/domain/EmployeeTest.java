@@ -31,7 +31,6 @@ class EmployeeTest extends BaseUnitTest {
         LocalDate dateOfBirth = LocalDate.of(1990, 1, 15);
         String position = "Software Engineer";
         LocalDate joinDate = LocalDate.of(2023, 1, 1);
-        Double baseSalary = 15000000.0;
         LocalDateTime now = LocalDateTime.now();
 
         // When
@@ -48,7 +47,6 @@ class EmployeeTest extends BaseUnitTest {
                 .position(position)
                 .joinDate(joinDate)
                 .employmentStatus(EmploymentStatus.ACTIVE)
-                .baseSalary(baseSalary)
                 .isDeleted(false)
                 .createdAt(now)
                 .build();
@@ -67,7 +65,6 @@ class EmployeeTest extends BaseUnitTest {
                 () -> assertThat(employee.getPosition()).isEqualTo(position),
                 () -> assertThat(employee.getJoinDate()).isEqualTo(joinDate),
                 () -> assertThat(employee.getEmploymentStatus()).isEqualTo(EmploymentStatus.ACTIVE),
-                () -> assertThat(employee.getBaseSalary()).isEqualTo(baseSalary),
                 () -> assertThat(employee.getIsDeleted()).isFalse(),
                 () -> assertThat(employee.getCreatedAt()).isEqualTo(now)
         );
@@ -281,7 +278,6 @@ class EmployeeTest extends BaseUnitTest {
     @DisplayName("Should handle financial fields")
     void shouldHandleFinancialFields() {
         // Given
-        Double baseSalary = 20000000.0;
         String bankAccountNumber = "1234567890";
         String bankName = "Vietcombank";
         String taxCode = "TAX123456";
@@ -293,7 +289,6 @@ class EmployeeTest extends BaseUnitTest {
                 .lastName("Employee")
                 .fullName("Finance Employee")
                 .email("finance@example.com")
-                .baseSalary(baseSalary)
                 .bankAccountNumber(bankAccountNumber)
                 .bankName(bankName)
                 .taxCode(taxCode)
@@ -301,7 +296,6 @@ class EmployeeTest extends BaseUnitTest {
 
         // Then
         assertAll(
-                () -> assertThat(employee.getBaseSalary()).isEqualTo(baseSalary),
                 () -> assertThat(employee.getBankAccountNumber()).isEqualTo(bankAccountNumber),
                 () -> assertThat(employee.getBankName()).isEqualTo(bankName),
                 () -> assertThat(employee.getTaxCode()).isEqualTo(taxCode)

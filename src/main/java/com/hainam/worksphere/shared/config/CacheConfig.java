@@ -45,6 +45,7 @@ public class CacheConfig {
     public static final String SYSTEM_PERMISSIONS_CACHE = "systemPermissions";
     public static final String DEPARTMENT_CACHE = "departments";
     public static final String EMPLOYEE_CACHE = "employees";
+    public static final String EMPLOYEE_SALARY_CACHE = "employeeSalaries";
     public static final String ATTENDANCE_CACHE = "attendances";
     public static final String WORK_SHIFT_CACHE = "workShifts";
     public static final String CONTRACT_CACHE = "contracts";
@@ -124,6 +125,9 @@ public class CacheConfig {
 
         // Employee cache - 30 minutes TTL
         cacheConfigurations.put(EMPLOYEE_CACHE, defaultConfig.entryTtl(Duration.ofMinutes(30)));
+
+        // Employee salary cache - 30 minutes TTL
+        cacheConfigurations.put(EMPLOYEE_SALARY_CACHE, defaultConfig.entryTtl(Duration.ofMinutes(30)));
 
         // Attendance cache - 10 minutes TTL
         cacheConfigurations.put(ATTENDANCE_CACHE, defaultConfig.entryTtl(Duration.ofMinutes(10)));

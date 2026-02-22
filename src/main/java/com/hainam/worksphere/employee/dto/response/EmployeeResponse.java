@@ -86,8 +86,6 @@ public class EmployeeResponse {
     @JsonProperty("health_insurance_number")
     private String healthInsuranceNumber;
 
-    @JsonProperty("base_salary")
-    private Double baseSalary;
 
     @JsonProperty("created_at")
     private LocalDateTime createdAt;

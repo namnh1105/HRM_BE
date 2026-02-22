@@ -65,7 +65,6 @@ class EmployeeServiceTest extends BaseUnitTest {
                 .phone(testEmployee.getPhone())
                 .position(testEmployee.getPosition())
                 .employmentStatus(testEmployee.getEmploymentStatus().name())
-                .baseSalary(testEmployee.getBaseSalary())
                 .createdAt(testEmployee.getCreatedAt())
                 .build();
     }
@@ -143,7 +142,6 @@ class EmployeeServiceTest extends BaseUnitTest {
                 .gender("MALE")
                 .position("Backend Developer")
                 .joinDate(LocalDate.of(2024, 1, 1))
-                .baseSalary(18000000.0)
                 .build();
 
         Employee savedEmployee = TestFixtures.createTestEmployee();

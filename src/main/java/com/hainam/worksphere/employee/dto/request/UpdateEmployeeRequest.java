@@ -83,8 +83,6 @@ public class UpdateEmployeeRequest {
     @Size(max = 20)
     private String healthInsuranceNumber;
 
-    @JsonProperty("base_salary")
-    private Double baseSalary;
 
     @JsonProperty("leave_date")
     private LocalDate leaveDate;

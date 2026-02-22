@@ -94,7 +94,6 @@ public class EmployeeService {
                 .taxCode(request.getTaxCode())
                 .socialInsuranceNumber(request.getSocialInsuranceNumber())
                 .healthInsuranceNumber(request.getHealthInsuranceNumber())
-                .baseSalary(request.getBaseSalary())
                 .createdBy(createdBy)
                 .build();
 
@@ -150,7 +149,6 @@ public class EmployeeService {
         if (request.getTaxCode() != null) employee.setTaxCode(request.getTaxCode());
         if (request.getSocialInsuranceNumber() != null) employee.setSocialInsuranceNumber(request.getSocialInsuranceNumber());
         if (request.getHealthInsuranceNumber() != null) employee.setHealthInsuranceNumber(request.getHealthInsuranceNumber());
-        if (request.getBaseSalary() != null) employee.setBaseSalary(request.getBaseSalary());
         if (request.getLeaveDate() != null) employee.setLeaveDate(request.getLeaveDate());
 
         if (request.getDepartmentId() != null) {
