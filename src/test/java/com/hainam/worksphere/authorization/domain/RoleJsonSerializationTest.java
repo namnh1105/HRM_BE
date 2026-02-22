@@ -15,7 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertAll;
 
 @SpringBootTest
-@ActiveProfiles("development")
+@ActiveProfiles("test")
 @DisplayName("Role JSON Serialization Tests")
 class RoleJsonSerializationTest extends BaseUnitTest {
 
