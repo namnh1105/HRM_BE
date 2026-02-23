@@ -118,4 +118,15 @@ public class EmployeeWorkShiftController {
         );
         return ResponseEntity.ok(ApiResponse.success(response));
     }
+
+    @GetMapping("/me")
+    @Operation(summary = "Get all work shift assignments for current user")
+    public ResponseEntity<ApiResponse<List<EmployeeWorkShiftResponse>>> getMyAllShifts(
+            @AuthenticationPrincipal UserPrincipal userPrincipal
+    ) {
+        List<EmployeeWorkShiftResponse> response = employeeWorkShiftService.getAllByUserId(
+                userPrincipal.getId()
+        );
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
 }

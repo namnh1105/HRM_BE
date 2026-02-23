@@ -153,4 +153,14 @@ public class EmployeeWorkShiftService {
                 .map(employeeWorkShiftMapper::toResponse)
                 .collect(Collectors.toList());
     }
+
+    public List<EmployeeWorkShiftResponse> getAllByUserId(UUID userId) {
+        Employee employee = employeeRepository.findActiveByUserId(userId)
+                .orElseThrow(() -> EmployeeNotFoundException.byId("user:" + userId));
+
+        return employeeWorkShiftRepository.findActiveByEmployeeId(employee.getId())
+                .stream()
+                .map(employeeWorkShiftMapper::toResponse)
+                .collect(Collectors.toList());
+    }
 }
