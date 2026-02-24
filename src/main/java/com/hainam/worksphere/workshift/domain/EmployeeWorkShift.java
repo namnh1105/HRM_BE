@@ -39,11 +39,8 @@ public class EmployeeWorkShift {
     @JoinColumn(name = "work_shift_id", nullable = false)
     private WorkShift workShift;
 
-    @Column(name = "effective_date", nullable = false)
-    private LocalDate effectiveDate;
-
-    @Column(name = "expiry_date")
-    private LocalDate expiryDate;
+    @Column(name = "date", nullable = false)
+    private LocalDate date;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "day_of_week", length = 10)

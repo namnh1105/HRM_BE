@@ -1,6 +1,5 @@
 package com.hainam.worksphere.authorization.dto.response;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -16,11 +15,9 @@ public class UserRoleAssignmentResponse {
 
     private UUID id;
 
-    @JsonProperty("user_id")
     private UUID userId;
 
     private RoleResponse role;
 
-    @JsonProperty("is_active")
     private Boolean isActive;
 }

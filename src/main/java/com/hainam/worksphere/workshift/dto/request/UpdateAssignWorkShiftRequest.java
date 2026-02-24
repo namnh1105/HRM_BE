@@ -1,6 +1,5 @@
 package com.hainam.worksphere.workshift.dto.request;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -15,12 +14,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class UpdateAssignWorkShiftRequest {
 
-    @JsonProperty("effective_date")
-    private LocalDate effectiveDate;
+    private LocalDate date;
 
-    @JsonProperty("expiry_date")
-    private LocalDate expiryDate;
-
-    @JsonProperty("day_of_week")
     private DayOfWeek dayOfWeek;
 }

@@ -1,7 +1,6 @@
 package com.hainam.worksphere.user.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,43 +17,32 @@ public class UserResponse {
 
     private UUID id;
 
-    @JsonProperty("given_name")
     private String givenName;
 
-    @JsonProperty("family_name")
     private String familyName;
 
     private String email;
 
     private String name;
 
-    @JsonProperty("avatar_url")
     private String avatarUrl;
 
-    @JsonProperty("is_active")
     private Boolean isActive;
 
-    @JsonProperty("created_at")
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS")
     private LocalDateTime createdAt;
 
-    @JsonProperty("updated_at")
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS")
     private LocalDateTime updatedAt;
 
-    @JsonProperty("created_by")
     private UUID createdBy;
 
-    @JsonProperty("updated_by")
     private UUID updatedBy;
 
-    @JsonProperty("is_deleted")
     private Boolean isDeleted;
 
-    @JsonProperty("deleted_at")
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS")
     private LocalDateTime deletedAt;
 
-    @JsonProperty("deleted_by")
     private UUID deletedBy;
 }

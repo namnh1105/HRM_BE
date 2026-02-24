@@ -1,6 +1,5 @@
 package com.hainam.worksphere.insurance.dto.response;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -21,25 +20,19 @@ public class InsuranceResponse {
 
     private String name;
 
-    @JsonProperty("insurance_type")
     private String insuranceType;
 
     private String provider;
 
-    @JsonProperty("employee_rate")
     private Double employeeRate;
 
-    @JsonProperty("employer_rate")
     private Double employerRate;
 
     private String description;
 
-    @JsonProperty("is_active")
     private Boolean isActive;
 
-    @JsonProperty("created_at")
     private LocalDateTime createdAt;
 
-    @JsonProperty("updated_at")
     private LocalDateTime updatedAt;
 }

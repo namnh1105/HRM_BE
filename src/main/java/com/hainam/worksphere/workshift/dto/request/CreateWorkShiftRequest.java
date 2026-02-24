@@ -1,6 +1,5 @@
 package com.hainam.worksphere.workshift.dto.request;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -26,18 +25,14 @@ public class CreateWorkShiftRequest {
     private String code;
 
     @NotNull(message = "Start time is required")
-    @JsonProperty("start_time")
     private LocalTime startTime;
 
     @NotNull(message = "End time is required")
-    @JsonProperty("end_time")
     private LocalTime endTime;
 
-    @JsonProperty("break_duration")
     private Double breakDuration;
 
     private String description;
 
-    @JsonProperty("is_night_shift")
     private Boolean isNightShift;
 }

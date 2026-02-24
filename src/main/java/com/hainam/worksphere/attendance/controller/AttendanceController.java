@@ -80,8 +80,8 @@ public class AttendanceController {
     @RequirePermission(PermissionType.VIEW_ATTENDANCE)
     public ResponseEntity<ApiResponse<List<AttendanceResponse>>> getMyAttendanceHistory(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
-            @RequestParam("start_date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam("end_date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
+            @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
     ) {
         Employee employee = getEmployeeByUserId(userPrincipal.getId());
         List<AttendanceResponse> response = attendanceService.getAttendanceHistory(employee.getId(), startDate, endDate);
@@ -93,8 +93,8 @@ public class AttendanceController {
     @RequirePermission(PermissionType.VIEW_ATTENDANCE)
     public ResponseEntity<ApiResponse<List<AttendanceResponse>>> getEmployeeAttendanceHistory(
             @PathVariable UUID employeeId,
-            @RequestParam("start_date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam("end_date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
+            @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
     ) {
         List<AttendanceResponse> response = attendanceService.getAttendanceHistory(employeeId, startDate, endDate);
         return ResponseEntity.ok(ApiResponse.success(response));

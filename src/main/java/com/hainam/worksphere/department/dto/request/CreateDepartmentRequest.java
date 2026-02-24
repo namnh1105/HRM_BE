@@ -1,6 +1,5 @@
 package com.hainam.worksphere.department.dto.request;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -32,9 +31,7 @@ public class CreateDepartmentRequest {
     @Size(max = 100)
     private String email;
 
-    @JsonProperty("manager_id")
     private UUID managerId;
 
-    @JsonProperty("parent_department_id")
     private UUID parentDepartmentId;
 }

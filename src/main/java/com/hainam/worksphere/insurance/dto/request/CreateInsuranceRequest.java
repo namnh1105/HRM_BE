@@ -1,6 +1,5 @@
 package com.hainam.worksphere.insurance.dto.request;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.hainam.worksphere.insurance.domain.InsuranceType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -22,15 +21,12 @@ public class CreateInsuranceRequest {
     private String name;
 
     @NotNull(message = "Insurance type is required")
-    @JsonProperty("insurance_type")
     private InsuranceType insuranceType;
 
     private String provider;
 
-    @JsonProperty("employee_rate")
     private Double employeeRate;
 
-    @JsonProperty("employer_rate")
     private Double employerRate;
 
     private String description;

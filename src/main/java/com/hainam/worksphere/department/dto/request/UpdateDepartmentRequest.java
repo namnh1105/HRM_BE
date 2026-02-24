@@ -1,6 +1,5 @@
 package com.hainam.worksphere.department.dto.request;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -26,12 +25,9 @@ public class UpdateDepartmentRequest {
     @Size(max = 100)
     private String email;
 
-    @JsonProperty("manager_id")
     private UUID managerId;
 
-    @JsonProperty("parent_department_id")
     private UUID parentDepartmentId;
 
-    @JsonProperty("is_active")
     private Boolean isActive;
 }

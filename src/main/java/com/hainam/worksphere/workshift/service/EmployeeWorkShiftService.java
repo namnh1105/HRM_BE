@@ -78,22 +78,17 @@ public class EmployeeWorkShiftService {
         WorkShift workShift = workShiftRepository.findActiveById(request.getWorkShiftId())
                 .orElseThrow(() -> WorkShiftNotFoundException.byId(request.getWorkShiftId().toString()));
 
-        // Validate dates
-        if (request.getExpiryDate() != null && request.getExpiryDate().isBefore(request.getEffectiveDate())) {
-            throw ValidationException.fieldError("expiry_date", "Expiry date must be after effective date");
-        }
-
-        // Check for duplicate assignment on same day_of_week with overlapping dates
+        // Check for duplicate assignment on same day_of_week and date
         DayOfWeek checkDay = request.getDayOfWeek();
         if (checkDay != null) {
             boolean exists = employeeWorkShiftRepository.existsActiveAssignment(
                     request.getEmployeeId(), request.getWorkShiftId(),
-                    request.getEffectiveDate(), checkDay
+                    request.getDate(), checkDay
             );
             if (exists) {
                 throw new ValidationException(
                         "Employee already has this work shift assigned for " + checkDay +
-                        " on the effective date"
+                        " on the date"
                 );
             }
         }
@@ -112,19 +107,11 @@ public class EmployeeWorkShiftService {
         EmployeeWorkShift ews = employeeWorkShiftRepository.findActiveById(id)
                 .orElseThrow(() -> new ValidationException("Employee work shift assignment not found with id: " + id));
 
-        if (request.getEffectiveDate() != null) {
-            ews.setEffectiveDate(request.getEffectiveDate());
-        }
-        if (request.getExpiryDate() != null) {
-            ews.setExpiryDate(request.getExpiryDate());
+        if (request.getDate() != null) {
+            ews.setDate(request.getDate());
         }
         if (request.getDayOfWeek() != null) {
             ews.setDayOfWeek(request.getDayOfWeek());
-        }
-
-        // Validate dates
-        if (ews.getExpiryDate() != null && ews.getExpiryDate().isBefore(ews.getEffectiveDate())) {
-            throw ValidationException.fieldError("expiry_date", "Expiry date must be after effective date");
         }
 
         ews.setUpdatedBy(updatedBy);

@@ -1,7 +1,6 @@
 package com.hainam.worksphere.workshift.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -23,31 +22,23 @@ public class WorkShiftResponse {
 
     private String code;
 
-    @JsonProperty("start_time")
     private LocalTime startTime;
 
-    @JsonProperty("end_time")
     private LocalTime endTime;
 
-    @JsonProperty("break_duration")
     private Double breakDuration;
 
-    @JsonProperty("total_hours")
     private Double totalHours;
 
     private String description;
 
-    @JsonProperty("is_active")
     private Boolean isActive;
 
-    @JsonProperty("is_night_shift")
     private Boolean isNightShift;
 
-    @JsonProperty("created_at")
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS")
     private LocalDateTime createdAt;
 
-    @JsonProperty("updated_at")
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS")
     private LocalDateTime updatedAt;
 }
