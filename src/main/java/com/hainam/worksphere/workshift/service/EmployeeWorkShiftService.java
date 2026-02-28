@@ -13,6 +13,9 @@ import com.hainam.worksphere.workshift.dto.response.EmployeeWorkShiftResponse;
 import com.hainam.worksphere.workshift.mapper.EmployeeWorkShiftMapper;
 import com.hainam.worksphere.workshift.repository.EmployeeWorkShiftRepository;
 import com.hainam.worksphere.workshift.repository.WorkShiftRepository;
+import com.hainam.worksphere.shared.audit.annotation.AuditAction;
+import com.hainam.worksphere.shared.audit.domain.ActionType;
+import com.hainam.worksphere.shared.audit.util.AuditContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -71,6 +74,7 @@ public class EmployeeWorkShiftService {
     }
 
     @Transactional
+    @AuditAction(type = ActionType.CREATE, entity = "EMPLOYEE_WORK_SHIFT")
     public EmployeeWorkShiftResponse assignWorkShift(AssignWorkShiftRequest request, UUID createdBy) {
         Employee employee = employeeRepository.findActiveById(request.getEmployeeId())
                 .orElseThrow(() -> EmployeeNotFoundException.byId(request.getEmployeeId().toString()));
@@ -99,13 +103,17 @@ public class EmployeeWorkShiftService {
         ews.setCreatedBy(createdBy);
 
         EmployeeWorkShift saved = employeeWorkShiftRepository.save(ews);
+        AuditContext.registerCreated(saved);
         return employeeWorkShiftMapper.toResponse(saved);
     }
 
     @Transactional
+    @AuditAction(type = ActionType.UPDATE, entity = "EMPLOYEE_WORK_SHIFT")
     public EmployeeWorkShiftResponse updateAssignment(UUID id, UpdateAssignWorkShiftRequest request, UUID updatedBy) {
         EmployeeWorkShift ews = employeeWorkShiftRepository.findActiveById(id)
                 .orElseThrow(() -> new ValidationException("Employee work shift assignment not found with id: " + id));
+
+        AuditContext.snapshot(ews);
 
         if (request.getDate() != null) {
             ews.setDate(request.getDate());
@@ -116,13 +124,17 @@ public class EmployeeWorkShiftService {
 
         ews.setUpdatedBy(updatedBy);
         EmployeeWorkShift saved = employeeWorkShiftRepository.save(ews);
+        AuditContext.registerUpdated(saved);
         return employeeWorkShiftMapper.toResponse(saved);
     }
 
     @Transactional
+    @AuditAction(type = ActionType.DELETE, entity = "EMPLOYEE_WORK_SHIFT")
     public void softDelete(UUID id, UUID deletedBy) {
         EmployeeWorkShift ews = employeeWorkShiftRepository.findActiveById(id)
                 .orElseThrow(() -> new ValidationException("Employee work shift assignment not found with id: " + id));
+
+        AuditContext.registerDeleted(ews);
 
         ews.setIsDeleted(true);
         ews.setDeletedAt(LocalDateTime.now());

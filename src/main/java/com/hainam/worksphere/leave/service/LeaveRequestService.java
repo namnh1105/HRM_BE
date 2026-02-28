@@ -13,6 +13,9 @@ import com.hainam.worksphere.shared.config.CacheConfig;
 import com.hainam.worksphere.shared.exception.EmployeeNotFoundException;
 import com.hainam.worksphere.shared.exception.LeaveRequestNotFoundException;
 import com.hainam.worksphere.shared.exception.ValidationException;
+import com.hainam.worksphere.shared.audit.annotation.AuditAction;
+import com.hainam.worksphere.shared.audit.domain.ActionType;
+import com.hainam.worksphere.shared.audit.util.AuditContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -36,6 +39,7 @@ public class LeaveRequestService {
 
     @Transactional
     @CacheEvict(value = CacheConfig.LEAVE_REQUEST_CACHE, allEntries = true)
+    @AuditAction(type = ActionType.CREATE, entity = "LEAVE_REQUEST")
     public LeaveRequestResponse createLeaveRequest(UUID employeeId, CreateLeaveRequestDto request) {
         Employee employee = employeeRepository.findActiveById(employeeId)
                 .orElseThrow(() -> EmployeeNotFoundException.byId(employeeId.toString()));
@@ -62,14 +66,18 @@ public class LeaveRequestService {
                 .build();
 
         LeaveRequest saved = leaveRequestRepository.save(leaveRequest);
+        AuditContext.registerCreated(saved);
         return leaveRequestMapper.toLeaveRequestResponse(saved);
     }
 
     @Transactional
     @CacheEvict(value = CacheConfig.LEAVE_REQUEST_CACHE, allEntries = true)
+    @AuditAction(type = ActionType.UPDATE, entity = "LEAVE_REQUEST", actionCode = "APPROVE_LEAVE_REQUEST")
     public LeaveRequestResponse approveLeaveRequest(UUID leaveRequestId, UUID approverId, ApproveLeaveRequestDto request) {
         LeaveRequest leaveRequest = leaveRequestRepository.findActiveById(leaveRequestId)
                 .orElseThrow(() -> LeaveRequestNotFoundException.byId(leaveRequestId.toString()));
+
+        AuditContext.snapshot(leaveRequest);
 
         if (leaveRequest.getStatus() != LeaveRequestStatus.PENDING) {
             throw new ValidationException("Only PENDING leave requests can be approved or rejected");
@@ -85,14 +93,18 @@ public class LeaveRequestService {
         leaveRequest.setUpdatedBy(approverId);
 
         LeaveRequest saved = leaveRequestRepository.save(leaveRequest);
+        AuditContext.registerUpdated(saved);
         return leaveRequestMapper.toLeaveRequestResponse(saved);
     }
 
     @Transactional
     @CacheEvict(value = CacheConfig.LEAVE_REQUEST_CACHE, allEntries = true)
+    @AuditAction(type = ActionType.UPDATE, entity = "LEAVE_REQUEST", actionCode = "CANCEL_LEAVE_REQUEST")
     public LeaveRequestResponse cancelLeaveRequest(UUID leaveRequestId, UUID employeeId) {
         LeaveRequest leaveRequest = leaveRequestRepository.findActiveById(leaveRequestId)
                 .orElseThrow(() -> LeaveRequestNotFoundException.byId(leaveRequestId.toString()));
+
+        AuditContext.snapshot(leaveRequest);
 
         if (!leaveRequest.getEmployee().getId().equals(employeeId)) {
             throw new ValidationException("You can only cancel your own leave requests");
@@ -106,6 +118,7 @@ public class LeaveRequestService {
         leaveRequest.setUpdatedBy(employeeId);
 
         LeaveRequest saved = leaveRequestRepository.save(leaveRequest);
+        AuditContext.registerUpdated(saved);
         return leaveRequestMapper.toLeaveRequestResponse(saved);
     }
 

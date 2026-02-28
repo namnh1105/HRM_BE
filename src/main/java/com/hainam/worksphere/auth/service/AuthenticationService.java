@@ -11,7 +11,12 @@ import com.hainam.worksphere.auth.security.UserPrincipal;
 import com.hainam.worksphere.auth.util.JwtUtil;
 import com.hainam.worksphere.authorization.domain.Permission;
 import com.hainam.worksphere.authorization.domain.Role;
+import com.hainam.worksphere.authorization.repository.RoleRepository;
 import com.hainam.worksphere.authorization.service.AuthorizationService;
+import com.hainam.worksphere.authorization.service.UserRoleService;
+import com.hainam.worksphere.shared.audit.annotation.AuditAction;
+import com.hainam.worksphere.shared.audit.domain.ActionType;
+import com.hainam.worksphere.shared.audit.util.AuditContext;
 import com.hainam.worksphere.shared.exception.*;
 import com.hainam.worksphere.user.domain.User;
 import com.hainam.worksphere.user.dto.response.UserWithAuthorizationResponse;
@@ -44,6 +49,8 @@ public class AuthenticationService {
     private final AuthResponseMapper authResponseMapper;
     private final AuthorizationService authorizationService;
     private final UserAuthorizationMapper userAuthorizationMapper;
+    private final UserRoleService userRoleService;
+    private final RoleRepository roleRepository;
 
     @Transactional
     public AuthenticationResponse register(RegisterRequest request) {
@@ -58,6 +65,12 @@ public class AuthenticationService {
 
         savedUser.setCreatedBy(savedUser.getId());
         savedUser = userRepository.save(savedUser);
+
+        // Auto-assign USER role to new user
+        assignDefaultUserRole(savedUser.getId());
+
+        // Register for audit via AuditContext (picked up by @Auditable on controller or logged inline)
+        AuditContext.registerCreated(savedUser);
 
         List<Role> userRoles = authorizationService.getUserRoles(savedUser.getId());
         List<Permission> userPermissions = authorizationService.getUserPermissions(savedUser.getId());
@@ -165,20 +178,29 @@ public class AuthenticationService {
             throw new OAuth2ValidationException("Family name is required for Google OAuth2 login");
         }
 
-        User user = userRepository.findActiveByEmail(email)
-                .orElseGet(() -> {
-                    User newUser = User.builder()
-                            .email(email)
-                            .name(name)
-                            .givenName(givenName)
-                            .familyName(familyName)
-                            .googleId(googleId)
-                            .isEnabled(true)
-                            .build();
-                    User savedUser = userRepository.save(newUser);
-                    savedUser.setCreatedBy(savedUser.getId());
-                    return userRepository.save(savedUser);
-                });
+        boolean isNewUser = false;
+        User user = userRepository.findActiveByEmail(email).orElse(null);
+
+        if (user == null) {
+            isNewUser = true;
+            User newUser = User.builder()
+                    .email(email)
+                    .name(name)
+                    .givenName(givenName)
+                    .familyName(familyName)
+                    .googleId(googleId)
+                    .isEnabled(true)
+                    .build();
+            User savedUser = userRepository.save(newUser);
+            savedUser.setCreatedBy(savedUser.getId());
+            user = userRepository.save(savedUser);
+
+            // Auto-assign USER role to new OAuth2 user
+            assignDefaultUserRole(user.getId());
+
+            // Register for audit
+            AuditContext.registerCreated(user);
+        }
 
         if (user.getGoogleId() == null || !user.getGoogleId().equals(googleId)) {
             user.setGoogleId(googleId);
@@ -201,6 +223,20 @@ public class AuthenticationService {
                 jwtUtil.getAccessTokenExpiration() / 1000,
                 userWithAuth
         );
+    }
+
+    /**
+     * Assign the default USER role to a newly registered user
+     */
+    private void assignDefaultUserRole(java.util.UUID userId) {
+        try {
+            roleRepository.findByCode("USER").ifPresent(role -> {
+                userRoleService.assignRoleToUser(userId, role.getId());
+                log.info("Assigned default USER role to user: {}", userId);
+            });
+        } catch (Exception e) {
+            log.warn("Failed to assign default USER role to user: {}", userId, e);
+        }
     }
 
     public UserPrincipal validateAccessToken(String token) {

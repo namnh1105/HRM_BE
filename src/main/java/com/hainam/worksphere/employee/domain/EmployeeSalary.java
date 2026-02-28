@@ -1,5 +1,6 @@
 package com.hainam.worksphere.employee.domain;
 
+import com.hainam.worksphere.shared.audit.annotation.AuditableEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -18,6 +19,10 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@AuditableEntity(ignoreFields = {
+    "id", "employee", "updatedAt", "updatedBy", "createdAt", "createdBy",
+    "version", "isDeleted", "deletedAt", "deletedBy"
+})
 public class EmployeeSalary {
 
     @Id

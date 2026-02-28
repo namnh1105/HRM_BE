@@ -8,6 +8,9 @@ import com.hainam.worksphere.department.mapper.DepartmentMapper;
 import com.hainam.worksphere.department.repository.DepartmentRepository;
 import com.hainam.worksphere.employee.domain.Employee;
 import com.hainam.worksphere.employee.repository.EmployeeRepository;
+import com.hainam.worksphere.shared.audit.annotation.AuditAction;
+import com.hainam.worksphere.shared.audit.domain.ActionType;
+import com.hainam.worksphere.shared.audit.util.AuditContext;
 import com.hainam.worksphere.shared.config.CacheConfig;
 import com.hainam.worksphere.shared.exception.DepartmentNotFoundException;
 import com.hainam.worksphere.shared.exception.EmployeeNotFoundException;
@@ -55,6 +58,7 @@ public class DepartmentService {
 
     @Transactional
     @CacheEvict(value = CacheConfig.DEPARTMENT_CACHE, allEntries = true)
+    @AuditAction(type = ActionType.CREATE, entity = "DEPARTMENT")
     public DepartmentResponse createDepartment(CreateDepartmentRequest request, UUID createdBy) {
         if (departmentRepository.existsActiveByCode(request.getCode())) {
             throw ValidationException.duplicateField("code", request.getCode());
@@ -76,14 +80,19 @@ public class DepartmentService {
         }
 
         Department saved = departmentRepository.save(department);
+        AuditContext.registerCreated(saved);
+
         return departmentMapper.toDepartmentResponse(saved);
     }
 
     @Transactional
     @CacheEvict(value = CacheConfig.DEPARTMENT_CACHE, allEntries = true)
+    @AuditAction(type = ActionType.UPDATE, entity = "DEPARTMENT")
     public DepartmentResponse updateDepartment(UUID departmentId, UpdateDepartmentRequest request, UUID updatedBy) {
         Department department = departmentRepository.findActiveById(departmentId)
                 .orElseThrow(() -> DepartmentNotFoundException.byId(departmentId.toString()));
+
+        AuditContext.snapshot(department);
 
         if (request.getName() != null) {
             department.setName(request.getName());
@@ -113,14 +122,19 @@ public class DepartmentService {
 
         department.setUpdatedBy(updatedBy);
         Department saved = departmentRepository.save(department);
+        AuditContext.registerUpdated(saved);
+
         return departmentMapper.toDepartmentResponse(saved);
     }
 
     @Transactional
     @CacheEvict(value = CacheConfig.DEPARTMENT_CACHE, allEntries = true)
+    @AuditAction(type = ActionType.DELETE, entity = "DEPARTMENT")
     public void softDeleteDepartment(UUID departmentId, UUID deletedBy) {
         Department department = departmentRepository.findActiveById(departmentId)
                 .orElseThrow(() -> DepartmentNotFoundException.byId(departmentId.toString()));
+
+        AuditContext.registerDeleted(department);
 
         department.setIsDeleted(true);
         department.setDeletedAt(LocalDateTime.now());

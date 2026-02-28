@@ -15,6 +15,9 @@ import com.hainam.worksphere.shared.config.CacheConfig;
 import com.hainam.worksphere.shared.exception.EmployeeNotFoundException;
 import com.hainam.worksphere.shared.exception.PayrollNotFoundException;
 import com.hainam.worksphere.shared.exception.ValidationException;
+import com.hainam.worksphere.shared.audit.annotation.AuditAction;
+import com.hainam.worksphere.shared.audit.domain.ActionType;
+import com.hainam.worksphere.shared.audit.util.AuditContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -68,6 +71,7 @@ public class PayrollService {
 
     @Transactional
     @CacheEvict(value = CacheConfig.PAYROLL_CACHE, allEntries = true)
+    @AuditAction(type = ActionType.CREATE, entity = "PAYROLL")
     public PayrollResponse createPayroll(CreatePayrollRequest request, UUID createdBy) {
         Employee employee = employeeRepository.findActiveById(request.getEmployeeId())
                 .orElseThrow(() -> EmployeeNotFoundException.byId(request.getEmployeeId().toString()));
@@ -110,14 +114,18 @@ public class PayrollService {
         calculatePayroll(payroll);
 
         Payroll saved = payrollRepository.save(payroll);
+        AuditContext.registerCreated(saved);
         return payrollMapper.toPayrollResponse(saved);
     }
 
     @Transactional
     @CacheEvict(value = CacheConfig.PAYROLL_CACHE, allEntries = true)
+    @AuditAction(type = ActionType.UPDATE, entity = "PAYROLL")
     public PayrollResponse updatePayroll(UUID id, UpdatePayrollRequest request, UUID updatedBy) {
         Payroll payroll = payrollRepository.findActiveById(id)
                 .orElseThrow(() -> PayrollNotFoundException.byId(id.toString()));
+
+        AuditContext.snapshot(payroll);
 
         if (request.getBaseSalary() != null) {
             payroll.setBaseSalary(request.getBaseSalary());
@@ -169,14 +177,18 @@ public class PayrollService {
         calculatePayroll(payroll);
 
         Payroll saved = payrollRepository.save(payroll);
+        AuditContext.registerUpdated(saved);
         return payrollMapper.toPayrollResponse(saved);
     }
 
     @Transactional
     @CacheEvict(value = CacheConfig.PAYROLL_CACHE, allEntries = true)
+    @AuditAction(type = ActionType.DELETE, entity = "PAYROLL")
     public void deletePayroll(UUID id, UUID deletedBy) {
         Payroll payroll = payrollRepository.findActiveById(id)
                 .orElseThrow(() -> PayrollNotFoundException.byId(id.toString()));
+
+        AuditContext.registerDeleted(payroll);
 
         payroll.setIsDeleted(true);
         payroll.setDeletedAt(LocalDateTime.now());
@@ -186,9 +198,12 @@ public class PayrollService {
 
     @Transactional
     @CacheEvict(value = CacheConfig.PAYROLL_CACHE, allEntries = true)
+    @AuditAction(type = ActionType.UPDATE, entity = "PAYROLL", actionCode = "CONFIRM_PAYROLL")
     public PayrollResponse confirmPayroll(UUID id, UUID updatedBy) {
         Payroll payroll = payrollRepository.findActiveById(id)
                 .orElseThrow(() -> PayrollNotFoundException.byId(id.toString()));
+
+        AuditContext.snapshot(payroll);
 
         if (payroll.getStatus() != PayrollStatus.DRAFT) {
             throw new ValidationException("Only DRAFT payrolls can be confirmed");
@@ -198,6 +213,7 @@ public class PayrollService {
         payroll.setUpdatedBy(updatedBy);
 
         Payroll saved = payrollRepository.save(payroll);
+        AuditContext.registerUpdated(saved);
         return payrollMapper.toPayrollResponse(saved);
     }
 

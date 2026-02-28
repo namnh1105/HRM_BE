@@ -11,6 +11,9 @@ import com.hainam.worksphere.insurance.dto.response.InsuranceResponse;
 import com.hainam.worksphere.insurance.mapper.InsuranceMapper;
 import com.hainam.worksphere.insurance.repository.InsuranceRegistrationRepository;
 import com.hainam.worksphere.insurance.repository.InsuranceRepository;
+import com.hainam.worksphere.shared.audit.annotation.AuditAction;
+import com.hainam.worksphere.shared.audit.domain.ActionType;
+import com.hainam.worksphere.shared.audit.util.AuditContext;
 import com.hainam.worksphere.shared.config.CacheConfig;
 import com.hainam.worksphere.shared.exception.EmployeeNotFoundException;
 import com.hainam.worksphere.shared.exception.InsuranceNotFoundException;
@@ -39,6 +42,7 @@ public class InsuranceService {
 
     @Transactional
     @CacheEvict(value = CacheConfig.INSURANCE_CACHE, allEntries = true)
+    @AuditAction(type = ActionType.CREATE, entity = "INSURANCE")
     public InsuranceResponse createInsurance(CreateInsuranceRequest request, UUID createdBy) {
         if (insuranceRepository.existsActiveByCode(request.getCode())) {
             throw new ValidationException("Insurance code already exists: " + request.getCode());
@@ -56,14 +60,18 @@ public class InsuranceService {
                 .build();
 
         Insurance saved = insuranceRepository.save(insurance);
+        AuditContext.registerCreated(saved);
         return insuranceMapper.toInsuranceResponse(saved);
     }
 
     @Transactional
     @CacheEvict(value = CacheConfig.INSURANCE_CACHE, allEntries = true)
+    @AuditAction(type = ActionType.UPDATE, entity = "INSURANCE")
     public InsuranceResponse updateInsurance(UUID id, CreateInsuranceRequest request, UUID updatedBy) {
         Insurance insurance = insuranceRepository.findActiveById(id)
                 .orElseThrow(() -> InsuranceNotFoundException.byId(id.toString()));
+
+        AuditContext.snapshot(insurance);
 
         insurance.setName(request.getName());
         insurance.setInsuranceType(request.getInsuranceType());
@@ -74,14 +82,18 @@ public class InsuranceService {
         insurance.setUpdatedBy(updatedBy);
 
         Insurance saved = insuranceRepository.save(insurance);
+        AuditContext.registerUpdated(saved);
         return insuranceMapper.toInsuranceResponse(saved);
     }
 
     @Transactional
     @CacheEvict(value = CacheConfig.INSURANCE_CACHE, allEntries = true)
+    @AuditAction(type = ActionType.DELETE, entity = "INSURANCE")
     public void deleteInsurance(UUID id, UUID deletedBy) {
         Insurance insurance = insuranceRepository.findActiveById(id)
                 .orElseThrow(() -> InsuranceNotFoundException.byId(id.toString()));
+
+        AuditContext.registerDeleted(insurance);
 
         insurance.setIsDeleted(true);
         insurance.setDeletedAt(LocalDateTime.now());
@@ -108,6 +120,7 @@ public class InsuranceService {
 
     @Transactional
     @CacheEvict(value = CacheConfig.INSURANCE_CACHE, allEntries = true)
+    @AuditAction(type = ActionType.CREATE, entity = "INSURANCE_REGISTRATION")
     public InsuranceRegistrationResponse createRegistration(CreateInsuranceRegistrationRequest request, UUID createdBy) {
         Employee employee = employeeRepository.findActiveById(request.getEmployeeId())
                 .orElseThrow(() -> EmployeeNotFoundException.byId(request.getEmployeeId().toString()));
@@ -131,14 +144,18 @@ public class InsuranceService {
                 .build();
 
         InsuranceRegistration saved = registrationRepository.save(registration);
+        AuditContext.registerCreated(saved);
         return insuranceMapper.toInsuranceRegistrationResponse(saved);
     }
 
     @Transactional
     @CacheEvict(value = CacheConfig.INSURANCE_CACHE, allEntries = true)
+    @AuditAction(type = ActionType.UPDATE, entity = "INSURANCE_REGISTRATION")
     public InsuranceRegistrationResponse updateRegistration(UUID id, CreateInsuranceRegistrationRequest request, UUID updatedBy) {
         InsuranceRegistration registration = registrationRepository.findActiveById(id)
                 .orElseThrow(() -> InsuranceNotFoundException.byId(id.toString()));
+
+        AuditContext.snapshot(registration);
 
         if (request.getEmployeeId() != null) {
             Employee employee = employeeRepository.findActiveById(request.getEmployeeId())
@@ -165,14 +182,18 @@ public class InsuranceService {
         registration.setUpdatedBy(updatedBy);
 
         InsuranceRegistration saved = registrationRepository.save(registration);
+        AuditContext.registerUpdated(saved);
         return insuranceMapper.toInsuranceRegistrationResponse(saved);
     }
 
     @Transactional
     @CacheEvict(value = CacheConfig.INSURANCE_CACHE, allEntries = true)
+    @AuditAction(type = ActionType.DELETE, entity = "INSURANCE_REGISTRATION")
     public void deleteRegistration(UUID id, UUID deletedBy) {
         InsuranceRegistration registration = registrationRepository.findActiveById(id)
                 .orElseThrow(() -> InsuranceNotFoundException.byId(id.toString()));
+
+        AuditContext.registerDeleted(registration);
 
         registration.setIsDeleted(true);
         registration.setDeletedAt(LocalDateTime.now());

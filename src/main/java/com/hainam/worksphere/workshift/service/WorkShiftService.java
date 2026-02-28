@@ -20,6 +20,10 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import com.hainam.worksphere.shared.audit.annotation.AuditAction;
+import com.hainam.worksphere.shared.audit.domain.ActionType;
+import com.hainam.worksphere.shared.audit.util.AuditContext;
+
 @Service
 @RequiredArgsConstructor
 public class WorkShiftService {
@@ -50,6 +54,7 @@ public class WorkShiftService {
 
     @Transactional
     @CacheEvict(value = CacheConfig.WORK_SHIFT_CACHE, allEntries = true)
+    @AuditAction(type = ActionType.CREATE, entity = "WORK_SHIFT")
     public WorkShiftResponse createWorkShift(CreateWorkShiftRequest request, UUID createdBy) {
         if (workShiftRepository.existsActiveByCode(request.getCode())) {
             throw ValidationException.duplicateField("code", request.getCode());
@@ -60,14 +65,18 @@ public class WorkShiftService {
         workShift.setTotalHours(calculateTotalHours(workShift));
 
         WorkShift saved = workShiftRepository.save(workShift);
+        AuditContext.registerCreated(saved);
         return workShiftMapper.toWorkShiftResponse(saved);
     }
 
     @Transactional
     @CacheEvict(value = CacheConfig.WORK_SHIFT_CACHE, allEntries = true)
+    @AuditAction(type = ActionType.UPDATE, entity = "WORK_SHIFT")
     public WorkShiftResponse updateWorkShift(UUID workShiftId, UpdateWorkShiftRequest request, UUID updatedBy) {
         WorkShift workShift = workShiftRepository.findActiveById(workShiftId)
                 .orElseThrow(() -> WorkShiftNotFoundException.byId(workShiftId.toString()));
+
+        AuditContext.snapshot(workShift);
 
         if (request.getName() != null) {
             workShift.setName(request.getName());
@@ -95,14 +104,18 @@ public class WorkShiftService {
         workShift.setUpdatedBy(updatedBy);
 
         WorkShift saved = workShiftRepository.save(workShift);
+        AuditContext.registerUpdated(saved);
         return workShiftMapper.toWorkShiftResponse(saved);
     }
 
     @Transactional
     @CacheEvict(value = CacheConfig.WORK_SHIFT_CACHE, allEntries = true)
+    @AuditAction(type = ActionType.DELETE, entity = "WORK_SHIFT")
     public void softDeleteWorkShift(UUID workShiftId, UUID deletedBy) {
         WorkShift workShift = workShiftRepository.findActiveById(workShiftId)
                 .orElseThrow(() -> WorkShiftNotFoundException.byId(workShiftId.toString()));
+
+        AuditContext.registerDeleted(workShift);
 
         workShift.setIsDeleted(true);
         workShift.setDeletedAt(LocalDateTime.now());

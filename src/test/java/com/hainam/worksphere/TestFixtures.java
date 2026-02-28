@@ -7,7 +7,6 @@ import com.hainam.worksphere.shared.audit.domain.ActionType;
 import com.hainam.worksphere.shared.audit.domain.AuditLog;
 import com.hainam.worksphere.shared.audit.domain.AuditLogDetail;
 import com.hainam.worksphere.shared.audit.domain.AuditStatus;
-import com.hainam.worksphere.shared.constant.PermissionType;
 import com.hainam.worksphere.shared.domain.EntityType;
 import com.hainam.worksphere.user.domain.User;
 import com.hainam.worksphere.department.domain.Department;

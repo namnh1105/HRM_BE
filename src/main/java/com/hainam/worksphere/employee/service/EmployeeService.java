@@ -10,6 +10,9 @@ import com.hainam.worksphere.employee.dto.request.UpdateEmployeeRequest;
 import com.hainam.worksphere.employee.dto.response.EmployeeResponse;
 import com.hainam.worksphere.employee.mapper.EmployeeMapper;
 import com.hainam.worksphere.employee.repository.EmployeeRepository;
+import com.hainam.worksphere.shared.audit.annotation.AuditAction;
+import com.hainam.worksphere.shared.audit.domain.ActionType;
+import com.hainam.worksphere.shared.audit.util.AuditContext;
 import com.hainam.worksphere.shared.config.CacheConfig;
 import com.hainam.worksphere.shared.exception.DepartmentNotFoundException;
 import com.hainam.worksphere.shared.exception.EmployeeNotFoundException;
@@ -65,6 +68,7 @@ public class EmployeeService {
 
     @Transactional
     @CacheEvict(value = CacheConfig.EMPLOYEE_CACHE, allEntries = true)
+    @AuditAction(type = ActionType.CREATE, entity = "EMPLOYEE")
     public EmployeeResponse createEmployee(CreateEmployeeRequest request, UUID createdBy) {
         if (employeeRepository.existsActiveByEmployeeCode(request.getEmployeeCode())) {
             throw ValidationException.duplicateField("employee_code", request.getEmployeeCode());
@@ -110,14 +114,19 @@ public class EmployeeService {
         }
 
         Employee saved = employeeRepository.save(employee);
+        AuditContext.registerCreated(saved);
+
         return employeeMapper.toEmployeeResponse(saved);
     }
 
     @Transactional
     @CacheEvict(value = CacheConfig.EMPLOYEE_CACHE, allEntries = true)
+    @AuditAction(type = ActionType.UPDATE, entity = "EMPLOYEE")
     public EmployeeResponse updateEmployee(UUID employeeId, UpdateEmployeeRequest request, UUID updatedBy) {
         Employee employee = employeeRepository.findActiveById(employeeId)
                 .orElseThrow(() -> EmployeeNotFoundException.byId(employeeId.toString()));
+
+        AuditContext.snapshot(employee);
 
         if (request.getFirstName() != null) {
             employee.setFirstName(request.getFirstName());
@@ -159,14 +168,19 @@ public class EmployeeService {
 
         employee.setUpdatedBy(updatedBy);
         Employee saved = employeeRepository.save(employee);
+        AuditContext.registerUpdated(saved);
+
         return employeeMapper.toEmployeeResponse(saved);
     }
 
     @Transactional
     @CacheEvict(value = CacheConfig.EMPLOYEE_CACHE, allEntries = true)
+    @AuditAction(type = ActionType.DELETE, entity = "EMPLOYEE")
     public void softDeleteEmployee(UUID employeeId, UUID deletedBy) {
         Employee employee = employeeRepository.findActiveById(employeeId)
                 .orElseThrow(() -> EmployeeNotFoundException.byId(employeeId.toString()));
+
+        AuditContext.registerDeleted(employee);
 
         employee.setIsDeleted(true);
         employee.setDeletedAt(LocalDateTime.now());

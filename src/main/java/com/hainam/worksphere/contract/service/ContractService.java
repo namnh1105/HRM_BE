@@ -13,6 +13,9 @@ import com.hainam.worksphere.shared.config.CacheConfig;
 import com.hainam.worksphere.shared.exception.ContractNotFoundException;
 import com.hainam.worksphere.shared.exception.EmployeeNotFoundException;
 import com.hainam.worksphere.shared.exception.ValidationException;
+import com.hainam.worksphere.shared.audit.annotation.AuditAction;
+import com.hainam.worksphere.shared.audit.domain.ActionType;
+import com.hainam.worksphere.shared.audit.util.AuditContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -34,6 +37,7 @@ public class ContractService {
 
     @Transactional
     @CacheEvict(value = CacheConfig.CONTRACT_CACHE, allEntries = true)
+    @AuditAction(type = ActionType.CREATE, entity = "CONTRACT")
     public ContractResponse createContract(CreateContractRequest request, UUID createdBy) {
         if (contractRepository.existsActiveByContractCode(request.getContractCode())) {
             throw new ValidationException("Contract code already exists: " + request.getContractCode());
@@ -61,14 +65,18 @@ public class ContractService {
                 .build();
 
         Contract saved = contractRepository.save(contract);
+        AuditContext.registerCreated(saved);
         return contractMapper.toContractResponse(saved);
     }
 
     @Transactional
     @CacheEvict(value = CacheConfig.CONTRACT_CACHE, allEntries = true)
+    @AuditAction(type = ActionType.UPDATE, entity = "CONTRACT")
     public ContractResponse updateContract(UUID id, UpdateContractRequest request, UUID updatedBy) {
         Contract contract = contractRepository.findActiveById(id)
                 .orElseThrow(() -> ContractNotFoundException.byId(id.toString()));
+
+        AuditContext.snapshot(contract);
 
         if (request.getEndDate() != null) {
             if (request.getEndDate().isBefore(contract.getStartDate())) {
@@ -94,14 +102,18 @@ public class ContractService {
         contract.setUpdatedBy(updatedBy);
 
         Contract saved = contractRepository.save(contract);
+        AuditContext.registerUpdated(saved);
         return contractMapper.toContractResponse(saved);
     }
 
     @Transactional
     @CacheEvict(value = CacheConfig.CONTRACT_CACHE, allEntries = true)
+    @AuditAction(type = ActionType.DELETE, entity = "CONTRACT")
     public void deleteContract(UUID id, UUID deletedBy) {
         Contract contract = contractRepository.findActiveById(id)
                 .orElseThrow(() -> ContractNotFoundException.byId(id.toString()));
+
+        AuditContext.registerDeleted(contract);
 
         contract.setIsDeleted(true);
         contract.setDeletedAt(LocalDateTime.now());

@@ -18,6 +18,87 @@ public class AuditDiffUtil {
     private final AuditService auditService;
 
     /**
+     * Create a snapshot (field value map) of an entity for later comparison.
+     * Call this BEFORE modifying the entity, then pass the snapshot to auditUpdate().
+     */
+    public Map<String, Object> snapshot(Object entity) {
+        Map<String, Object> map = new LinkedHashMap<>();
+        if (entity == null) return map;
+
+        Class<?> clazz = entity.getClass();
+        try {
+            for (Field field : clazz.getDeclaredFields()) {
+                field.setAccessible(true);
+                map.put(field.getName(), field.get(entity));
+            }
+        } catch (Exception e) {
+            log.warn("Failed to snapshot entity: {}", clazz.getSimpleName(), e);
+        }
+        return map;
+    }
+
+    /**
+     * Audit entity update by comparing a pre-change snapshot with the current entity state.
+     *
+     * @param action the action code (e.g., "UPDATE_EMPLOYEE")
+     * @param entityType the entity type (e.g., "EMPLOYEE")
+     * @param entityId the entity ID
+     * @param beforeSnapshot the snapshot taken before modifications (from snapshot() method)
+     * @param after the entity after modifications
+     * @param requestId the request ID
+     */
+    public void auditUpdate(
+            String action,
+            String entityType,
+            String entityId,
+            Map<String, Object> beforeSnapshot,
+            Object after,
+            String requestId
+    ) {
+        if (beforeSnapshot == null || after == null) {
+            log.debug("Skipping audit update - snapshot or entity is null");
+            return;
+        }
+
+        Class<?> clazz = after.getClass();
+        AuditableEntity auditable = clazz.getAnnotation(AuditableEntity.class);
+
+        if (auditable == null) {
+            log.debug("Class {} is not annotated with @AuditableEntity, skipping audit update",
+                     clazz.getSimpleName());
+            return;
+        }
+
+        Set<String> ignoreFields = Set.of(auditable.ignoreFields());
+        List<AuditLogDetailDto> fieldChanges = new ArrayList<>();
+
+        try {
+            for (Field field : clazz.getDeclaredFields()) {
+                String fieldName = field.getName();
+                if (ignoreFields.contains(fieldName)) continue;
+
+                field.setAccessible(true);
+                Object oldValue = beforeSnapshot.get(fieldName);
+                Object newValue = field.get(after);
+
+                if (!Objects.equals(oldValue, newValue)) {
+                    fieldChanges.add(AuditLogDetailDto.builder()
+                            .fieldName(convertFieldName(fieldName))
+                            .oldValue(String.valueOf(serializeValue(oldValue)))
+                            .newValue(String.valueOf(serializeValue(newValue)))
+                            .build());
+                }
+            }
+
+            if (!fieldChanges.isEmpty()) {
+                auditService.createAuditLogWithDetails(action, entityType, entityId, fieldChanges, requestId);
+            }
+        } catch (Exception e) {
+            log.error("Failed to audit update for entityType: {}, entityId: {}", entityType, entityId, e);
+        }
+    }
+
+    /**
      * Audit all field changes using class-level @AuditableEntity annotation.
      * This method audits all fields by default and excludes only the specified ones.
      *
@@ -106,6 +187,154 @@ public class AuditDiffUtil {
         }
     }
 
+
+    /**
+     * Audit entity creation - logs all non-ignored fields of a newly created entity.
+     *
+     * @param action the action being performed (e.g., "CREATE_EMPLOYEE")
+     * @param entityType the type of entity being audited (e.g., "EMPLOYEE")
+     * @param entityId the ID of the entity
+     * @param newEntity the newly created entity
+     * @param requestId the request ID for tracking
+     */
+    public void auditCreate(
+            String action,
+            String entityType,
+            String entityId,
+            Object newEntity,
+            String requestId
+    ) {
+        if (newEntity == null) {
+            log.debug("Skipping audit create - entity is null");
+            return;
+        }
+
+        Class<?> clazz = newEntity.getClass();
+        AuditableEntity auditable = clazz.getAnnotation(AuditableEntity.class);
+
+        if (auditable == null) {
+            log.debug("Class {} is not annotated with @AuditableEntity, skipping audit create",
+                     clazz.getSimpleName());
+            return;
+        }
+
+        Set<String> ignoreFields = Set.of(auditable.ignoreFields());
+        log.debug("Auditing create for entity {} with ignored fields: {}", clazz.getSimpleName(), ignoreFields);
+
+        List<AuditLogDetailDto> fieldChanges = new ArrayList<>();
+
+        try {
+            for (Field field : clazz.getDeclaredFields()) {
+                String fieldName = field.getName();
+
+                if (ignoreFields.contains(fieldName)) {
+                    continue;
+                }
+
+                field.setAccessible(true);
+
+                try {
+                    Object newValue = field.get(newEntity);
+
+                    if (newValue != null) {
+                        fieldChanges.add(AuditLogDetailDto.builder()
+                                .fieldName(convertFieldName(fieldName))
+                                .oldValue(null)
+                                .newValue(String.valueOf(serializeValue(newValue)))
+                                .build());
+                    }
+                } catch (IllegalAccessException e) {
+                    log.warn("Cannot access field {}: {}", fieldName, e.getMessage());
+                }
+            }
+
+            if (!fieldChanges.isEmpty()) {
+                auditService.createAuditLogWithDetails(
+                    action,
+                    entityType,
+                    entityId,
+                    fieldChanges,
+                    requestId
+                );
+            }
+        } catch (Exception e) {
+            log.error("Failed to audit create for entityType: {}, entityId: {}",
+                     entityType, entityId, e);
+        }
+    }
+
+    /**
+     * Audit entity deletion - logs the action of deleting an entity.
+     *
+     * @param action the action being performed (e.g., "DELETE_EMPLOYEE")
+     * @param entityType the type of entity being audited (e.g., "EMPLOYEE")
+     * @param entityId the ID of the entity
+     * @param entity the entity being deleted (to log its state)
+     * @param requestId the request ID for tracking
+     */
+    public void auditDelete(
+            String action,
+            String entityType,
+            String entityId,
+            Object entity,
+            String requestId
+    ) {
+        if (entity == null) {
+            log.debug("Skipping audit delete - entity is null");
+            return;
+        }
+
+        Class<?> clazz = entity.getClass();
+        AuditableEntity auditable = clazz.getAnnotation(AuditableEntity.class);
+
+        if (auditable == null) {
+            log.debug("Class {} is not annotated with @AuditableEntity, skipping audit delete",
+                     clazz.getSimpleName());
+            return;
+        }
+
+        Set<String> ignoreFields = Set.of(auditable.ignoreFields());
+        List<AuditLogDetailDto> fieldChanges = new ArrayList<>();
+
+        try {
+            for (Field field : clazz.getDeclaredFields()) {
+                String fieldName = field.getName();
+
+                if (ignoreFields.contains(fieldName)) {
+                    continue;
+                }
+
+                field.setAccessible(true);
+
+                try {
+                    Object oldValue = field.get(entity);
+
+                    if (oldValue != null) {
+                        fieldChanges.add(AuditLogDetailDto.builder()
+                                .fieldName(convertFieldName(fieldName))
+                                .oldValue(String.valueOf(serializeValue(oldValue)))
+                                .newValue(null)
+                                .build());
+                    }
+                } catch (IllegalAccessException e) {
+                    log.warn("Cannot access field {}: {}", fieldName, e.getMessage());
+                }
+            }
+
+            if (!fieldChanges.isEmpty()) {
+                auditService.createAuditLogWithDetails(
+                    action,
+                    entityType,
+                    entityId,
+                    fieldChanges,
+                    requestId
+                );
+            }
+        } catch (Exception e) {
+            log.error("Failed to audit delete for entityType: {}, entityId: {}",
+                     entityType, entityId, e);
+        }
+    }
 
     /**
      * Convert camelCase field name to snake_case for database consistency

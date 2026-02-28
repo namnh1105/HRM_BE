@@ -8,6 +8,9 @@ import com.hainam.worksphere.employee.dto.response.EmployeeSalaryResponse;
 import com.hainam.worksphere.employee.mapper.EmployeeSalaryMapper;
 import com.hainam.worksphere.employee.repository.EmployeeRepository;
 import com.hainam.worksphere.employee.repository.EmployeeSalaryRepository;
+import com.hainam.worksphere.shared.audit.annotation.AuditAction;
+import com.hainam.worksphere.shared.audit.domain.ActionType;
+import com.hainam.worksphere.shared.audit.util.AuditContext;
 import com.hainam.worksphere.shared.exception.EmployeeNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -54,6 +57,7 @@ public class EmployeeSalaryService {
     }
 
     @Transactional
+    @AuditAction(type = ActionType.CREATE, entity = "EMPLOYEE_SALARY")
     public EmployeeSalaryResponse createSalary(CreateEmployeeSalaryRequest request, UUID createdBy) {
         Employee employee = employeeRepository.findActiveById(request.getEmployeeId())
                 .orElseThrow(() -> EmployeeNotFoundException.byId(request.getEmployeeId().toString()));
@@ -76,13 +80,18 @@ public class EmployeeSalaryService {
                 .build();
 
         EmployeeSalary saved = employeeSalaryRepository.save(salary);
+        AuditContext.registerCreated(saved);
+
         return employeeSalaryMapper.toResponse(saved);
     }
 
     @Transactional
+    @AuditAction(type = ActionType.UPDATE, entity = "EMPLOYEE_SALARY")
     public EmployeeSalaryResponse updateSalary(UUID id, UpdateEmployeeSalaryRequest request, UUID updatedBy) {
         EmployeeSalary salary = employeeSalaryRepository.findActiveById(id)
                 .orElseThrow(() -> new RuntimeException("Employee salary not found with id: " + id));
+
+        AuditContext.snapshot(salary);
 
         if (request.getBaseSalary() != null) {
             salary.setBaseSalary(request.getBaseSalary());
@@ -96,13 +105,18 @@ public class EmployeeSalaryService {
 
         salary.setUpdatedBy(updatedBy);
         EmployeeSalary saved = employeeSalaryRepository.save(salary);
+        AuditContext.registerUpdated(saved);
+
         return employeeSalaryMapper.toResponse(saved);
     }
 
     @Transactional
+    @AuditAction(type = ActionType.DELETE, entity = "EMPLOYEE_SALARY")
     public void deleteSalary(UUID id, UUID deletedBy) {
         EmployeeSalary salary = employeeSalaryRepository.findActiveById(id)
                 .orElseThrow(() -> new RuntimeException("Employee salary not found with id: " + id));
+
+        AuditContext.registerDeleted(salary);
 
         salary.setIsDeleted(true);
         salary.setDeletedAt(LocalDateTime.now());
@@ -110,4 +124,3 @@ public class EmployeeSalaryService {
         employeeSalaryRepository.save(salary);
     }
 }
-

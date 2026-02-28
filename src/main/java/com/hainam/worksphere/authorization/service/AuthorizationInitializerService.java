@@ -6,6 +6,7 @@ import com.hainam.worksphere.authorization.domain.RolePermission;
 import com.hainam.worksphere.authorization.repository.PermissionRepository;
 import com.hainam.worksphere.authorization.repository.RoleRepository;
 import com.hainam.worksphere.authorization.repository.RolePermissionRepository;
+import com.hainam.worksphere.shared.constant.PermissionType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
@@ -37,29 +38,26 @@ public class AuthorizationInitializerService implements CommandLineRunner {
     private void createDefaultPermissions() {
         log.info("Creating default permissions...");
 
-        List<PermissionData> permissions = Arrays.asList(
-            new PermissionData("MANAGE_USER", "Manage User", "Create, update, delete users", "USER", "MANAGE"),
-            new PermissionData("MANAGE_ROLE", "Manage Role", "Create, update, delete roles", "ROLE", "MANAGE"),
-            new PermissionData("MANAGE_PERMISSION", "Manage Permission", "Create, update, delete permissions", "PERMISSION", "MANAGE"),
-            new PermissionData("VIEW_PROFILE", "View Profile", "View own profile", "PROFILE", "VIEW"),
-            new PermissionData("UPDATE_PROFILE", "Update Profile", "Update own profile", "PROFILE", "UPDATE")
-        );
+        List<PermissionType.PermissionDef> permissions = PermissionType.all();
 
-        for (PermissionData permData : permissions) {
-            if (!permissionRepository.existsByCode(permData.code)) {
+        for (PermissionType.PermissionDef permDef : permissions) {
+            if (!permissionRepository.existsByCode(permDef.getCode())) {
                 Permission permission = Permission.builder()
-                        .code(permData.code)
-                        .displayName(permData.displayName)
-                        .description(permData.description)
-                        .resource(permData.resource)
-                        .action(permData.action)
+                        .code(permDef.getCode())
+                        .displayName(permDef.getDisplayName())
+                        .description(permDef.getDescription())
+                        .resource(permDef.getResource())
+                        .action(permDef.getAction())
                         .isSystem(true)
                         .isActive(true)
                         .build();
 
                 permissionRepository.save(permission);
+                log.debug("Created permission: {}", permDef.getCode());
             }
         }
+
+        log.info("Default permissions created: {} total definitions", permissions.size());
     }
 
     private void createDefaultRoles() {
@@ -82,6 +80,7 @@ public class AuthorizationInitializerService implements CommandLineRunner {
                         .build();
 
                 roleRepository.save(role);
+                log.debug("Created role: {}", roleData.code);
             }
         }
     }
@@ -106,10 +105,23 @@ public class AuthorizationInitializerService implements CommandLineRunner {
             }
         }
 
-        // ADMIN gets MANAGE_USER, MANAGE_ROLE permissions
+        // ADMIN gets management permissions
         Role admin = roleRepository.findByCode("ADMIN").orElse(null);
         if (admin != null) {
-            String[] adminPermissions = {"MANAGE_USER", "MANAGE_ROLE"};
+            String[] adminPermissions = {
+                PermissionType.MANAGE_USER, PermissionType.VIEW_USER, PermissionType.CREATE_USER,
+                PermissionType.UPDATE_USER, PermissionType.DELETE_USER,
+                PermissionType.MANAGE_ROLES, PermissionType.ASSIGN_ROLES, PermissionType.REVOKE_ROLES,
+                PermissionType.VIEW_DEPARTMENT, PermissionType.CREATE_DEPARTMENT,
+                PermissionType.UPDATE_DEPARTMENT, PermissionType.DELETE_DEPARTMENT,
+                PermissionType.VIEW_EMPLOYEE, PermissionType.CREATE_EMPLOYEE,
+                PermissionType.UPDATE_EMPLOYEE, PermissionType.DELETE_EMPLOYEE,
+                PermissionType.VIEW_ATTENDANCE, PermissionType.VIEW_WORK_SHIFT,
+                PermissionType.VIEW_LEAVE_REQUEST, PermissionType.APPROVE_LEAVE_REQUEST,
+                PermissionType.VIEW_CONTRACT, PermissionType.VIEW_PAYROLL,
+                PermissionType.VIEW_INSURANCE, PermissionType.VIEW_AUDIT_LOGS,
+                PermissionType.VIEW_PROFILE, PermissionType.UPDATE_PROFILE
+            };
             for (String permissionCode : adminPermissions) {
                 Permission permission = permissionRepository.findByCode(permissionCode).orElse(null);
                 if (permission != null && !rolePermissionRepository.existsByRoleIdAndPermissionIdAndIsActiveTrue(admin.getId(), permission.getId())) {
@@ -124,10 +136,16 @@ public class AuthorizationInitializerService implements CommandLineRunner {
             }
         }
 
-        // USER gets VIEW_PROFILE, UPDATE_PROFILE permissions
+        // USER gets basic profile and view permissions
         Role user = roleRepository.findByCode("USER").orElse(null);
         if (user != null) {
-            String[] userPermissions = {"VIEW_PROFILE", "UPDATE_PROFILE"};
+            String[] userPermissions = {
+                PermissionType.VIEW_PROFILE, PermissionType.UPDATE_PROFILE,
+                PermissionType.VIEW_ATTENDANCE, PermissionType.CREATE_ATTENDANCE,
+                PermissionType.VIEW_WORK_SHIFT,
+                PermissionType.VIEW_LEAVE_REQUEST, PermissionType.CREATE_LEAVE_REQUEST,
+                PermissionType.READ_USER_ROLE
+            };
             for (String permissionCode : userPermissions) {
                 Permission permission = permissionRepository.findByCode(permissionCode).orElse(null);
                 if (permission != null && !rolePermissionRepository.existsByRoleIdAndPermissionIdAndIsActiveTrue(user.getId(), permission.getId())) {
@@ -140,23 +158,6 @@ public class AuthorizationInitializerService implements CommandLineRunner {
                     log.debug("Assigned permission {} to USER", permission.getCode());
                 }
             }
-        }
-
-    }
-
-    private static class PermissionData {
-        final String code;
-        final String displayName;
-        final String description;
-        final String resource;
-        final String action;
-
-        PermissionData(String code, String displayName, String description, String resource, String action) {
-            this.code = code;
-            this.displayName = displayName;
-            this.description = description;
-            this.resource = resource;
-            this.action = action;
         }
     }
 

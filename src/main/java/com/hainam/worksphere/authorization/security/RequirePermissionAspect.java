@@ -2,14 +2,12 @@ package com.hainam.worksphere.authorization.security;
 
 import com.hainam.worksphere.auth.security.UserPrincipal;
 import com.hainam.worksphere.authorization.service.AuthorizationService;
-import com.hainam.worksphere.shared.constant.PermissionType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.reflect.MethodSignature;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.access.AccessDeniedException;
@@ -45,8 +43,7 @@ public class RequirePermissionAspect {
             return;
         }
 
-        PermissionType requiredPermission = annotation.value();
-        String permissionKey = requiredPermission.key();
+        String permissionKey = annotation.value();
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {

@@ -7,6 +7,9 @@ import com.hainam.worksphere.relative.dto.request.CreateRelativeRequest;
 import com.hainam.worksphere.relative.dto.response.RelativeResponse;
 import com.hainam.worksphere.relative.mapper.RelativeMapper;
 import com.hainam.worksphere.relative.repository.RelativeRepository;
+import com.hainam.worksphere.shared.audit.annotation.AuditAction;
+import com.hainam.worksphere.shared.audit.domain.ActionType;
+import com.hainam.worksphere.shared.audit.util.AuditContext;
 import com.hainam.worksphere.shared.config.CacheConfig;
 import com.hainam.worksphere.shared.exception.EmployeeNotFoundException;
 import com.hainam.worksphere.shared.exception.RelativeNotFoundException;
@@ -31,6 +34,7 @@ public class RelativeService {
 
     @Transactional
     @CacheEvict(value = CacheConfig.RELATIVE_CACHE, allEntries = true)
+    @AuditAction(type = ActionType.CREATE, entity = "RELATIVE")
     public RelativeResponse createRelative(CreateRelativeRequest request, UUID createdBy) {
         Employee employee = employeeRepository.findActiveById(request.getEmployeeId())
                 .orElseThrow(() -> EmployeeNotFoundException.byId(request.getEmployeeId().toString()));
@@ -50,14 +54,19 @@ public class RelativeService {
                 .build();
 
         Relative saved = relativeRepository.save(relative);
+        AuditContext.registerCreated(saved);
+
         return relativeMapper.toRelativeResponse(saved);
     }
 
     @Transactional
     @CacheEvict(value = CacheConfig.RELATIVE_CACHE, allEntries = true)
+    @AuditAction(type = ActionType.UPDATE, entity = "RELATIVE")
     public RelativeResponse updateRelative(UUID id, CreateRelativeRequest request, UUID updatedBy) {
         Relative relative = relativeRepository.findActiveById(id)
                 .orElseThrow(() -> RelativeNotFoundException.byId(id.toString()));
+
+        AuditContext.snapshot(relative);
 
         if (request.getEmployeeId() != null) {
             Employee employee = employeeRepository.findActiveById(request.getEmployeeId())
@@ -94,14 +103,19 @@ public class RelativeService {
         relative.setUpdatedBy(updatedBy);
 
         Relative saved = relativeRepository.save(relative);
+        AuditContext.registerUpdated(saved);
+
         return relativeMapper.toRelativeResponse(saved);
     }
 
     @Transactional
     @CacheEvict(value = CacheConfig.RELATIVE_CACHE, allEntries = true)
+    @AuditAction(type = ActionType.DELETE, entity = "RELATIVE")
     public void deleteRelative(UUID id, UUID deletedBy) {
         Relative relative = relativeRepository.findActiveById(id)
                 .orElseThrow(() -> RelativeNotFoundException.byId(id.toString()));
+
+        AuditContext.registerDeleted(relative);
 
         relative.setIsDeleted(true);
         relative.setDeletedAt(LocalDateTime.now());

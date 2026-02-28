@@ -1,8 +1,9 @@
 package com.hainam.worksphere.user.service;
 
 import com.hainam.worksphere.auth.security.UserPrincipal;
-import com.hainam.worksphere.shared.audit.util.AuditDiffUtil;
-import com.hainam.worksphere.shared.audit.util.RequestContextUtil;
+import com.hainam.worksphere.shared.audit.annotation.AuditAction;
+import com.hainam.worksphere.shared.audit.domain.ActionType;
+import com.hainam.worksphere.shared.audit.util.AuditContext;
 import com.hainam.worksphere.shared.config.CacheConfig;
 import com.hainam.worksphere.shared.exception.UserNotFoundException;
 import com.hainam.worksphere.shared.exception.ValidationException;
@@ -34,7 +35,6 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
     private final UserUpdateMapper userUpdateMapper;
-    private final AuditDiffUtil auditDiffUtil;
 
     public UserResponse getCurrentUser(UserPrincipal userPrincipal) {
         User user = userRepository.findActiveById(userPrincipal.getId())
@@ -61,51 +61,20 @@ public class UserService {
         @CacheEvict(value = CacheConfig.USER_CACHE, key = "#userPrincipal.id.toString()"),
         @CacheEvict(value = CacheConfig.USER_BY_EMAIL_CACHE, allEntries = true)
     })
+    @AuditAction(type = ActionType.UPDATE, entity = "USER", actionCode = "UPDATE_PROFILE")
     public UserResponse updateProfile(UserPrincipal userPrincipal, UpdateProfileRequest request) {
-        User userBefore = userRepository.findActiveById(userPrincipal.getId())
+        User user = userRepository.findActiveById(userPrincipal.getId())
                 .orElseThrow(() -> UserNotFoundException.byId(userPrincipal.getId().toString()));
 
-        User originalUser = createUserCopy(userBefore);
+        AuditContext.snapshot(user);
 
-        userUpdateMapper.updateUserFromRequest(request, userBefore);
-        userBefore.setUpdatedBy(userPrincipal.getId());
-        User userAfter = userRepository.save(userBefore);
+        userUpdateMapper.updateUserFromRequest(request, user);
+        user.setUpdatedBy(userPrincipal.getId());
+        User userAfter = userRepository.save(user);
 
-        String requestId = RequestContextUtil.getRequestId();
-        auditDiffUtil.auditAllChanges(
-            "UPDATE_PROFILE",
-            "USER",
-            userAfter.getId().toString(),
-            originalUser,
-            userAfter,
-            requestId
-        );
+        AuditContext.registerUpdated(userAfter);
 
         return userMapper.toUserResponse(userAfter);
-    }
-
-    /**
-     * Create a copy of user entity for audit comparison
-     */
-    private User createUserCopy(User original) {
-        return User.builder()
-                .id(original.getId())
-                .email(original.getEmail())
-                .name(original.getName())
-                .givenName(original.getGivenName())
-                .familyName(original.getFamilyName())
-                .avatarUrl(original.getAvatarUrl())
-                .googleId(original.getGoogleId())
-                .isEnabled(original.getIsEnabled())
-                .createdAt(original.getCreatedAt())
-                .updatedAt(original.getUpdatedAt())
-                .createdBy(original.getCreatedBy())
-                .updatedBy(original.getUpdatedBy())
-                .isDeleted(original.getIsDeleted())
-                .deletedAt(original.getDeletedAt())
-                .deletedBy(original.getDeletedBy())
-                .password(original.getPassword())
-                .build();
     }
 
     @Transactional
@@ -141,9 +110,12 @@ public class UserService {
         @CacheEvict(value = CacheConfig.USER_ROLES_CACHE, key = "#userId.toString()"),
         @CacheEvict(value = CacheConfig.USER_PERMISSIONS_CACHE, key = "#userId.toString()")
     })
+    @AuditAction(type = ActionType.DELETE, entity = "USER")
     public void softDeleteUser(UUID userId, UUID deletedBy) {
         User user = userRepository.findActiveById(userId)
                 .orElseThrow(() -> UserNotFoundException.byId(userId.toString()));
+
+        AuditContext.registerDeleted(user);
 
         user.setIsDeleted(true);
         user.setDeletedAt(LocalDateTime.now());
