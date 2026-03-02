@@ -20,7 +20,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -50,8 +49,7 @@ public class EmployeeWorkShiftService {
         employeeRepository.findActiveById(employeeId)
                 .orElseThrow(() -> EmployeeNotFoundException.byId(employeeId.toString()));
 
-        DayOfWeek dayOfWeek = date.getDayOfWeek();
-        return employeeWorkShiftRepository.findActiveByEmployeeIdAndDate(employeeId, date, dayOfWeek)
+        return employeeWorkShiftRepository.findActiveByEmployeeIdAndDate(employeeId, date)
                 .stream()
                 .map(employeeWorkShiftMapper::toResponse)
                 .collect(Collectors.toList());
@@ -82,19 +80,15 @@ public class EmployeeWorkShiftService {
         WorkShift workShift = workShiftRepository.findActiveById(request.getWorkShiftId())
                 .orElseThrow(() -> WorkShiftNotFoundException.byId(request.getWorkShiftId().toString()));
 
-        // Check for duplicate assignment on same day_of_week and date
-        DayOfWeek checkDay = request.getDayOfWeek();
-        if (checkDay != null) {
-            boolean exists = employeeWorkShiftRepository.existsActiveAssignment(
-                    request.getEmployeeId(), request.getWorkShiftId(),
-                    request.getDate(), checkDay
+        // Check for duplicate assignment: same employee + same shift + same date
+        boolean exists = employeeWorkShiftRepository.existsActiveAssignment(
+                request.getEmployeeId(), request.getWorkShiftId(),
+                request.getDate()
+        );
+        if (exists) {
+            throw new ValidationException(
+                    "Nhân viên đã được gán ca làm việc này vào ngày " + request.getDate()
             );
-            if (exists) {
-                throw new ValidationException(
-                        "Employee already has this work shift assigned for " + checkDay +
-                        " on the date"
-                );
-            }
         }
 
         EmployeeWorkShift ews = employeeWorkShiftMapper.toEntity(request);
@@ -117,9 +111,6 @@ public class EmployeeWorkShiftService {
 
         if (request.getDate() != null) {
             ews.setDate(request.getDate());
-        }
-        if (request.getDayOfWeek() != null) {
-            ews.setDayOfWeek(request.getDayOfWeek());
         }
 
         ews.setUpdatedBy(updatedBy);
@@ -146,8 +137,7 @@ public class EmployeeWorkShiftService {
         Employee employee = employeeRepository.findActiveByUserId(userId)
                 .orElseThrow(() -> EmployeeNotFoundException.byId("user:" + userId));
 
-        DayOfWeek dayOfWeek = date.getDayOfWeek();
-        return employeeWorkShiftRepository.findActiveByEmployeeIdAndDate(employee.getId(), date, dayOfWeek)
+        return employeeWorkShiftRepository.findActiveByEmployeeIdAndDate(employee.getId(), date)
                 .stream()
                 .map(employeeWorkShiftMapper::toResponse)
                 .collect(Collectors.toList());

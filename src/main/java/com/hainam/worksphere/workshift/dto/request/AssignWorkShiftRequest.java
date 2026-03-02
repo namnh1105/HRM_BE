@@ -6,7 +6,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -24,6 +23,4 @@ public class AssignWorkShiftRequest {
 
     @NotNull(message = "Date is required")
     private LocalDate date;
-
-    private DayOfWeek dayOfWeek;
 }

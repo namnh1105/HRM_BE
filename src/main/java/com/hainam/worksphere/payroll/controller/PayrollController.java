@@ -2,15 +2,14 @@ package com.hainam.worksphere.payroll.controller;
 
 import com.hainam.worksphere.auth.security.UserPrincipal;
 import com.hainam.worksphere.authorization.security.RequirePermission;
-import com.hainam.worksphere.employee.domain.Employee;
-import com.hainam.worksphere.employee.repository.EmployeeRepository;
+import com.hainam.worksphere.employee.dto.response.EmployeeResponse;
+import com.hainam.worksphere.employee.service.EmployeeService;
 import com.hainam.worksphere.payroll.dto.request.CreatePayrollRequest;
 import com.hainam.worksphere.payroll.dto.request.UpdatePayrollRequest;
 import com.hainam.worksphere.payroll.dto.response.PayrollResponse;
 import com.hainam.worksphere.payroll.service.PayrollService;
 import com.hainam.worksphere.shared.constant.PermissionType;
 import com.hainam.worksphere.shared.dto.ApiResponse;
-import com.hainam.worksphere.shared.exception.EmployeeNotFoundException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -30,7 +29,7 @@ import java.util.UUID;
 public class PayrollController {
 
     private final PayrollService payrollService;
-    private final EmployeeRepository employeeRepository;
+    private final EmployeeService employeeService;
 
     @GetMapping
     @Operation(summary = "Get all payrolls")
@@ -54,7 +53,7 @@ public class PayrollController {
     public ResponseEntity<ApiResponse<List<PayrollResponse>>> getMyPayrolls(
             @AuthenticationPrincipal UserPrincipal userPrincipal
     ) {
-        Employee employee = getEmployeeByUserId(userPrincipal.getId());
+        EmployeeResponse employee = employeeService.getEmployeeByUserId(userPrincipal.getId());
         List<PayrollResponse> response = payrollService.getByEmployeeId(employee.getId());
         return ResponseEntity.ok(ApiResponse.success(response));
     }
@@ -125,8 +124,4 @@ public class PayrollController {
         return ResponseEntity.ok(ApiResponse.success("Payroll confirmed successfully", response));
     }
 
-    private Employee getEmployeeByUserId(UUID userId) {
-        return employeeRepository.findActiveByUserId(userId)
-                .orElseThrow(() -> EmployeeNotFoundException.byUserId(userId.toString()));
-    }
 }

@@ -5,7 +5,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.DayOfWeek;
 import java.time.LocalDate;
 
 @Data
@@ -15,6 +14,4 @@ import java.time.LocalDate;
 public class UpdateAssignWorkShiftRequest {
 
     private LocalDate date;
-
-    private DayOfWeek dayOfWeek;
 }

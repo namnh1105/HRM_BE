@@ -31,4 +31,18 @@ public interface AttendanceRepository extends JpaRepository<Attendance, UUID> {
 
     @Query("SELECT CASE WHEN COUNT(a) > 0 THEN true ELSE false END FROM Attendance a WHERE a.employee.id = :employeeId AND a.workDate = :workDate AND a.isDeleted = false")
     boolean existsActiveByEmployeeIdAndWorkDate(@Param("employeeId") UUID employeeId, @Param("workDate") LocalDate workDate);
+
+    @Query("SELECT a FROM Attendance a WHERE a.employee.id = :employeeId AND a.workDate = :workDate AND a.workShift.id = :workShiftId AND a.isDeleted = false")
+    Optional<Attendance> findActiveByEmployeeIdAndWorkDateAndWorkShift(
+            @Param("employeeId") UUID employeeId,
+            @Param("workDate") LocalDate workDate,
+            @Param("workShiftId") UUID workShiftId
+    );
+
+    @Query("SELECT a FROM Attendance a WHERE a.employee.id = :employeeId AND a.workDate = :workDate " +
+           "AND a.checkInTime IS NOT NULL AND a.checkOutTime IS NULL AND a.isDeleted = false")
+    List<Attendance> findOpenAttendances(
+            @Param("employeeId") UUID employeeId,
+            @Param("workDate") LocalDate workDate
+    );
 }

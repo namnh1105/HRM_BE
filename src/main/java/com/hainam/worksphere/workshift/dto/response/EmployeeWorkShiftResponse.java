@@ -6,7 +6,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -37,8 +36,6 @@ public class EmployeeWorkShiftResponse {
     private LocalTime shiftEndTime;
 
     private LocalDate date;
-
-    private DayOfWeek dayOfWeek;
 
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS")
     private LocalDateTime createdAt;

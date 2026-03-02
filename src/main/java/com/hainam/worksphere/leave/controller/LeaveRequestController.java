@@ -2,15 +2,14 @@ package com.hainam.worksphere.leave.controller;
 
 import com.hainam.worksphere.auth.security.UserPrincipal;
 import com.hainam.worksphere.authorization.security.RequirePermission;
-import com.hainam.worksphere.employee.domain.Employee;
-import com.hainam.worksphere.employee.repository.EmployeeRepository;
+import com.hainam.worksphere.employee.dto.response.EmployeeResponse;
+import com.hainam.worksphere.employee.service.EmployeeService;
 import com.hainam.worksphere.leave.dto.request.ApproveLeaveRequestDto;
 import com.hainam.worksphere.leave.dto.request.CreateLeaveRequestDto;
 import com.hainam.worksphere.leave.dto.response.LeaveRequestResponse;
 import com.hainam.worksphere.leave.service.LeaveRequestService;
 import com.hainam.worksphere.shared.constant.PermissionType;
 import com.hainam.worksphere.shared.dto.ApiResponse;
-import com.hainam.worksphere.shared.exception.EmployeeNotFoundException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -32,7 +31,7 @@ import java.util.UUID;
 public class LeaveRequestController {
 
     private final LeaveRequestService leaveRequestService;
-    private final EmployeeRepository employeeRepository;
+    private final EmployeeService employeeService;
 
     @PostMapping
     @Operation(summary = "Create a new leave request")
@@ -41,7 +40,7 @@ public class LeaveRequestController {
             @Valid @RequestBody CreateLeaveRequestDto request,
             @AuthenticationPrincipal UserPrincipal userPrincipal
     ) {
-        Employee employee = getEmployeeByUserId(userPrincipal.getId());
+        EmployeeResponse employee = employeeService.getEmployeeByUserId(userPrincipal.getId());
         LeaveRequestResponse response = leaveRequestService.createLeaveRequest(employee.getId(), request);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("Leave request created successfully", response));
     }
@@ -52,7 +51,7 @@ public class LeaveRequestController {
     public ResponseEntity<ApiResponse<List<LeaveRequestResponse>>> getMyLeaveRequests(
             @AuthenticationPrincipal UserPrincipal userPrincipal
     ) {
-        Employee employee = getEmployeeByUserId(userPrincipal.getId());
+        EmployeeResponse employee = employeeService.getEmployeeByUserId(userPrincipal.getId());
         List<LeaveRequestResponse> response = leaveRequestService.getMyLeaveRequests(employee.getId());
         return ResponseEntity.ok(ApiResponse.success(response));
     }
@@ -83,7 +82,7 @@ public class LeaveRequestController {
             @Valid @RequestBody ApproveLeaveRequestDto request,
             @AuthenticationPrincipal UserPrincipal userPrincipal
     ) {
-        Employee approver = getEmployeeByUserId(userPrincipal.getId());
+        EmployeeResponse approver = employeeService.getEmployeeByUserId(userPrincipal.getId());
         LeaveRequestResponse response = leaveRequestService.approveLeaveRequest(id, approver.getId(), request);
         return ResponseEntity.ok(ApiResponse.success("Leave request processed successfully", response));
     }
@@ -95,13 +94,9 @@ public class LeaveRequestController {
             @PathVariable UUID id,
             @AuthenticationPrincipal UserPrincipal userPrincipal
     ) {
-        Employee employee = getEmployeeByUserId(userPrincipal.getId());
+        EmployeeResponse employee = employeeService.getEmployeeByUserId(userPrincipal.getId());
         LeaveRequestResponse response = leaveRequestService.cancelLeaveRequest(id, employee.getId());
         return ResponseEntity.ok(ApiResponse.success("Leave request cancelled successfully", response));
     }
 
-    private Employee getEmployeeByUserId(UUID userId) {
-        return employeeRepository.findActiveByUserId(userId)
-                .orElseThrow(() -> EmployeeNotFoundException.byUserId(userId.toString()));
-    }
 }

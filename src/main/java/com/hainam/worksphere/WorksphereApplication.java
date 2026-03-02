@@ -11,6 +11,9 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 public class WorksphereApplication {
 
     public static void main(String[] args) {
+        // Set timezone mặc định cho JVM là Việt Nam
+        java.util.TimeZone.setDefault(java.util.TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
+
         SpringApplication app = new SpringApplication(WorksphereApplication.class);
 
         // Configure dotenv

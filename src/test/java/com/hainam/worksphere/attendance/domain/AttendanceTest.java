@@ -189,30 +189,36 @@ class AttendanceTest extends BaseUnitTest {
     }
 
     @Test
-    @DisplayName("Should handle location fields")
-    void shouldHandleLocationFields() {
+    @DisplayName("Should handle IP and GPS fields")
+    void shouldHandleIpAndGpsFields() {
         // Given
-        String checkInLocation = "Office Building A, Floor 3";
-        String checkOutLocation = "Office Building A, Floor 3";
         String checkInIp = "192.168.1.100";
         String checkOutIp = "192.168.1.101";
+        Double checkInLatitude = 10.762622;
+        Double checkInLongitude = 106.660172;
+        Double checkOutLatitude = 10.762700;
+        Double checkOutLongitude = 106.660200;
 
         // When
         Attendance attendance = Attendance.builder()
                 .employee(TestFixtures.createTestEmployee())
                 .workDate(LocalDate.now())
-                .checkInLocation(checkInLocation)
-                .checkOutLocation(checkOutLocation)
                 .checkInIp(checkInIp)
                 .checkOutIp(checkOutIp)
+                .checkInLatitude(checkInLatitude)
+                .checkInLongitude(checkInLongitude)
+                .checkOutLatitude(checkOutLatitude)
+                .checkOutLongitude(checkOutLongitude)
                 .build();
 
         // Then
         assertAll(
-                () -> assertThat(attendance.getCheckInLocation()).isEqualTo(checkInLocation),
-                () -> assertThat(attendance.getCheckOutLocation()).isEqualTo(checkOutLocation),
                 () -> assertThat(attendance.getCheckInIp()).isEqualTo(checkInIp),
-                () -> assertThat(attendance.getCheckOutIp()).isEqualTo(checkOutIp)
+                () -> assertThat(attendance.getCheckOutIp()).isEqualTo(checkOutIp),
+                () -> assertThat(attendance.getCheckInLatitude()).isEqualTo(checkInLatitude),
+                () -> assertThat(attendance.getCheckInLongitude()).isEqualTo(checkInLongitude),
+                () -> assertThat(attendance.getCheckOutLatitude()).isEqualTo(checkOutLatitude),
+                () -> assertThat(attendance.getCheckOutLongitude()).isEqualTo(checkOutLongitude)
         );
     }
 

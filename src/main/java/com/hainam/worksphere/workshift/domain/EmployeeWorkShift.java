@@ -10,7 +10,6 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -41,10 +40,6 @@ public class EmployeeWorkShift {
 
     @Column(name = "date", nullable = false)
     private LocalDate date;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "day_of_week", length = 10)
-    private DayOfWeek dayOfWeek;
 
     @CreationTimestamp
     @Column(name = "created_at")

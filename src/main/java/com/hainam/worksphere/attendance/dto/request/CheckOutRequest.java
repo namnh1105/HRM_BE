@@ -11,7 +11,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class CheckOutRequest {
 
-    private String note;
+    private Double latitude;
 
-    private String checkOutLocation;
+    private Double longitude;
+
+    private String note;
 }

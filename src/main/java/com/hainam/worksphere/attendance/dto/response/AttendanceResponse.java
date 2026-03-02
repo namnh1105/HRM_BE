@@ -33,10 +33,6 @@ public class AttendanceResponse {
 
     private String checkOutIp;
 
-    private String checkInLocation;
-
-    private String checkOutLocation;
-
     private AttendanceStatus status;
 
     private Double workingHours;

@@ -51,12 +51,6 @@ public class Attendance {
     @Column(name = "check_out_ip", length = 255)
     private String checkOutIp;
 
-    @Column(name = "check_in_location", length = 255)
-    private String checkInLocation;
-
-    @Column(name = "check_out_location", length = 255)
-    private String checkOutLocation;
-
     @Column(name = "check_in_latitude")
     private Double checkInLatitude;
 

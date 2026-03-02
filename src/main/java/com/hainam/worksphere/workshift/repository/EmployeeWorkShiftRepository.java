@@ -6,7 +6,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -30,23 +29,19 @@ public interface EmployeeWorkShiftRepository extends JpaRepository<EmployeeWorkS
 
     @Query("SELECT ews FROM EmployeeWorkShift ews WHERE ews.employee.id = :employeeId " +
            "AND ews.date = :date " +
-           "AND (ews.dayOfWeek IS NULL OR ews.dayOfWeek = :dayOfWeek) " +
            "AND ews.isDeleted = false")
     List<EmployeeWorkShift> findActiveByEmployeeIdAndDate(
             @Param("employeeId") UUID employeeId,
-            @Param("date") LocalDate date,
-            @Param("dayOfWeek") DayOfWeek dayOfWeek
+            @Param("date") LocalDate date
     );
 
     @Query("SELECT CASE WHEN COUNT(ews) > 0 THEN true ELSE false END FROM EmployeeWorkShift ews " +
            "WHERE ews.employee.id = :employeeId AND ews.workShift.id = :workShiftId " +
            "AND ews.date = :date " +
-           "AND (ews.dayOfWeek IS NULL OR ews.dayOfWeek = :dayOfWeek) " +
            "AND ews.isDeleted = false")
     boolean existsActiveAssignment(
             @Param("employeeId") UUID employeeId,
             @Param("workShiftId") UUID workShiftId,
-            @Param("date") LocalDate date,
-            @Param("dayOfWeek") DayOfWeek dayOfWeek
+            @Param("date") LocalDate date
     );
 }
