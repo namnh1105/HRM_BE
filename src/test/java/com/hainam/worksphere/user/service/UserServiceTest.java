@@ -3,7 +3,6 @@ package com.hainam.worksphere.user.service;
 import com.hainam.worksphere.BaseUnitTest;
 import com.hainam.worksphere.TestFixtures;
 import com.hainam.worksphere.auth.security.UserPrincipal;
-import com.hainam.worksphere.shared.audit.util.AuditDiffUtil;
 import com.hainam.worksphere.shared.exception.UserNotFoundException;
 import com.hainam.worksphere.shared.exception.ValidationException;
 import com.hainam.worksphere.user.domain.User;
@@ -47,9 +46,6 @@ class UserServiceTest extends BaseUnitTest {
 
     @Mock
     private UserUpdateMapper userUpdateMapper;
-
-    @Mock
-    private AuditDiffUtil auditDiffUtil;
 
     @InjectMocks
     private UserService userService;
@@ -198,8 +194,7 @@ class UserServiceTest extends BaseUnitTest {
             () -> verify(userRepository).findActiveById(testUser.getId()),
             () -> verify(userUpdateMapper).updateUserFromRequest(request, testUser),
             () -> verify(userRepository).save(any(User.class)),
-            () -> verify(userMapper).toUserResponse(updatedUser),
-            () -> verify(auditDiffUtil).auditAllChanges(anyString(), anyString(), anyString(), any(User.class), any(User.class), anyString())
+            () -> verify(userMapper).toUserResponse(updatedUser)
         );
     }
 
