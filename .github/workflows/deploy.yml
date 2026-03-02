@@ -163,9 +163,8 @@ jobs:
           # Copy Docker image
           scp /tmp/worksphere-image.tar $VPS_USER@$VPS_HOST:/tmp/
           
-          # Copy compose + init sql
+          # Copy compose file
           scp docker-compose.prod.yml $VPS_USER@$VPS_HOST:/tmp/docker-compose.yml
-          scp init-db.sql $VPS_USER@$VPS_HOST:/tmp/
           
           ssh -T $VPS_USER@$VPS_HOST << 'EOF'
             set -e
@@ -191,7 +190,6 @@ jobs:
           
             echo "▶ Move deployment files"
             mv /tmp/docker-compose.yml /opt/worksphere/docker-compose.yml
-            mv /tmp/init-db.sql /opt/worksphere/
           
             cd /opt/worksphere
           
