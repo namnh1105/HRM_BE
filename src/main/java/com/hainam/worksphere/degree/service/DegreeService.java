@@ -19,7 +19,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -96,7 +96,7 @@ public class DegreeService {
         AuditContext.registerDeleted(degree);
 
         degree.setIsDeleted(true);
-        degree.setDeletedAt(LocalDateTime.now());
+        degree.setDeletedAt(Instant.now());
         degree.setDeletedBy(deletedBy);
         degreeRepository.save(degree);
     }

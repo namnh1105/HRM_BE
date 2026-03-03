@@ -27,4 +27,7 @@ public interface WorkShiftRepository extends JpaRepository<WorkShift, UUID> {
 
     @Query("SELECT ws FROM WorkShift ws WHERE ws.isActive = true AND ws.isDeleted = false")
     List<WorkShift> findAllActiveAndEnabled();
+
+    @Query("SELECT ws FROM WorkShift ws WHERE ws.store.id = :storeId AND ws.isDeleted = false")
+    List<WorkShift> findActiveByStoreId(@Param("storeId") UUID storeId);
 }

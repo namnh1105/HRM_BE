@@ -7,7 +7,7 @@ import com.hainam.worksphere.shared.web.HttpMethod;
 import lombok.Builder;
 import lombok.Data;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -30,7 +30,7 @@ public class AuditLogDto {
     private String requestId;
     private HttpMethod requestMethod;
     private String requestUrl;
-    private LocalDateTime timestamp;
+    private Instant timestamp;
     private AuditStatus status;
     private String errorMessage;
 

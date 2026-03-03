@@ -29,5 +29,7 @@ public class UpdateDepartmentRequest {
 
     private UUID parentDepartmentId;
 
+    private UUID storeId;
+
     private Boolean isActive;
 }

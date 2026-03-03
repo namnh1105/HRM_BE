@@ -28,4 +28,6 @@ public class UpdateWorkShiftRequest {
     private Boolean isActive;
 
     private Boolean isNightShift;
+
+    private java.util.UUID storeId;
 }

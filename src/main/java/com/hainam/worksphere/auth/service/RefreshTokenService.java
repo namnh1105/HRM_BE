@@ -11,7 +11,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -30,7 +30,7 @@ public class RefreshTokenService {
         RefreshToken refreshToken = RefreshToken.builder()
                 .token(UUID.randomUUID().toString())
                 .user(user)
-                .expiresAt(LocalDateTime.now().plusSeconds(jwtUtil.getRefreshTokenExpiration() / 1000))
+                .expiresAt(Instant.now().plusSeconds(jwtUtil.getRefreshTokenExpiration() / 1000))
                 .build();
 
         return refreshTokenRepository.save(refreshToken);
@@ -70,7 +70,7 @@ public class RefreshTokenService {
     @Transactional
     public void removeExpiredTokens() {
         log.info("Removing expired refresh tokens");
-        refreshTokenRepository.deleteExpiredAndRevokedTokens(LocalDateTime.now());
+        refreshTokenRepository.deleteExpiredAndRevokedTokens(Instant.now());
     }
 }
 

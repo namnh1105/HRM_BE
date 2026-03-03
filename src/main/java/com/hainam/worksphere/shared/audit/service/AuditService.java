@@ -27,7 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -300,7 +300,7 @@ public class AuditService {
      * Get audit statistics by action type
      */
     @Transactional(readOnly = true)
-    public List<AuditStatisticDto> getAuditStatisticsByActionType(LocalDateTime startDate) {
+    public List<AuditStatisticDto> getAuditStatisticsByActionType(Instant startDate) {
         List<Object[]> statistics = auditLogRepository.getAuditStatisticsByActionType(startDate);
         return statistics.stream()
                 .map(row -> AuditStatisticDto.builder()
@@ -314,7 +314,7 @@ public class AuditService {
      * Get audit statistics by action code
      */
     @Transactional(readOnly = true)
-    public List<AuditStatisticDto> getAuditStatisticsByActionCode(LocalDateTime startDate) {
+    public List<AuditStatisticDto> getAuditStatisticsByActionCode(Instant startDate) {
         List<Object[]> statistics = auditLogRepository.getAuditStatisticsByActionCode(startDate);
         return statistics.stream()
                 .map(row -> AuditStatisticDto.builder()
@@ -328,7 +328,7 @@ public class AuditService {
      * Get audit statistics (backward compatibility - uses action code)
      */
     @Transactional(readOnly = true)
-    public List<AuditStatisticDto> getAuditStatistics(LocalDateTime startDate) {
+    public List<AuditStatisticDto> getAuditStatistics(Instant startDate) {
         return getAuditStatisticsByActionCode(startDate);
     }
 
@@ -370,7 +370,7 @@ public class AuditService {
         }
 
         // Set timestamp
-        auditLog.setTimestamp(LocalDateTime.now());
+        auditLog.setTimestamp(Instant.now());
     }
 
     /**

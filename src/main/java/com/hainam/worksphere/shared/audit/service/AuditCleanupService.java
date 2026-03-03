@@ -10,7 +10,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Slf4j
 @Service
@@ -29,7 +29,7 @@ public class AuditCleanupService {
         }
 
         try {
-            LocalDateTime cutoffDate = LocalDateTime.now().minusDays(auditProperties.getRetentionDays());
+            Instant cutoffDate = Instant.now().minus(java.time.Duration.ofDays(auditProperties.getRetentionDays()));
 
             long totalCount = auditLogRepository.count();
 
@@ -72,7 +72,7 @@ public class AuditCleanupService {
 
         try {
             long totalCount = auditLogRepository.count();
-            LocalDateTime last24Hours = LocalDateTime.now().minusDays(1);
+            Instant last24Hours = Instant.now().minus(java.time.Duration.ofDays(1));
             Long recentCount = auditLogRepository.countByUserIdAndTimestampAfter(null, last24Hours);
 
             if (recentCount == null) {

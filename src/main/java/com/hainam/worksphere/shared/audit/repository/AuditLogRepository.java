@@ -11,7 +11,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -41,7 +41,7 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, UUID> {
     /**
      * Find audit logs within date range
      */
-    Page<AuditLog> findByTimestampBetweenOrderByTimestampDesc(LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
+    Page<AuditLog> findByTimestampBetweenOrderByTimestampDesc(Instant startDate, Instant endDate, Pageable pageable);
 
     /**
      * Find audit logs by multiple criteria
@@ -58,8 +58,8 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, UUID> {
                                   @Param("actionType") ActionType actionType,
                                   @Param("actionCode") String actionCode,
                                   @Param("entityType") EntityType entityType,
-                                  @Param("startDate") LocalDateTime startDate,
-                                  @Param("endDate") LocalDateTime endDate,
+                                  @Param("startDate") Instant startDate,
+                                  @Param("endDate") Instant endDate,
                                   Pageable pageable);
 
     /**
@@ -80,8 +80,8 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, UUID> {
                                      @Param("actionType") ActionType actionType,
                                      @Param("actionCode") String actionCode,
                                      @Param("entityType") EntityType entityType,
-                                     @Param("startDate") LocalDateTime startDate,
-                                     @Param("endDate") LocalDateTime endDate,
+                                     @Param("startDate") Instant startDate,
+                                     @Param("endDate") Instant endDate,
                                      @Param("fieldName") String fieldName,
                                      @Param("oldValue") String oldValue,
                                      @Param("newValue") String newValue,
@@ -96,23 +96,23 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, UUID> {
      * Count audit logs by user within date range
      */
     @Query("SELECT COUNT(a) FROM AuditLog a WHERE a.userId = :userId AND a.timestamp >= :startDate")
-    Long countByUserIdAndTimestampAfter(@Param("userId") String userId, @Param("startDate") LocalDateTime startDate);
+    Long countByUserIdAndTimestampAfter(@Param("userId") String userId, @Param("startDate") Instant startDate);
 
     /**
      * Get audit statistics by action type
      */
     @Query("SELECT a.actionType, COUNT(a) FROM AuditLog a WHERE a.timestamp >= :startDate GROUP BY a.actionType")
-    List<Object[]> getAuditStatisticsByActionType(@Param("startDate") LocalDateTime startDate);
+    List<Object[]> getAuditStatisticsByActionType(@Param("startDate") Instant startDate);
 
     /**
      * Get audit statistics by action code
      */
     @Query("SELECT a.actionCode, COUNT(a) FROM AuditLog a WHERE a.timestamp >= :startDate GROUP BY a.actionCode")
-    List<Object[]> getAuditStatisticsByActionCode(@Param("startDate") LocalDateTime startDate);
+    List<Object[]> getAuditStatisticsByActionCode(@Param("startDate") Instant startDate);
 
     /**
      * Find old audit logs for cleanup
      */
     @Query("SELECT a FROM AuditLog a WHERE a.timestamp < :cutoffDate ORDER BY a.timestamp ASC")
-    List<AuditLog> findTop1000ByTimestampBeforeOrderByTimestampAsc(@Param("cutoffDate") LocalDateTime cutoffDate, Pageable pageable);
+    List<AuditLog> findTop1000ByTimestampBeforeOrderByTimestampAsc(@Param("cutoffDate") Instant cutoffDate, Pageable pageable);
 }

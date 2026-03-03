@@ -20,8 +20,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -128,7 +128,7 @@ public class EmployeeWorkShiftService {
         AuditContext.registerDeleted(ews);
 
         ews.setIsDeleted(true);
-        ews.setDeletedAt(LocalDateTime.now());
+        ews.setDeletedAt(Instant.now());
         ews.setDeletedBy(deletedBy);
         employeeWorkShiftRepository.save(ews);
     }

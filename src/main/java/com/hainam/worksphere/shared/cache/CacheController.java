@@ -9,7 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.*;
 
 /**
@@ -161,7 +161,7 @@ public class CacheController {
 
         health.put("cacheManagerType", cacheManager.getClass().getSimpleName());
         health.put("fallbackEnabled", cacheManager instanceof FallbackCacheManager);
-        health.put("timestamp", LocalDateTime.now());
+        health.put("timestamp", Instant.now());
 
         return ResponseEntity.ok(health);
     }
@@ -188,7 +188,7 @@ public class CacheController {
         }
 
         result.put("testPerformed", true);
-        result.put("timestamp", LocalDateTime.now());
+        result.put("timestamp", Instant.now());
 
         boolean allAvailable = (boolean) result.getOrDefault("cacheRedisAvailable", true) &&
                               (boolean) result.getOrDefault("rateLimitRedisAvailable", true);
@@ -216,7 +216,7 @@ public class CacheController {
             config.put("redisStatus", "UNKNOWN");
         }
 
-        config.put("timestamp", LocalDateTime.now());
+        config.put("timestamp", Instant.now());
 
         return ResponseEntity.ok(config);
     }

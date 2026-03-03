@@ -1,13 +1,12 @@
 package com.hainam.worksphere.relative.dto.response;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Data
@@ -40,9 +39,7 @@ public class RelativeResponse {
 
     private Boolean isDependent;
 
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS")
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS")
-    private LocalDateTime updatedAt;
+    private Instant updatedAt;
 }

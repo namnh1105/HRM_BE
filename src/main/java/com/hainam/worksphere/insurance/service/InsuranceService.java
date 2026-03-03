@@ -24,7 +24,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -96,7 +96,7 @@ public class InsuranceService {
         AuditContext.registerDeleted(insurance);
 
         insurance.setIsDeleted(true);
-        insurance.setDeletedAt(LocalDateTime.now());
+        insurance.setDeletedAt(Instant.now());
         insurance.setDeletedBy(deletedBy);
         insuranceRepository.save(insurance);
     }
@@ -196,7 +196,7 @@ public class InsuranceService {
         AuditContext.registerDeleted(registration);
 
         registration.setIsDeleted(true);
-        registration.setDeletedAt(LocalDateTime.now());
+        registration.setDeletedAt(Instant.now());
         registration.setDeletedBy(deletedBy);
         registrationRepository.save(registration);
     }

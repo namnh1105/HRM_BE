@@ -9,8 +9,8 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -44,11 +44,11 @@ public class EmployeeSalary {
 
     @CreationTimestamp
     @Column(name = "created_at")
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
     @UpdateTimestamp
     @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    private Instant updatedAt;
 
     @Column(name = "created_by")
     private UUID createdBy;
@@ -61,7 +61,7 @@ public class EmployeeSalary {
     private Boolean isDeleted = false;
 
     @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
+    private Instant deletedAt;
 
     @Column(name = "deleted_by")
     private UUID deletedBy;

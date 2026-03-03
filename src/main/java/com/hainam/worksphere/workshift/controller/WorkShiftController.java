@@ -46,6 +46,16 @@ public class WorkShiftController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
+    @GetMapping("/store/{storeId}")
+    @Operation(summary = "Get work shifts by store")
+    @RequirePermission(PermissionType.VIEW_WORK_SHIFT)
+    public ResponseEntity<ApiResponse<List<WorkShiftResponse>>> getWorkShiftsByStore(
+            @PathVariable UUID storeId
+    ) {
+        List<WorkShiftResponse> response = workShiftService.getWorkShiftsByStore(storeId);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
     @GetMapping("/{workShiftId}")
     @Operation(summary = "Get work shift by ID")
     @RequirePermission(PermissionType.VIEW_WORK_SHIFT)

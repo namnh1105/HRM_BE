@@ -16,7 +16,10 @@ import com.hainam.worksphere.shared.audit.util.AuditContext;
 import com.hainam.worksphere.shared.config.CacheConfig;
 import com.hainam.worksphere.shared.exception.DepartmentNotFoundException;
 import com.hainam.worksphere.shared.exception.EmployeeNotFoundException;
+import com.hainam.worksphere.shared.exception.StoreNotFoundException;
 import com.hainam.worksphere.shared.exception.ValidationException;
+import com.hainam.worksphere.store.domain.Store;
+import com.hainam.worksphere.store.repository.StoreRepository;
 import com.hainam.worksphere.user.domain.User;
 import com.hainam.worksphere.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +28,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -37,6 +40,7 @@ public class EmployeeService {
     private final EmployeeRepository employeeRepository;
     private final DepartmentRepository departmentRepository;
     private final UserRepository userRepository;
+    private final StoreRepository storeRepository;
     private final EmployeeMapper employeeMapper;
 
     @Cacheable(value = CacheConfig.EMPLOYEE_CACHE, key = "#employeeId.toString()")
@@ -61,6 +65,13 @@ public class EmployeeService {
 
     public List<EmployeeResponse> getEmployeesByDepartment(UUID departmentId) {
         return employeeRepository.findActiveByDepartmentId(departmentId)
+                .stream()
+                .map(employeeMapper::toEmployeeResponse)
+                .collect(Collectors.toList());
+    }
+
+    public List<EmployeeResponse> getEmployeesByStore(UUID storeId) {
+        return employeeRepository.findActiveByStoreId(storeId)
                 .stream()
                 .map(employeeMapper::toEmployeeResponse)
                 .collect(Collectors.toList());
@@ -111,6 +122,12 @@ public class EmployeeService {
             Department department = departmentRepository.findActiveById(request.getDepartmentId())
                     .orElseThrow(() -> DepartmentNotFoundException.byId(request.getDepartmentId().toString()));
             employee.setDepartment(department);
+        }
+
+        if (request.getStoreId() != null) {
+            Store store = storeRepository.findActiveById(request.getStoreId())
+                    .orElseThrow(() -> StoreNotFoundException.byId(request.getStoreId().toString()));
+            employee.setStore(store);
         }
 
         Employee saved = employeeRepository.save(employee);
@@ -166,6 +183,12 @@ public class EmployeeService {
             employee.setDepartment(department);
         }
 
+        if (request.getStoreId() != null) {
+            Store store = storeRepository.findActiveById(request.getStoreId())
+                    .orElseThrow(() -> StoreNotFoundException.byId(request.getStoreId().toString()));
+            employee.setStore(store);
+        }
+
         employee.setUpdatedBy(updatedBy);
         Employee saved = employeeRepository.save(employee);
         AuditContext.registerUpdated(saved);
@@ -183,7 +206,7 @@ public class EmployeeService {
         AuditContext.registerDeleted(employee);
 
         employee.setIsDeleted(true);
-        employee.setDeletedAt(LocalDateTime.now());
+        employee.setDeletedAt(Instant.now());
         employee.setDeletedBy(deletedBy);
         employee.setEmploymentStatus(EmploymentStatus.TERMINATED);
         employeeRepository.save(employee);

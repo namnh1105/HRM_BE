@@ -22,8 +22,8 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
@@ -88,7 +88,7 @@ public class LeaveRequestService {
 
         leaveRequest.setStatus(request.getApproved() ? LeaveRequestStatus.APPROVED : LeaveRequestStatus.REJECTED);
         leaveRequest.setApprover(approver);
-        leaveRequest.setApprovedAt(LocalDateTime.now());
+        leaveRequest.setApprovedAt(Instant.now());
         leaveRequest.setApproverComment(request.getComment());
         leaveRequest.setUpdatedBy(approverId);
 

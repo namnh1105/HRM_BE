@@ -9,7 +9,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.UuidGenerator;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -90,7 +90,7 @@ public class AuditLog {
     /* ========= Status ========= */
 
     @Column(nullable = false)
-    private LocalDateTime timestamp;
+    private Instant timestamp;
 
     @Enumerated(EnumType.STRING)
     @Column(length = 20)
@@ -106,7 +106,7 @@ public class AuditLog {
     @PrePersist
     protected void onCreate() {
         if (timestamp == null) {
-            timestamp = LocalDateTime.now();
+            timestamp = Instant.now();
         }
         if (status == null) {
             status = AuditStatus.SUCCESS;

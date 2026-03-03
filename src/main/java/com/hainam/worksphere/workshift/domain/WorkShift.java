@@ -1,6 +1,7 @@
 package com.hainam.worksphere.workshift.domain;
 
 import com.hainam.worksphere.shared.audit.annotation.AuditableEntity;
+import com.hainam.worksphere.store.domain.Store;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,7 +10,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.time.LocalTime;
 import java.util.UUID;
 
@@ -59,13 +60,17 @@ public class WorkShift {
     @Builder.Default
     private Boolean isNightShift = false;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "store_id")
+    private Store store;
+
     @CreationTimestamp
     @Column(name = "created_at")
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
     @UpdateTimestamp
     @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    private Instant updatedAt;
 
     @Column(name = "created_by")
     private UUID createdBy;
@@ -78,7 +83,7 @@ public class WorkShift {
     private Boolean isDeleted = false;
 
     @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
+    private Instant deletedAt;
 
     @Column(name = "deleted_by")
     private UUID deletedBy;

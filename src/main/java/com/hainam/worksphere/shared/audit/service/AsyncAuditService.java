@@ -20,7 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Slf4j
 @Service
@@ -57,7 +57,7 @@ public class AsyncAuditService {
                     .userAgent(userAgent)
                     .requestMethod(parseHttpMethod(requestMethod))
                     .requestUrl(requestUrl)
-                    .timestamp(LocalDateTime.now())
+                    .timestamp(Instant.now())
                     .build();
 
             auditLogRepository.save(auditLog);

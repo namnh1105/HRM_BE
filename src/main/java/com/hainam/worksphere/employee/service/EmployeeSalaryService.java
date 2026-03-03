@@ -16,8 +16,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -119,7 +119,7 @@ public class EmployeeSalaryService {
         AuditContext.registerDeleted(salary);
 
         salary.setIsDeleted(true);
-        salary.setDeletedAt(LocalDateTime.now());
+        salary.setDeletedAt(Instant.now());
         salary.setDeletedBy(deletedBy);
         employeeSalaryRepository.save(salary);
     }

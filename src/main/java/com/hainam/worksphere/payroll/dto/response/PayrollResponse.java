@@ -6,8 +6,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Data
@@ -64,9 +64,9 @@ public class PayrollResponse {
 
     private LocalDate paymentDate;
 
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
-    private LocalDateTime updatedAt;
+    private Instant updatedAt;
 
     private UUID createdBy;
 

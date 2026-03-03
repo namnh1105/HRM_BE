@@ -8,6 +8,7 @@ import com.hainam.worksphere.attendance.dto.response.AttendanceResponse;
 import com.hainam.worksphere.attendance.mapper.AttendanceMapper;
 import com.hainam.worksphere.attendance.repository.AttendanceRepository;
 import com.hainam.worksphere.employee.domain.Employee;
+import com.hainam.worksphere.employee.repository.EmployeeRepository;
 import com.hainam.worksphere.shared.audit.annotation.AuditAction;
 import com.hainam.worksphere.shared.audit.domain.ActionType;
 import com.hainam.worksphere.shared.audit.util.AuditContext;
@@ -40,6 +41,7 @@ import java.util.stream.Collectors;
 public class AttendanceService {
 
     private final AttendanceRepository attendanceRepository;
+    private final EmployeeRepository employeeRepository;
     private final EmployeeWorkShiftRepository employeeWorkShiftRepository;
     private final AttendanceMapper attendanceMapper;
     private final FaceApiClient faceApiClient;
@@ -93,8 +95,12 @@ public class AttendanceService {
             attendance.setLateMinutes(lateMinutes);
             attendance.setStatus(status);
         } else {
+            // Fetch employee to get store
+            Employee emp = employeeRepository.findActiveById(employeeId)
+                    .orElse(Employee.builder().id(employeeId).build());
+
             attendance = Attendance.builder()
-                    .employee(Employee.builder().id(employeeId).build())
+                    .employee(emp)
                     .workDate(today)
                     .checkInTime(now)
                     .checkInIp(ipAddress)
@@ -103,6 +109,7 @@ public class AttendanceService {
                     .lateMinutes(lateMinutes)
                     .status(status)
                     .workShift(matchingShift)
+                    .store(emp.getStore())
                     .note(request.getNote())
                     .build();
         }
@@ -220,6 +227,28 @@ public class AttendanceService {
     public Optional<AttendanceResponse> getTodayAttendance(UUID employeeId) {
         return attendanceRepository.findActiveByEmployeeIdAndWorkDate(employeeId, LocalDate.now())
                 .map(attendanceMapper::toAttendanceResponse);
+    }
+
+    public List<AttendanceResponse> getAttendancesByStore(UUID storeId) {
+        return attendanceRepository.findActiveByStoreId(storeId)
+                .stream()
+                .map(attendanceMapper::toAttendanceResponse)
+                .collect(Collectors.toList());
+    }
+
+    public List<AttendanceResponse> getAttendancesByStoreAndDateRange(UUID storeId,
+                                                                      LocalDate startDate, LocalDate endDate) {
+        return attendanceRepository.findActiveByStoreIdAndWorkDateBetween(storeId, startDate, endDate)
+                .stream()
+                .map(attendanceMapper::toAttendanceResponse)
+                .collect(Collectors.toList());
+    }
+
+    public List<AttendanceResponse> getAttendancesByStoreAndDate(UUID storeId, LocalDate workDate) {
+        return attendanceRepository.findActiveByStoreIdAndWorkDate(storeId, workDate)
+                .stream()
+                .map(attendanceMapper::toAttendanceResponse)
+                .collect(Collectors.toList());
     }
 
     // ── Shift matching ──────────────────────────────────────────────

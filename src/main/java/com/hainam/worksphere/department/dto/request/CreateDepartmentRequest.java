@@ -34,4 +34,6 @@ public class CreateDepartmentRequest {
     private UUID managerId;
 
     private UUID parentDepartmentId;
+
+    private UUID storeId;
 }

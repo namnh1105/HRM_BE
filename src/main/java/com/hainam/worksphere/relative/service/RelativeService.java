@@ -19,7 +19,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -118,7 +118,7 @@ public class RelativeService {
         AuditContext.registerDeleted(relative);
 
         relative.setIsDeleted(true);
-        relative.setDeletedAt(LocalDateTime.now());
+        relative.setDeletedAt(Instant.now());
         relative.setDeletedBy(deletedBy);
         relativeRepository.save(relative);
     }

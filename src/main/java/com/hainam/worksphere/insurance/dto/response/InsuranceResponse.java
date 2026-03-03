@@ -5,7 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 @Data
@@ -32,7 +32,7 @@ public class InsuranceResponse {
 
     private Boolean isActive;
 
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
-    private LocalDateTime updatedAt;
+    private Instant updatedAt;
 }

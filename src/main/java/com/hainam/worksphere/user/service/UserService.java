@@ -22,7 +22,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -118,7 +118,7 @@ public class UserService {
         AuditContext.registerDeleted(user);
 
         user.setIsDeleted(true);
-        user.setDeletedAt(LocalDateTime.now());
+        user.setDeletedAt(Instant.now());
         user.setDeletedBy(deletedBy);
         user.setUpdatedBy(deletedBy);
 

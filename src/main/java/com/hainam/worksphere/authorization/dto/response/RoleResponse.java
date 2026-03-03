@@ -1,12 +1,11 @@
 package com.hainam.worksphere.authorization.dto.response;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Set;
 import java.util.UUID;
 
@@ -24,9 +23,7 @@ public class RoleResponse {
     private Boolean isActive;
     private Set<PermissionResponse> permissions;
 
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS")
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS")
-    private LocalDateTime updatedAt;
+    private Instant updatedAt;
 }

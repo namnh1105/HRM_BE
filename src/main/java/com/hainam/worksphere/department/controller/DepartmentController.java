@@ -58,6 +58,16 @@ public class DepartmentController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
+    @GetMapping("/store/{storeId}")
+    @Operation(summary = "Get departments by store")
+    @RequirePermission(PermissionType.VIEW_DEPARTMENT)
+    public ResponseEntity<ApiResponse<List<DepartmentResponse>>> getDepartmentsByStore(
+            @PathVariable UUID storeId
+    ) {
+        List<DepartmentResponse> response = departmentService.getDepartmentsByStore(storeId);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
     @PostMapping
     @Operation(summary = "Create a new department")
     @RequirePermission(PermissionType.CREATE_DEPARTMENT)

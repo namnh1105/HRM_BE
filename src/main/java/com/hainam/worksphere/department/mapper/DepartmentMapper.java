@@ -14,11 +14,14 @@ public interface DepartmentMapper {
     @Mapping(target = "managerName", source = "manager.fullName")
     @Mapping(target = "parentDepartmentId", source = "parentDepartment.id")
     @Mapping(target = "parentDepartmentName", source = "parentDepartment.name")
+    @Mapping(target = "storeId", source = "store.id")
+    @Mapping(target = "storeName", source = "store.name")
     DepartmentResponse toDepartmentResponse(Department department);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "manager", ignore = true)
     @Mapping(target = "parentDepartment", ignore = true)
+    @Mapping(target = "store", ignore = true)
     @Mapping(target = "isActive", constant = "true")
     @Mapping(target = "isDeleted", constant = "false")
     @Mapping(target = "createdAt", ignore = true)

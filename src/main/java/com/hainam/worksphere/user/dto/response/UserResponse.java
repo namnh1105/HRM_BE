@@ -1,12 +1,11 @@
 package com.hainam.worksphere.user.dto.response;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 @Data
@@ -29,11 +28,9 @@ public class UserResponse {
 
     private Boolean isActive;
 
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS")
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS")
-    private LocalDateTime updatedAt;
+    private Instant updatedAt;
 
     private UUID createdBy;
 
@@ -41,8 +38,7 @@ public class UserResponse {
 
     private Boolean isDeleted;
 
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS")
-    private LocalDateTime deletedAt;
+    private Instant deletedAt;
 
     private UUID deletedBy;
 }

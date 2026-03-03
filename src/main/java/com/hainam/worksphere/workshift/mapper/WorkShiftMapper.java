@@ -10,10 +10,13 @@ import org.mapstruct.MappingConstants;
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
 public interface WorkShiftMapper {
 
+    @Mapping(target = "storeId", source = "store.id")
+    @Mapping(target = "storeName", source = "store.name")
     WorkShiftResponse toWorkShiftResponse(WorkShift workShift);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "totalHours", ignore = true)
+    @Mapping(target = "store", ignore = true)
     @Mapping(target = "isActive", constant = "true")
     @Mapping(target = "isDeleted", constant = "false")
     @Mapping(target = "createdAt", ignore = true)

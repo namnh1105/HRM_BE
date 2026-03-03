@@ -2,6 +2,7 @@ package com.hainam.worksphere.employee.domain;
 
 import com.hainam.worksphere.department.domain.Department;
 import com.hainam.worksphere.shared.audit.annotation.AuditableEntity;
+import com.hainam.worksphere.store.domain.Store;
 import com.hainam.worksphere.user.domain.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -13,8 +14,8 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.type.SqlTypes;
 
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -84,6 +85,10 @@ public class Employee {
     @JoinColumn(name = "department_id")
     private Department department;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "store_id")
+    private Store store;
+
     @Column(name = "position", length = 100)
     private String position;
 
@@ -120,11 +125,11 @@ public class Employee {
 
     @CreationTimestamp
     @Column(name = "created_at")
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
     @UpdateTimestamp
     @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    private Instant updatedAt;
 
     @Column(name = "created_by")
     private UUID createdBy;
@@ -137,7 +142,7 @@ public class Employee {
     private Boolean isDeleted = false;
 
     @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
+    private Instant deletedAt;
 
     @Column(name = "deleted_by")
     private UUID deletedBy;

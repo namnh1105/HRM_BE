@@ -33,4 +33,7 @@ public interface DepartmentRepository extends JpaRepository<Department, UUID> {
 
     @Query("SELECT d FROM Department d WHERE d.isActive = true AND d.isDeleted = false")
     List<Department> findAllActiveAndEnabled();
+
+    @Query("SELECT d FROM Department d WHERE d.store.id = :storeId AND d.isDeleted = false")
+    List<Department> findActiveByStoreId(@Param("storeId") UUID storeId);
 }

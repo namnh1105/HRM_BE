@@ -5,8 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Data
@@ -47,6 +47,10 @@ public class EmployeeResponse {
 
     private String departmentName;
 
+    private UUID storeId;
+
+    private String storeName;
+
     private String position;
 
     private LocalDate joinDate;
@@ -65,7 +69,7 @@ public class EmployeeResponse {
 
     private String healthInsuranceNumber;
 
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
-    private LocalDateTime updatedAt;
+    private Instant updatedAt;
 }

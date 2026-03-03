@@ -6,8 +6,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.UUID;
 
@@ -47,9 +47,13 @@ public class AttendanceResponse {
 
     private UUID workShiftId;
 
-    private LocalDateTime createdAt;
+    private UUID storeId;
 
-    private LocalDateTime updatedAt;
+    private String storeName;
+
+    private Instant createdAt;
+
+    private Instant updatedAt;
 
     private UUID createdBy;
 
@@ -57,7 +61,7 @@ public class AttendanceResponse {
 
     private Boolean isDeleted;
 
-    private LocalDateTime deletedAt;
+    private Instant deletedAt;
 
     private UUID deletedBy;
 }

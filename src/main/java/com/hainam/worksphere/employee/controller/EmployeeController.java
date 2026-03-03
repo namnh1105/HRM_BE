@@ -68,6 +68,16 @@ public class EmployeeController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
+    @GetMapping("/store/{storeId}")
+    @Operation(summary = "Get employees by store")
+    @RequirePermission(PermissionType.VIEW_EMPLOYEE)
+    public ResponseEntity<ApiResponse<List<EmployeeResponse>>> getEmployeesByStore(
+            @PathVariable UUID storeId
+    ) {
+        List<EmployeeResponse> response = employeeService.getEmployeesByStore(storeId);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
     @PostMapping
     @Operation(summary = "Create a new employee")
     @RequirePermission(PermissionType.CREATE_EMPLOYEE)

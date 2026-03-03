@@ -7,7 +7,7 @@ import com.hainam.worksphere.shared.web.HttpMethod;
 import lombok.Data;
 import org.springframework.format.annotation.DateTimeFormat;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Data
 public class AuditLogSearchRequest {
@@ -23,10 +23,10 @@ public class AuditLogSearchRequest {
     private String entityId;
 
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-    private LocalDateTime startDate;
+    private Instant startDate;
 
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-    private LocalDateTime endDate;
+    private Instant endDate;
 
     private String ipAddress;
 

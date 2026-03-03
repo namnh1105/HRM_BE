@@ -111,6 +111,12 @@ public final class PermissionType {
     public static final String UPDATE_RELATIVE = "UPDATE_RELATIVE";
     public static final String DELETE_RELATIVE = "DELETE_RELATIVE";
 
+    // Store management permissions
+    public static final String VIEW_STORE = "VIEW_STORE";
+    public static final String CREATE_STORE = "CREATE_STORE";
+    public static final String UPDATE_STORE = "UPDATE_STORE";
+    public static final String DELETE_STORE = "DELETE_STORE";
+
     // Audit logging permissions
     public static final String VIEW_AUDIT_LOGS = "VIEW_AUDIT_LOGS";
     public static final String MANAGE_AUDIT_LOGS = "MANAGE_AUDIT_LOGS";
@@ -222,7 +228,12 @@ public final class PermissionType {
             new PermissionDef(DELETE_RELATIVE, "Delete relatives", "RELATIVE", "DELETE"),
 
             new PermissionDef(VIEW_AUDIT_LOGS, "View audit logs", "AUDIT_LOG", "VIEW"),
-            new PermissionDef(MANAGE_AUDIT_LOGS, "Manage audit logs", "AUDIT_LOG", "MANAGE")
+            new PermissionDef(MANAGE_AUDIT_LOGS, "Manage audit logs", "AUDIT_LOG", "MANAGE"),
+
+            new PermissionDef(VIEW_STORE, "View stores", "STORE", "VIEW"),
+            new PermissionDef(CREATE_STORE, "Create stores", "STORE", "CREATE"),
+            new PermissionDef(UPDATE_STORE, "Update stores", "STORE", "UPDATE"),
+            new PermissionDef(DELETE_STORE, "Delete stores", "STORE", "DELETE")
         );
     }
 

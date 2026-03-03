@@ -47,6 +47,8 @@ public class UpdateEmployeeRequest {
 
     private UUID departmentId;
 
+    private UUID storeId;
+
     @Size(max = 100)
     private String position;
 

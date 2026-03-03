@@ -22,7 +22,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -116,7 +116,7 @@ public class ContractService {
         AuditContext.registerDeleted(contract);
 
         contract.setIsDeleted(true);
-        contract.setDeletedAt(LocalDateTime.now());
+        contract.setDeletedAt(Instant.now());
         contract.setDeletedBy(deletedBy);
         contractRepository.save(contract);
     }

@@ -11,8 +11,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 public class WorksphereApplication {
 
     public static void main(String[] args) {
-        // Set timezone mặc định cho JVM là Việt Nam
-        java.util.TimeZone.setDefault(java.util.TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
+        // Set timezone mặc định cho JVM là UTC (chuẩn microservice)
+        java.util.TimeZone.setDefault(java.util.TimeZone.getTimeZone("UTC"));
 
         SpringApplication app = new SpringApplication(WorksphereApplication.class);
 

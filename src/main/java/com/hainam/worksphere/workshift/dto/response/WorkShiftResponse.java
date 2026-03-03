@@ -1,12 +1,11 @@
 package com.hainam.worksphere.workshift.dto.response;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.time.LocalTime;
 import java.util.UUID;
 
@@ -36,9 +35,11 @@ public class WorkShiftResponse {
 
     private Boolean isNightShift;
 
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS")
-    private LocalDateTime createdAt;
+    private UUID storeId;
 
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS")
-    private LocalDateTime updatedAt;
+    private String storeName;
+
+    private Instant createdAt;
+
+    private Instant updatedAt;
 }

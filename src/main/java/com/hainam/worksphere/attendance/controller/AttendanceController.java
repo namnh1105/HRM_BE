@@ -43,7 +43,7 @@ public class AttendanceController {
     @RequirePermission(PermissionType.CREATE_ATTENDANCE)
     public ResponseEntity<ApiResponse<AttendanceResponse>> checkIn(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
-            @RequestPart("file") MultipartFile photo,
+            @RequestPart("photo") MultipartFile photo,
             @RequestParam(value = "latitude", required = false) Double latitude,
             @RequestParam(value = "longitude", required = false) Double longitude,
             @RequestParam(value = "note", required = false) String note,
@@ -67,7 +67,7 @@ public class AttendanceController {
     @RequirePermission(PermissionType.UPDATE_ATTENDANCE)
     public ResponseEntity<ApiResponse<AttendanceResponse>> checkOut(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
-            @RequestPart("file") MultipartFile photo,
+            @RequestPart("photo") MultipartFile photo,
             @RequestParam(value = "latitude", required = false) Double latitude,
             @RequestParam(value = "longitude", required = false) Double longitude,
             @RequestParam(value = "note", required = false) String note,
@@ -119,6 +119,38 @@ public class AttendanceController {
             @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
     ) {
         List<AttendanceResponse> response = attendanceService.getAttendanceHistory(employeeId, startDate, endDate);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    @GetMapping("/store/{storeId}")
+    @Operation(summary = "Get all attendances by store")
+    @RequirePermission(PermissionType.VIEW_ATTENDANCE)
+    public ResponseEntity<ApiResponse<List<AttendanceResponse>>> getAttendancesByStore(
+            @PathVariable UUID storeId
+    ) {
+        List<AttendanceResponse> response = attendanceService.getAttendancesByStore(storeId);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    @GetMapping("/store/{storeId}/history")
+    @Operation(summary = "Get attendance history by store and date range")
+    @RequirePermission(PermissionType.VIEW_ATTENDANCE)
+    public ResponseEntity<ApiResponse<List<AttendanceResponse>>> getAttendancesByStoreAndDateRange(
+            @PathVariable UUID storeId,
+            @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
+    ) {
+        List<AttendanceResponse> response = attendanceService.getAttendancesByStoreAndDateRange(storeId, startDate, endDate);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    @GetMapping("/store/{storeId}/today")
+    @Operation(summary = "Get today's attendances by store")
+    @RequirePermission(PermissionType.VIEW_ATTENDANCE)
+    public ResponseEntity<ApiResponse<List<AttendanceResponse>>> getAttendancesByStoreToday(
+            @PathVariable UUID storeId
+    ) {
+        List<AttendanceResponse> response = attendanceService.getAttendancesByStoreAndDate(storeId, LocalDate.now());
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 

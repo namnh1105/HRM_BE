@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -28,9 +28,9 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, UUID
 
     @Modifying
     @Query("UPDATE RefreshToken rt SET rt.isRevoked = true WHERE rt.expiresAt < :now")
-    void revokeExpiredTokens(@Param("now") LocalDateTime now);
+    void revokeExpiredTokens(@Param("now") Instant now);
 
     @Modifying
     @Query("DELETE FROM RefreshToken rt WHERE rt.isRevoked = true OR rt.expiresAt < :now")
-    void deleteExpiredAndRevokedTokens(@Param("now") LocalDateTime now);
+    void deleteExpiredAndRevokedTokens(@Param("now") Instant now);
 }

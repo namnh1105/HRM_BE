@@ -40,4 +40,7 @@ public interface EmployeeRepository extends JpaRepository<Employee, UUID> {
 
     @Query("SELECT e FROM Employee e WHERE e.employmentStatus = :status AND e.isDeleted = false")
     List<Employee> findActiveByEmploymentStatus(@Param("status") EmploymentStatus status);
+
+    @Query("SELECT e FROM Employee e WHERE e.store.id = :storeId AND e.isDeleted = false")
+    List<Employee> findActiveByStoreId(@Param("storeId") UUID storeId);
 }

@@ -35,4 +35,6 @@ public class CreateWorkShiftRequest {
     private String description;
 
     private Boolean isNightShift;
+
+    private java.util.UUID storeId;
 }

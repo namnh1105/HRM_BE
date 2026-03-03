@@ -45,4 +45,13 @@ public interface AttendanceRepository extends JpaRepository<Attendance, UUID> {
             @Param("employeeId") UUID employeeId,
             @Param("workDate") LocalDate workDate
     );
+
+    @Query("SELECT a FROM Attendance a WHERE a.store.id = :storeId AND a.isDeleted = false")
+    List<Attendance> findActiveByStoreId(@Param("storeId") UUID storeId);
+
+    @Query("SELECT a FROM Attendance a WHERE a.store.id = :storeId AND a.workDate BETWEEN :startDate AND :endDate AND a.isDeleted = false")
+    List<Attendance> findActiveByStoreIdAndWorkDateBetween(@Param("storeId") UUID storeId, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+
+    @Query("SELECT a FROM Attendance a WHERE a.store.id = :storeId AND a.workDate = :workDate AND a.isDeleted = false")
+    List<Attendance> findActiveByStoreIdAndWorkDate(@Param("storeId") UUID storeId, @Param("workDate") LocalDate workDate);
 }

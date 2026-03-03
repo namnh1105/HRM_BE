@@ -54,6 +54,7 @@ public class CacheConfig {
     public static final String INSURANCE_CACHE = "insurances";
     public static final String DEGREE_CACHE = "degrees";
     public static final String RELATIVE_CACHE = "relatives";
+    public static final String STORE_CACHE = "stores";
 
     @Bean
     public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
@@ -152,6 +153,9 @@ public class CacheConfig {
 
         // Relative cache - 30 minutes TTL
         cacheConfigurations.put(RELATIVE_CACHE, defaultConfig.entryTtl(Duration.ofMinutes(30)));
+
+        // Store cache - 1 hour TTL
+        cacheConfigurations.put(STORE_CACHE, defaultConfig.entryTtl(Duration.ofHours(1)));
 
         return cacheConfigurations;
     }

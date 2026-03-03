@@ -1,6 +1,5 @@
 package com.hainam.worksphere.shared.dto;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -8,7 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.domain.Page;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 @Data
@@ -25,8 +24,7 @@ public class PaginatedApiResponse<T> {
     private PageInfo pagination;
 
     @Builder.Default
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS")
-    private LocalDateTime timestamp = LocalDateTime.now();
+    private Instant timestamp = Instant.now();
 
     public static <T> PaginatedApiResponse<T> success(Page<T> page) {
         return PaginatedApiResponse.<T>builder()

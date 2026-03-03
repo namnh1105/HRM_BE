@@ -18,7 +18,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 @RestController
@@ -79,7 +79,7 @@ public class AuditController {
     public ResponseEntity<ApiResponse<List<AuditStatisticDto>>> getAuditStatistics(
             @RequestParam(defaultValue = "7") int days) {
 
-        LocalDateTime startDate = LocalDateTime.now().minusDays(days);
+        Instant startDate = Instant.now().minus(java.time.Duration.ofDays(days));
         List<AuditStatisticDto> statistics = auditService.getAuditStatistics(startDate);
         return ResponseEntity.ok(ApiResponse.success("Audit statistics retrieved successfully", statistics));
     }

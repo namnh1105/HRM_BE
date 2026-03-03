@@ -1,8 +1,11 @@
 package com.hainam.worksphere.workshift.service;
 
 import com.hainam.worksphere.shared.config.CacheConfig;
+import com.hainam.worksphere.shared.exception.StoreNotFoundException;
 import com.hainam.worksphere.shared.exception.ValidationException;
 import com.hainam.worksphere.shared.exception.WorkShiftNotFoundException;
+import com.hainam.worksphere.store.domain.Store;
+import com.hainam.worksphere.store.repository.StoreRepository;
 import com.hainam.worksphere.workshift.domain.WorkShift;
 import com.hainam.worksphere.workshift.dto.request.CreateWorkShiftRequest;
 import com.hainam.worksphere.workshift.dto.request.UpdateWorkShiftRequest;
@@ -15,7 +18,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -29,6 +32,7 @@ import com.hainam.worksphere.shared.audit.util.AuditContext;
 public class WorkShiftService {
 
     private final WorkShiftRepository workShiftRepository;
+    private final StoreRepository storeRepository;
     private final WorkShiftMapper workShiftMapper;
 
     @Cacheable(value = CacheConfig.WORK_SHIFT_CACHE, key = "#workShiftId.toString()")
@@ -52,6 +56,13 @@ public class WorkShiftService {
                 .collect(Collectors.toList());
     }
 
+    public List<WorkShiftResponse> getWorkShiftsByStore(UUID storeId) {
+        return workShiftRepository.findActiveByStoreId(storeId)
+                .stream()
+                .map(workShiftMapper::toWorkShiftResponse)
+                .collect(Collectors.toList());
+    }
+
     @Transactional
     @CacheEvict(value = CacheConfig.WORK_SHIFT_CACHE, allEntries = true)
     @AuditAction(type = ActionType.CREATE, entity = "WORK_SHIFT")
@@ -63,6 +74,12 @@ public class WorkShiftService {
         WorkShift workShift = workShiftMapper.toEntity(request);
         workShift.setCreatedBy(createdBy);
         workShift.setTotalHours(calculateTotalHours(workShift));
+
+        if (request.getStoreId() != null) {
+            Store store = storeRepository.findActiveById(request.getStoreId())
+                    .orElseThrow(() -> StoreNotFoundException.byId(request.getStoreId().toString()));
+            workShift.setStore(store);
+        }
 
         WorkShift saved = workShiftRepository.save(workShift);
         AuditContext.registerCreated(saved);
@@ -100,6 +117,12 @@ public class WorkShiftService {
             workShift.setIsNightShift(request.getIsNightShift());
         }
 
+        if (request.getStoreId() != null) {
+            Store store = storeRepository.findActiveById(request.getStoreId())
+                    .orElseThrow(() -> StoreNotFoundException.byId(request.getStoreId().toString()));
+            workShift.setStore(store);
+        }
+
         workShift.setTotalHours(calculateTotalHours(workShift));
         workShift.setUpdatedBy(updatedBy);
 
@@ -118,7 +141,7 @@ public class WorkShiftService {
         AuditContext.registerDeleted(workShift);
 
         workShift.setIsDeleted(true);
-        workShift.setDeletedAt(LocalDateTime.now());
+        workShift.setDeletedAt(Instant.now());
         workShift.setDeletedBy(deletedBy);
         workShiftRepository.save(workShift);
     }

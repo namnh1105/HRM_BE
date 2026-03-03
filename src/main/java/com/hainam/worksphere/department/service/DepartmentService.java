@@ -14,7 +14,10 @@ import com.hainam.worksphere.shared.audit.util.AuditContext;
 import com.hainam.worksphere.shared.config.CacheConfig;
 import com.hainam.worksphere.shared.exception.DepartmentNotFoundException;
 import com.hainam.worksphere.shared.exception.EmployeeNotFoundException;
+import com.hainam.worksphere.shared.exception.StoreNotFoundException;
 import com.hainam.worksphere.shared.exception.ValidationException;
+import com.hainam.worksphere.store.domain.Store;
+import com.hainam.worksphere.store.repository.StoreRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -22,7 +25,7 @@ import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -33,6 +36,7 @@ public class DepartmentService {
 
     private final DepartmentRepository departmentRepository;
     private final EmployeeRepository employeeRepository;
+    private final StoreRepository storeRepository;
     private final DepartmentMapper departmentMapper;
 
     @Cacheable(value = CacheConfig.DEPARTMENT_CACHE, key = "#departmentId.toString()")
@@ -51,6 +55,13 @@ public class DepartmentService {
 
     public List<DepartmentResponse> getSubDepartments(UUID parentId) {
         return departmentRepository.findActiveByParentDepartmentId(parentId)
+                .stream()
+                .map(departmentMapper::toDepartmentResponse)
+                .collect(Collectors.toList());
+    }
+
+    public List<DepartmentResponse> getDepartmentsByStore(UUID storeId) {
+        return departmentRepository.findActiveByStoreId(storeId)
                 .stream()
                 .map(departmentMapper::toDepartmentResponse)
                 .collect(Collectors.toList());
@@ -77,6 +88,12 @@ public class DepartmentService {
             Department parent = departmentRepository.findActiveById(request.getParentDepartmentId())
                     .orElseThrow(() -> DepartmentNotFoundException.byId(request.getParentDepartmentId().toString()));
             department.setParentDepartment(parent);
+        }
+
+        if (request.getStoreId() != null) {
+            Store store = storeRepository.findActiveById(request.getStoreId())
+                    .orElseThrow(() -> StoreNotFoundException.byId(request.getStoreId().toString()));
+            department.setStore(store);
         }
 
         Department saved = departmentRepository.save(department);
@@ -120,6 +137,12 @@ public class DepartmentService {
             department.setParentDepartment(parent);
         }
 
+        if (request.getStoreId() != null) {
+            Store store = storeRepository.findActiveById(request.getStoreId())
+                    .orElseThrow(() -> StoreNotFoundException.byId(request.getStoreId().toString()));
+            department.setStore(store);
+        }
+
         department.setUpdatedBy(updatedBy);
         Department saved = departmentRepository.save(department);
         AuditContext.registerUpdated(saved);
@@ -137,7 +160,7 @@ public class DepartmentService {
         AuditContext.registerDeleted(department);
 
         department.setIsDeleted(true);
-        department.setDeletedAt(LocalDateTime.now());
+        department.setDeletedAt(Instant.now());
         department.setDeletedBy(deletedBy);
         departmentRepository.save(department);
     }

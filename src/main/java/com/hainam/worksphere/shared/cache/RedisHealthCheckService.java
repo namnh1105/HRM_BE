@@ -10,7 +10,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -30,8 +30,8 @@ public class RedisHealthCheckService {
 
     private final AtomicBoolean redisAvailable = new AtomicBoolean(true);
     private final AtomicInteger consecutiveFailures = new AtomicInteger(0);
-    private volatile LocalDateTime lastSuccessfulCheck;
-    private volatile LocalDateTime lastFailedCheck;
+    private volatile Instant lastSuccessfulCheck;
+    private volatile Instant lastFailedCheck;
     private volatile String lastErrorMessage;
 
     /**
@@ -74,14 +74,14 @@ public class RedisHealthCheckService {
     /**
      * Get the last successful check time
      */
-    public LocalDateTime getLastSuccessfulCheck() {
+    public Instant getLastSuccessfulCheck() {
         return lastSuccessfulCheck;
     }
 
     /**
      * Get the last failed check time
      */
-    public LocalDateTime getLastFailedCheck() {
+    public Instant getLastFailedCheck() {
         return lastFailedCheck;
     }
 
@@ -142,7 +142,7 @@ public class RedisHealthCheckService {
         boolean wasUnavailable = !redisAvailable.get();
         redisAvailable.set(true);
         consecutiveFailures.set(0);
-        lastSuccessfulCheck = LocalDateTime.now();
+        lastSuccessfulCheck = Instant.now();
         lastErrorMessage = null;
 
         if (wasUnavailable) {
@@ -157,7 +157,7 @@ public class RedisHealthCheckService {
      */
     private void markHealthCheckFailure(Exception e) {
         int failures = consecutiveFailures.incrementAndGet();
-        lastFailedCheck = LocalDateTime.now();
+        lastFailedCheck = Instant.now();
         lastErrorMessage = e.getMessage();
 
         if (failures >= properties.getMaxConsecutiveFailures()) {

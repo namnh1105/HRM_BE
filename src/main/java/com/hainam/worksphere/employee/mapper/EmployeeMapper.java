@@ -12,6 +12,8 @@ public interface EmployeeMapper {
     @Mapping(target = "userId", source = "user.id")
     @Mapping(target = "departmentId", source = "department.id")
     @Mapping(target = "departmentName", source = "department.name")
+    @Mapping(target = "storeId", source = "store.id")
+    @Mapping(target = "storeName", source = "store.name")
     @Mapping(target = "gender", expression = "java(employee.getGender() != null ? employee.getGender().name() : null)")
     @Mapping(target = "employmentStatus", expression = "java(employee.getEmploymentStatus() != null ? employee.getEmploymentStatus().name() : null)")
     EmployeeResponse toEmployeeResponse(Employee employee);

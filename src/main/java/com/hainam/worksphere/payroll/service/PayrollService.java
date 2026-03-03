@@ -24,7 +24,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -191,7 +191,7 @@ public class PayrollService {
         AuditContext.registerDeleted(payroll);
 
         payroll.setIsDeleted(true);
-        payroll.setDeletedAt(LocalDateTime.now());
+        payroll.setDeletedAt(Instant.now());
         payroll.setDeletedBy(deletedBy);
         payrollRepository.save(payroll);
     }
