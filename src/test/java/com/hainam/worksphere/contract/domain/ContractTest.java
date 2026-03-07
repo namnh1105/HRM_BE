@@ -7,7 +7,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -28,7 +28,7 @@ class ContractTest extends BaseUnitTest {
         LocalDate signingDate = LocalDate.of(2022, 12, 15);
         Double baseSalary = 15000000.0;
         Double salaryCoefficient = 1.2;
-        LocalDateTime now = LocalDateTime.now();
+        Instant now = Instant.now();
 
         // When
         Contract contract = Contract.builder()
@@ -198,7 +198,7 @@ class ContractTest extends BaseUnitTest {
     @DisplayName("Should handle soft deletion fields")
     void shouldHandleSoftDeletionFields() {
         // Given
-        LocalDateTime deletionTime = LocalDateTime.now();
+        Instant deletionTime = Instant.now();
         UUID deletedBy = UUID.randomUUID();
 
         // When

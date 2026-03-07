@@ -11,7 +11,7 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.ActiveProfiles;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 import static org.mockito.Mockito.mock;
@@ -67,8 +67,8 @@ public abstract class BaseUnitTest {
     /**
      * Helper method to create test timestamp
      */
-    protected LocalDateTime getTestTimestamp() {
-        return LocalDateTime.of(2024, 1, 1, 12, 0, 0);
+    protected Instant getTestTimestamp() {
+        return Instant.parse("2024-01-01T12:00:00Z");
     }
 }
 

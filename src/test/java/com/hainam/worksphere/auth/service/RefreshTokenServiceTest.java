@@ -13,7 +13,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -107,7 +108,7 @@ class RefreshTokenServiceTest extends BaseUnitTest {
     @DisplayName("Should verify refresh token successfully for valid token")
     void shouldVerifyRefreshTokenSuccessfullyForValidToken() {
         // Given
-        testRefreshToken.setExpiresAt(LocalDateTime.now().plusDays(7));
+        testRefreshToken.setExpiresAt(Instant.now().plus(7, ChronoUnit.DAYS));
         testRefreshToken.setIsRevoked(false);
 
         // When
@@ -125,9 +126,9 @@ class RefreshTokenServiceTest extends BaseUnitTest {
                 .id(UUID.randomUUID())
                 .token("expired-token")
                 .user(testUser)
-                .expiresAt(LocalDateTime.now().minusHours(1))
+                .expiresAt(Instant.now().minus(1, ChronoUnit.HOURS))
                 .isRevoked(false)
-                .createdAt(LocalDateTime.now().minusDays(8))
+                .createdAt(Instant.now().minus(8, ChronoUnit.DAYS))
                 .build();
 
         // When & Then
@@ -146,9 +147,9 @@ class RefreshTokenServiceTest extends BaseUnitTest {
                 .id(UUID.randomUUID())
                 .token("revoked-token")
                 .user(testUser)
-                .expiresAt(LocalDateTime.now().plusDays(7))
+                .expiresAt(Instant.now().plus(7, ChronoUnit.DAYS))
                 .isRevoked(true)
-                .createdAt(LocalDateTime.now())
+                .createdAt(Instant.now())
                 .build();
 
         // When & Then
@@ -192,7 +193,7 @@ class RefreshTokenServiceTest extends BaseUnitTest {
         refreshTokenService.removeExpiredTokens();
 
         // Then
-        verify(refreshTokenRepository).deleteExpiredAndRevokedTokens(any(LocalDateTime.class));
+        verify(refreshTokenRepository).deleteExpiredAndRevokedTokens(any(Instant.class));
     }
 
     @Test
@@ -223,7 +224,7 @@ class RefreshTokenServiceTest extends BaseUnitTest {
         when(refreshTokenRepository.save(any(RefreshToken.class))).thenAnswer(invocation -> {
             RefreshToken token = invocation.getArgument(0);
             // Verify expiration is set correctly (approximately)
-            LocalDateTime expectedExpiration = LocalDateTime.now().plusSeconds(refreshTokenExpiration / 1000);
+            Instant expectedExpiration = Instant.now().plusSeconds(refreshTokenExpiration / 1000);
             assertThat(token.getExpiresAt()).isAfterOrEqualTo(expectedExpiration.minusSeconds(1));
             assertThat(token.getExpiresAt()).isBeforeOrEqualTo(expectedExpiration.plusSeconds(1));
             return token;
@@ -246,14 +247,14 @@ class RefreshTokenServiceTest extends BaseUnitTest {
         RefreshToken token1 = RefreshToken.builder()
                 .token("token-1")
                 .user(testUser)
-                .expiresAt(LocalDateTime.now().plusDays(7))
+                .expiresAt(Instant.now().plus(7, ChronoUnit.DAYS))
                 .isRevoked(false)
                 .build();
 
         RefreshToken token2 = RefreshToken.builder()
                 .token("token-2")
                 .user(testUser)
-                .expiresAt(LocalDateTime.now().plusDays(7))
+                .expiresAt(Instant.now().plus(7, ChronoUnit.DAYS))
                 .isRevoked(false)
                 .build();
 

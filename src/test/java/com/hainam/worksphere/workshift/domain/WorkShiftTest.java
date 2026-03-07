@@ -4,7 +4,7 @@ import com.hainam.worksphere.BaseUnitTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.time.LocalTime;
 import java.util.UUID;
 
@@ -26,7 +26,7 @@ class WorkShiftTest extends BaseUnitTest {
         Double breakDuration = 1.0;
         Double totalHours = 8.0;
         String description = "Regular morning shift";
-        LocalDateTime now = LocalDateTime.now();
+        Instant now = Instant.now();
 
         // When
         WorkShift workShift = WorkShift.builder()
@@ -164,7 +164,7 @@ class WorkShiftTest extends BaseUnitTest {
     @DisplayName("Should handle soft deletion fields")
     void shouldHandleSoftDeletionFields() {
         // Given
-        LocalDateTime deletionTime = LocalDateTime.now();
+        Instant deletionTime = Instant.now();
         UUID deletedBy = UUID.randomUUID();
 
         // When

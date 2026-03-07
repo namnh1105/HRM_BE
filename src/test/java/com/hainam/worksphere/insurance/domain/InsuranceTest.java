@@ -7,7 +7,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -27,7 +27,7 @@ class InsuranceTest extends BaseUnitTest {
         Double employeeRate = 8.0;
         Double employerRate = 17.5;
         String description = "Mandatory social insurance";
-        LocalDateTime now = LocalDateTime.now();
+        Instant now = Instant.now();
 
         // When
         Insurance insurance = Insurance.builder()
@@ -115,7 +115,7 @@ class InsuranceTest extends BaseUnitTest {
         String registrationNumber = "REG001";
         LocalDate startDate = LocalDate.of(2023, 1, 1);
         LocalDate endDate = LocalDate.of(2025, 12, 31);
-        LocalDateTime now = LocalDateTime.now();
+        Instant now = Instant.now();
 
         // When
         InsuranceRegistration registration = InsuranceRegistration.builder()

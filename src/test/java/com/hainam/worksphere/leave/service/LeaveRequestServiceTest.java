@@ -22,7 +22,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -80,7 +80,7 @@ class LeaveRequestServiceTest extends BaseUnitTest {
                 .totalDays(testLeaveRequest.getTotalDays())
                 .reason(testLeaveRequest.getReason())
                 .status(LeaveRequestStatus.PENDING.name())
-                .createdAt(LocalDateTime.now())
+                .createdAt(Instant.now())
                 .build();
     }
 
@@ -151,7 +151,7 @@ class LeaveRequestServiceTest extends BaseUnitTest {
                 .employeeId(employeeId)
                 .status(LeaveRequestStatus.APPROVED.name())
                 .approverId(approverId)
-                .approvedAt(LocalDateTime.now())
+                .approvedAt(Instant.now())
                 .approverComment("Approved by manager")
                 .build();
 

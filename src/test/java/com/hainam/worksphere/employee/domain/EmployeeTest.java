@@ -8,7 +8,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -31,7 +32,7 @@ class EmployeeTest extends BaseUnitTest {
         LocalDate dateOfBirth = LocalDate.of(1990, 1, 15);
         String position = "Software Engineer";
         LocalDate joinDate = LocalDate.of(2023, 1, 1);
-        LocalDateTime now = LocalDateTime.now();
+        Instant now = Instant.now();
 
         // When
         Employee employee = Employee.builder()
@@ -103,7 +104,7 @@ class EmployeeTest extends BaseUnitTest {
     @DisplayName("Should handle soft deletion fields")
     void shouldHandleSoftDeletionFields() {
         // Given
-        LocalDateTime deletionTime = LocalDateTime.now();
+        Instant deletionTime = Instant.now();
         UUID deletedBy = UUID.randomUUID();
 
         // When
@@ -130,8 +131,8 @@ class EmployeeTest extends BaseUnitTest {
     @DisplayName("Should handle audit timestamps")
     void shouldHandleAuditTimestamps() {
         // Given
-        LocalDateTime createdTime = LocalDateTime.now().minusDays(1);
-        LocalDateTime updatedTime = LocalDateTime.now();
+        Instant createdTime = Instant.now().minus(1, ChronoUnit.DAYS);
+        Instant updatedTime = Instant.now();
         UUID createdBy = UUID.randomUUID();
         UUID updatedBy = UUID.randomUUID();
 

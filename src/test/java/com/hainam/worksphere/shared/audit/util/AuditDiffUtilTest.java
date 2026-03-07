@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -45,7 +45,7 @@ class AuditDiffUtilTest extends BaseUnitTest {
                 .isEnabled(false) // Changed from true
                 .isDeleted(originalUser.getIsDeleted())
                 .createdAt(originalUser.getCreatedAt())
-                .updatedAt(LocalDateTime.now())
+                .updatedAt(Instant.now())
                 .build();
         requestId = UUID.randomUUID().toString();
     }

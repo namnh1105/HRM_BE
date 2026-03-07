@@ -7,7 +7,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -28,7 +28,7 @@ class RelativeTest extends BaseUnitTest {
         String idCardNumber = "012345678901";
         String occupation = "Teacher";
         String address = "123 Nguyen Hue, District 1, HCMC";
-        LocalDateTime now = LocalDateTime.now();
+        Instant now = Instant.now();
 
         // When
         Relative relative = Relative.builder()
@@ -164,7 +164,7 @@ class RelativeTest extends BaseUnitTest {
     @DisplayName("Should handle soft deletion fields")
     void shouldHandleSoftDeletionFields() {
         // Given
-        LocalDateTime deletionTime = LocalDateTime.now();
+        Instant deletionTime = Instant.now();
         UUID deletedBy = UUID.randomUUID();
 
         // When

@@ -8,7 +8,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.time.LocalTime;
 import java.util.UUID;
 
@@ -28,7 +28,7 @@ class AttendanceTest extends BaseUnitTest {
         LocalTime checkInTime = LocalTime.of(8, 0);
         LocalTime checkOutTime = LocalTime.of(17, 0);
         Double workingHours = 8.0;
-        LocalDateTime now = LocalDateTime.now();
+        Instant now = Instant.now();
 
         // When
         Attendance attendance = Attendance.builder()
@@ -226,7 +226,7 @@ class AttendanceTest extends BaseUnitTest {
     @DisplayName("Should handle soft deletion fields")
     void shouldHandleSoftDeletionFields() {
         // Given
-        LocalDateTime deletionTime = LocalDateTime.now();
+        Instant deletionTime = Instant.now();
         UUID deletedBy = UUID.randomUUID();
 
         // When

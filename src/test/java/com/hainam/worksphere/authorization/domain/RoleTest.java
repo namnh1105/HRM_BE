@@ -5,7 +5,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -17,12 +18,12 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 class RoleTest extends BaseUnitTest {
 
     private UUID roleId;
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
     @BeforeEach
     void setUp() {
         roleId = UUID.randomUUID();
-        createdAt = LocalDateTime.now();
+        createdAt = Instant.now();
     }
 
     @Test
@@ -152,7 +153,7 @@ class RoleTest extends BaseUnitTest {
                 .isActive(true)
                 .build();
 
-        LocalDateTime updateTime = LocalDateTime.now();
+        Instant updateTime = Instant.now();
 
         // When
         role.setDisplayName("Standard User");
@@ -219,8 +220,8 @@ class RoleTest extends BaseUnitTest {
     @DisplayName("Should handle timestamp fields")
     void shouldHandleTimestampFields() {
         // Given
-        LocalDateTime createdAt = LocalDateTime.now().minusDays(1);
-        LocalDateTime updatedAt = LocalDateTime.now();
+        Instant createdAt = Instant.now().minus(1, ChronoUnit.DAYS);
+        Instant updatedAt = Instant.now();
 
         // When
         Role role = Role.builder()

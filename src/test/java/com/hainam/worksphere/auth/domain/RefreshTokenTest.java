@@ -7,7 +7,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -18,15 +19,15 @@ class RefreshTokenTest extends BaseUnitTest {
 
     private UUID refreshTokenId;
     private User testUser;
-    private LocalDateTime expiresAt;
-    private LocalDateTime createdAt;
+    private Instant expiresAt;
+    private Instant createdAt;
 
     @BeforeEach
     void setUp() {
         refreshTokenId = UUID.randomUUID();
         testUser = TestFixtures.createTestUser();
-        expiresAt = LocalDateTime.now().plusDays(7);
-        createdAt = LocalDateTime.now();
+        expiresAt = Instant.now().plus(7, ChronoUnit.DAYS);
+        createdAt = Instant.now();
     }
 
     @Test
@@ -70,7 +71,7 @@ class RefreshTokenTest extends BaseUnitTest {
     @DisplayName("Should handle token expiration")
     void shouldHandleTokenExpiration() {
         // Given
-        LocalDateTime pastDate = LocalDateTime.now().minusDays(1);
+        Instant pastDate = Instant.now().minus(1, ChronoUnit.DAYS);
 
         // When
         RefreshToken expiredToken = RefreshToken.builder()
@@ -83,7 +84,7 @@ class RefreshTokenTest extends BaseUnitTest {
         // Then
         assertAll(
                 () -> assertThat(expiredToken.getExpiresAt()).isEqualTo(pastDate),
-                () -> assertThat(expiredToken.getExpiresAt()).isBefore(LocalDateTime.now()),
+                () -> assertThat(expiredToken.getExpiresAt()).isBefore(Instant.now()),
                 () -> assertThat(expiredToken.getIsRevoked()).isFalse()
         );
     }
@@ -158,7 +159,7 @@ class RefreshTokenTest extends BaseUnitTest {
     @DisplayName("Should handle future expiration dates")
     void shouldHandleFutureExpirationDates() {
         // Given
-        LocalDateTime futureDate = LocalDateTime.now().plusMonths(1);
+        Instant futureDate = Instant.now().plus(30, ChronoUnit.DAYS);
 
         // When
         RefreshToken longLivedToken = RefreshToken.builder()
@@ -171,7 +172,7 @@ class RefreshTokenTest extends BaseUnitTest {
         // Then
         assertAll(
                 () -> assertThat(longLivedToken.getExpiresAt()).isEqualTo(futureDate),
-                () -> assertThat(longLivedToken.getExpiresAt()).isAfter(LocalDateTime.now())
+                () -> assertThat(longLivedToken.getExpiresAt()).isAfter(Instant.now())
         );
     }
 
@@ -182,30 +183,30 @@ class RefreshTokenTest extends BaseUnitTest {
         RefreshToken activeToken = RefreshToken.builder()
                 .token("active-token")
                 .user(testUser)
-                .expiresAt(LocalDateTime.now().plusDays(7))
+                .expiresAt(Instant.now().plus(7, ChronoUnit.DAYS))
                 .isRevoked(false)
                 .build();
 
         RefreshToken revokedToken = RefreshToken.builder()
                 .token("revoked-token")
                 .user(testUser)
-                .expiresAt(LocalDateTime.now().plusDays(7))
+                .expiresAt(Instant.now().plus(7, ChronoUnit.DAYS))
                 .isRevoked(true)
                 .build();
 
         RefreshToken expiredToken = RefreshToken.builder()
                 .token("expired-token")
                 .user(testUser)
-                .expiresAt(LocalDateTime.now().minusDays(1))
+                .expiresAt(Instant.now().minus(1, ChronoUnit.DAYS))
                 .isRevoked(false)
                 .build();
 
         // Then
         assertAll(
                 () -> assertThat(activeToken.getIsRevoked()).isFalse(),
-                () -> assertThat(activeToken.getExpiresAt()).isAfter(LocalDateTime.now()),
+                () -> assertThat(activeToken.getExpiresAt()).isAfter(Instant.now()),
                 () -> assertThat(revokedToken.getIsRevoked()).isTrue(),
-                () -> assertThat(expiredToken.getExpiresAt()).isBefore(LocalDateTime.now())
+                () -> assertThat(expiredToken.getExpiresAt()).isBefore(Instant.now())
         );
     }
 
@@ -228,7 +229,7 @@ class RefreshTokenTest extends BaseUnitTest {
     @DisplayName("Should handle token creation timestamp")
     void shouldHandleTokenCreationTimestamp() {
         // Given
-        LocalDateTime specificTime = LocalDateTime.of(2024, 1, 15, 10, 30, 45);
+        Instant specificTime = Instant.parse("2024-01-15T10:30:45Z");
 
         // When
         RefreshToken timestampedToken = RefreshToken.builder()
@@ -256,7 +257,7 @@ class RefreshTokenTest extends BaseUnitTest {
 
         // When
         String newToken = "new-token-value";
-        LocalDateTime newExpiresAt = LocalDateTime.now().plusDays(14);
+        Instant newExpiresAt = Instant.now().plus(14, ChronoUnit.DAYS);
 
         refreshToken.setToken(newToken);
         refreshToken.setExpiresAt(newExpiresAt);

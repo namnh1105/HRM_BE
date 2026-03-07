@@ -7,7 +7,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -19,14 +19,14 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 class AuditLogTest extends BaseUnitTest {
 
     private UUID auditLogId;
-    private LocalDateTime timestamp;
+    private Instant timestamp;
     private String entityId;
     private String userId;
 
     @BeforeEach
     void setUp() {
         auditLogId = UUID.randomUUID();
-        timestamp = LocalDateTime.now();
+        timestamp = Instant.now();
         entityId = UUID.randomUUID().toString();
         userId = UUID.randomUUID().toString();
     }
@@ -311,7 +311,7 @@ class AuditLogTest extends BaseUnitTest {
     @DisplayName("Should handle timestamp correctly")
     void shouldHandleTimestampCorrectly() {
         // Given
-        LocalDateTime specificTime = LocalDateTime.of(2024, 1, 15, 10, 30, 45);
+        Instant specificTime = Instant.parse("2024-01-15T10:30:45Z");
 
         // When
         AuditLog auditLog = AuditLog.builder()

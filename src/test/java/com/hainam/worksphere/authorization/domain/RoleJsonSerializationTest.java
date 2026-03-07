@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -23,11 +23,11 @@ class RoleJsonSerializationTest extends BaseUnitTest {
     private ObjectMapper objectMapper;
 
     @Test
-    @DisplayName("Should serialize Role with LocalDateTime fields to JSON")
+    @DisplayName("Should serialize Role with Instant fields to JSON")
     void shouldSerializeRoleWithLocalDateTimeToJson() throws Exception {
         // Given
-        LocalDateTime createdAt = LocalDateTime.of(2026, 2, 10, 8, 0, 0, 123000000);
-        LocalDateTime updatedAt = LocalDateTime.of(2026, 2, 10, 9, 30, 45, 567000000);
+        Instant createdAt = Instant.parse("2026-02-10T08:00:00.123Z");
+        Instant updatedAt = Instant.parse("2026-02-10T09:30:45.567Z");
 
         Role role = Role.builder()
                 .id(UUID.randomUUID())
@@ -47,8 +47,8 @@ class RoleJsonSerializationTest extends BaseUnitTest {
         assertAll(
                 () -> assertThat(json).contains("\"code\":\"TEST_ROLE\""),
                 () -> assertThat(json).contains("\"displayName\":\"Test Role\""),
-                () -> assertThat(json).contains("\"createdAt\":\"2026-02-10T08:00:00.123\""),
-                () -> assertThat(json).contains("\"updatedAt\":\"2026-02-10T09:30:45.567\""),
+                () -> assertThat(json).contains("\"createdAt\":\"2026-02-10T08:00:00.123Z\""),
+                () -> assertThat(json).contains("\"updatedAt\":\"2026-02-10T09:30:45.567Z\""),
                 () -> assertThat(json).doesNotContain("\"createdAt\":[") // Should not be an array (timestamp)
         );
 
@@ -56,7 +56,7 @@ class RoleJsonSerializationTest extends BaseUnitTest {
     }
 
     @Test
-    @DisplayName("Should deserialize JSON with LocalDateTime fields to Role")
+    @DisplayName("Should deserialize JSON with Instant fields to Role")
     void shouldDeserializeJsonWithLocalDateTimeToRole() throws Exception {
         // Given
         String json = """
@@ -67,8 +67,8 @@ class RoleJsonSerializationTest extends BaseUnitTest {
                     "description": "A role for deserialization testing",
                     "isSystem": false,
                     "isActive": true,
-                    "createdAt": "2026-02-10T10:15:30.789",
-                    "updatedAt": "2026-02-10T11:20:35.123",
+                    "createdAt": "2026-02-10T10:15:30.789Z",
+                    "updatedAt": "2026-02-10T11:20:35.123Z",
                     "rolePermissions": []
                 }
                 """;
@@ -80,8 +80,8 @@ class RoleJsonSerializationTest extends BaseUnitTest {
         assertAll(
                 () -> assertThat(role.getCode()).isEqualTo("DESERIALIZE_TEST"),
                 () -> assertThat(role.getDisplayName()).isEqualTo("Deserialize Test Role"),
-                () -> assertThat(role.getCreatedAt()).isEqualTo(LocalDateTime.of(2026, 2, 10, 10, 15, 30, 789000000)),
-                () -> assertThat(role.getUpdatedAt()).isEqualTo(LocalDateTime.of(2026, 2, 10, 11, 20, 35, 123000000)),
+                () -> assertThat(role.getCreatedAt()).isEqualTo(Instant.parse("2026-02-10T10:15:30.789Z")),
+                () -> assertThat(role.getUpdatedAt()).isEqualTo(Instant.parse("2026-02-10T11:20:35.123Z")),
                 () -> assertThat(role.getIsActive()).isTrue(),
                 () -> assertThat(role.getIsSystem()).isFalse()
         );

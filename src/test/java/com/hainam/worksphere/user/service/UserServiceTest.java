@@ -19,7 +19,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -297,7 +297,7 @@ class UserServiceTest extends BaseUnitTest {
         UUID userId = testUser.getId();
         UUID restoredBy = UUID.randomUUID();
         testUser.setIsDeleted(true);
-        testUser.setDeletedAt(LocalDateTime.now());
+        testUser.setDeletedAt(Instant.now());
 
         User restoredUser = User.builder()
                 .id(testUser.getId())

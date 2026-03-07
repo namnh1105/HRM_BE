@@ -26,7 +26,8 @@ import com.hainam.worksphere.payroll.domain.PayrollStatus;
 import com.hainam.worksphere.workshift.domain.WorkShift;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.time.LocalTime;
 import java.util.UUID;
 
@@ -46,7 +47,7 @@ public class TestFixtures {
                 .name("John Doe")
                 .isEnabled(true)
                 .isDeleted(false)
-                .createdAt(LocalDateTime.now())
+                .createdAt(Instant.now())
                 .build();
     }
 
@@ -60,7 +61,7 @@ public class TestFixtures {
                 .name("John Doe")
                 .isEnabled(true)
                 .isDeleted(false)
-                .createdAt(LocalDateTime.now())
+                .createdAt(Instant.now())
                 .build();
     }
 
@@ -75,7 +76,7 @@ public class TestFixtures {
                 .avatarUrl("https://example.com/avatar.jpg")
                 .isEnabled(true)
                 .isDeleted(false)
-                .createdAt(LocalDateTime.now())
+                .createdAt(Instant.now())
                 .build();
     }
 
@@ -88,7 +89,7 @@ public class TestFixtures {
                 .description("A test role")
                 .isSystem(false)
                 .isActive(true)
-                .createdAt(LocalDateTime.now())
+                .createdAt(Instant.now())
                 .build();
     }
 
@@ -100,7 +101,7 @@ public class TestFixtures {
                 .description("System administrator role")
                 .isSystem(false)
                 .isActive(true)
-                .createdAt(LocalDateTime.now())
+                .createdAt(Instant.now())
                 .build();
     }
 
@@ -115,7 +116,7 @@ public class TestFixtures {
                 .action("READ")
                 .isSystem(false)
                 .isActive(true)
-                .createdAt(LocalDateTime.now())
+                .createdAt(Instant.now())
                 .build();
     }
 
@@ -125,9 +126,9 @@ public class TestFixtures {
                 .id(UUID.randomUUID())
                 .token("test-refresh-token")
                 .user(createTestUser())
-                .expiresAt(LocalDateTime.now().plusDays(7))
+                .expiresAt(Instant.now().plus(7, ChronoUnit.DAYS))
                 .isRevoked(false)
-                .createdAt(LocalDateTime.now())
+                .createdAt(Instant.now())
                 .build();
     }
 
@@ -136,9 +137,9 @@ public class TestFixtures {
                 .id(UUID.randomUUID())
                 .token("expired-refresh-token")
                 .user(createTestUser())
-                .expiresAt(LocalDateTime.now().minusDays(1))
+                .expiresAt(Instant.now().minus(1, ChronoUnit.DAYS))
                 .isRevoked(false)
-                .createdAt(LocalDateTime.now().minusDays(8))
+                .createdAt(Instant.now().minus(8, ChronoUnit.DAYS))
                 .build();
     }
 
@@ -147,9 +148,9 @@ public class TestFixtures {
                 .id(UUID.randomUUID())
                 .token("revoked-refresh-token")
                 .user(createTestUser())
-                .expiresAt(LocalDateTime.now().plusDays(7))
+                .expiresAt(Instant.now().plus(7, ChronoUnit.DAYS))
                 .isRevoked(true)
-                .createdAt(LocalDateTime.now())
+                .createdAt(Instant.now())
                 .build();
     }
 
@@ -166,7 +167,7 @@ public class TestFixtures {
                 .ipAddress("192.168.1.1")
                 .userAgent("Test User Agent")
                 .requestId(UUID.randomUUID().toString())
-                .timestamp(LocalDateTime.now())
+                .timestamp(Instant.now())
                 .build();
     }
 
@@ -189,7 +190,7 @@ public class TestFixtures {
                 .description("Engineering Department")
                 .isActive(true)
                 .isDeleted(false)
-                .createdAt(LocalDateTime.now())
+                .createdAt(Instant.now())
                 .build();
     }
 
@@ -209,7 +210,7 @@ public class TestFixtures {
                 .joinDate(LocalDate.of(2023, 1, 1))
                 .employmentStatus(EmploymentStatus.ACTIVE)
                 .isDeleted(false)
-                .createdAt(LocalDateTime.now())
+                .createdAt(Instant.now())
                 .build();
     }
 
@@ -228,7 +229,7 @@ public class TestFixtures {
                 .joinDate(LocalDate.of(2023, 1, 1))
                 .employmentStatus(EmploymentStatus.ACTIVE)
                 .isDeleted(false)
-                .createdAt(LocalDateTime.now())
+                .createdAt(Instant.now())
                 .build();
     }
 

@@ -7,7 +7,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -26,7 +26,7 @@ class LeaveRequestTest extends BaseUnitTest {
         LocalDate endDate = LocalDate.now().plusDays(3);
         Double totalDays = 3.0;
         String reason = "Personal vacation";
-        LocalDateTime now = LocalDateTime.now();
+        Instant now = Instant.now();
 
         // When
         LeaveRequest leaveRequest = LeaveRequest.builder()
@@ -154,7 +154,7 @@ class LeaveRequestTest extends BaseUnitTest {
     void shouldHandleApproval() {
         // Given
         Employee approver = TestFixtures.createTestEmployee();
-        LocalDateTime approvedAt = LocalDateTime.now();
+        Instant approvedAt = Instant.now();
         LeaveRequest leaveRequest = LeaveRequest.builder()
                 .employee(TestFixtures.createTestEmployee())
                 .leaveType(LeaveType.ANNUAL_LEAVE)
@@ -226,7 +226,7 @@ class LeaveRequestTest extends BaseUnitTest {
     @DisplayName("Should handle soft deletion fields")
     void shouldHandleSoftDeletionFields() {
         // Given
-        LocalDateTime deletionTime = LocalDateTime.now();
+        Instant deletionTime = Instant.now();
         UUID deletedBy = UUID.randomUUID();
 
         // When
