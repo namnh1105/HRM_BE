@@ -5,20 +5,15 @@ import com.hainam.worksphere.TestFixtures;
 import com.hainam.worksphere.auth.domain.RefreshToken;
 import com.hainam.worksphere.auth.dto.request.LoginRequest;
 import com.hainam.worksphere.auth.dto.request.RegisterRequest;
-import com.hainam.worksphere.auth.dto.request.RefreshTokenRequest;
 import com.hainam.worksphere.auth.dto.response.AuthenticationResponse;
-import com.hainam.worksphere.auth.dto.response.TokenResponse;
 import com.hainam.worksphere.auth.mapper.AuthMapper;
 import com.hainam.worksphere.auth.mapper.AuthResponseMapper;
 import com.hainam.worksphere.auth.mapper.UserAuthorizationMapper;
 import com.hainam.worksphere.auth.security.UserPrincipal;
 import com.hainam.worksphere.auth.util.JwtUtil;
-import com.hainam.worksphere.authorization.domain.Permission;
-import com.hainam.worksphere.authorization.domain.Role;
 import com.hainam.worksphere.authorization.service.AuthorizationService;
 import com.hainam.worksphere.shared.exception.EmailAlreadyExistsException;
 import com.hainam.worksphere.shared.exception.InvalidCredentialsException;
-import com.hainam.worksphere.shared.exception.RefreshTokenException;
 import com.hainam.worksphere.user.domain.User;
 import com.hainam.worksphere.user.dto.response.UserWithAuthorizationResponse;
 import com.hainam.worksphere.user.repository.UserRepository;
@@ -34,7 +29,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -80,10 +74,8 @@ class AuthenticationServiceTest extends BaseUnitTest {
     private User testUser;
     private RegisterRequest registerRequest;
     private LoginRequest loginRequest;
-    private RefreshTokenRequest refreshTokenRequest;
     private RefreshToken testRefreshToken;
     private AuthenticationResponse authResponse;
-    private TokenResponse tokenResponse;
     private UserPrincipal testUserPrincipal;
 
     @BeforeEach
@@ -102,20 +94,12 @@ class AuthenticationServiceTest extends BaseUnitTest {
         loginRequest.setEmail(TEST_EMAIL);
         loginRequest.setPassword(TEST_PASSWORD);
 
-        refreshTokenRequest = new RefreshTokenRequest();
-        refreshTokenRequest.setRefreshToken("test-refresh-token");
 
         authResponse = AuthenticationResponse.builder()
                 .accessToken("access-token")
                 .refreshToken("refresh-token")
                 .expiresIn(3600L)
                 .user(mock(UserWithAuthorizationResponse.class))
-                .build();
-
-        tokenResponse = TokenResponse.builder()
-                .accessToken("new-access-token")
-                .tokenType("Bearer")
-                .expiresIn(3600L)
                 .build();
     }
 

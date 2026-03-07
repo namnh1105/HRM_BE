@@ -2,7 +2,6 @@ package com.hainam.worksphere.shared.audit.util;
 
 import com.hainam.worksphere.BaseUnitTest;
 import com.hainam.worksphere.TestFixtures;
-import com.hainam.worksphere.shared.audit.dto.AuditLogDetailDto;
 import com.hainam.worksphere.shared.audit.service.AuditService;
 import com.hainam.worksphere.user.domain.User;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,7 +11,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
 import java.time.Instant;
-import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.*;
@@ -68,7 +66,7 @@ class AuditDiffUtilTest extends BaseUnitTest {
                 eq("UPDATE_PROFILE"),
                 eq("USER"),
                 eq(originalUser.getId().toString()),
-                any(List.class), // List<AuditLogDetailDto>
+                anyList(),
                 eq(requestId)
         );
     }
@@ -118,7 +116,7 @@ class AuditDiffUtilTest extends BaseUnitTest {
                 eq("UPDATE_PROFILE"),
                 eq("USER"),
                 eq(originalUser.getId().toString()),
-                any(List.class),
+                anyList(),
                 eq(requestId)
         );
     }
@@ -155,7 +153,7 @@ class AuditDiffUtilTest extends BaseUnitTest {
                 eq("UPDATE_PROFILE"),
                 eq("USER"),
                 eq(originalUser.getId().toString()),
-                any(List.class),
+                anyList(),
                 eq(requestId)
         );
     }
@@ -234,7 +232,7 @@ class AuditDiffUtilTest extends BaseUnitTest {
                 eq("UPDATE_PROFILE"),
                 eq("USER"),
                 eq(originalUser.getId().toString()),
-                any(List.class),
+                anyList(),
                 eq(requestId)
         );
     }
@@ -282,7 +280,7 @@ class AuditDiffUtilTest extends BaseUnitTest {
                 eq("UPDATE_PROFILE"),
                 eq("USER"),
                 eq(originalUser.getId().toString()),
-                any(List.class),
+                anyList(),
                 eq(requestId)
         );
     }
@@ -318,7 +316,7 @@ class AuditDiffUtilTest extends BaseUnitTest {
                 eq("UPDATE_EMAIL"),
                 eq("USER"),
                 eq(originalUser.getId().toString()),
-                any(List.class),
+                anyList(),
                 eq(requestId)
         );
     }

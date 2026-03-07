@@ -7,7 +7,6 @@ import com.hainam.worksphere.authorization.repository.RolePermissionRepository;
 import com.hainam.worksphere.shared.config.CacheConfig;
 import com.hainam.worksphere.shared.exception.DuplicateResourceException;
 import com.hainam.worksphere.shared.exception.ResourceNotFoundException;
-import com.hainam.worksphere.shared.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -31,7 +30,7 @@ public class RolePermissionService {
 
     @Transactional
     @Caching(evict = {
-        @CacheEvict(value = CacheConfig.ROLE_PERMISSIONS_CACHE, key = "#roleId.toString()"),
+        @CacheEvict(value = CacheConfig.ROLE_PERMISSIONS_CACHE, key = "#roleId"),
         @CacheEvict(value = CacheConfig.USER_PERMISSIONS_CACHE, allEntries = true)
     })
     public RolePermission assignPermissionToRole(UUID roleId, UUID permissionId) {
@@ -59,7 +58,7 @@ public class RolePermissionService {
 
     @Transactional
     @Caching(evict = {
-        @CacheEvict(value = CacheConfig.ROLE_PERMISSIONS_CACHE, key = "#roleId.toString()"),
+        @CacheEvict(value = CacheConfig.ROLE_PERMISSIONS_CACHE, key = "#roleId"),
         @CacheEvict(value = CacheConfig.USER_PERMISSIONS_CACHE, allEntries = true)
     })
     public void removePermissionFromRole(UUID roleId, UUID permissionId) {
@@ -100,7 +99,7 @@ public class RolePermissionService {
 
     @Transactional
     @Caching(evict = {
-        @CacheEvict(value = CacheConfig.ROLE_PERMISSIONS_CACHE, key = "#roleId.toString()"),
+        @CacheEvict(value = CacheConfig.ROLE_PERMISSIONS_CACHE, key = "#roleId"),
         @CacheEvict(value = CacheConfig.USER_PERMISSIONS_CACHE, allEntries = true)
     })
     public void deactivateAllPermissionsForRole(UUID roleId) {
@@ -119,7 +118,7 @@ public class RolePermissionService {
 
     @Transactional
     @Caching(evict = {
-        @CacheEvict(value = CacheConfig.ROLE_PERMISSIONS_CACHE, key = "#roleId.toString()"),
+        @CacheEvict(value = CacheConfig.ROLE_PERMISSIONS_CACHE, key = "#roleId"),
         @CacheEvict(value = CacheConfig.USER_PERMISSIONS_CACHE, allEntries = true)
     })
     public void activateRolePermission(UUID roleId, UUID permissionId) {
@@ -128,7 +127,7 @@ public class RolePermissionService {
 
     @Transactional
     @Caching(evict = {
-        @CacheEvict(value = CacheConfig.ROLE_PERMISSIONS_CACHE, key = "#roleId.toString()"),
+        @CacheEvict(value = CacheConfig.ROLE_PERMISSIONS_CACHE, key = "#roleId"),
         @CacheEvict(value = CacheConfig.USER_PERMISSIONS_CACHE, allEntries = true)
     })
     public void deactivateRolePermission(UUID roleId, UUID permissionId) {

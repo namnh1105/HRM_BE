@@ -3,11 +3,6 @@ package com.hainam.worksphere;
 import com.hainam.worksphere.auth.domain.RefreshToken;
 import com.hainam.worksphere.authorization.domain.Permission;
 import com.hainam.worksphere.authorization.domain.Role;
-import com.hainam.worksphere.shared.audit.domain.ActionType;
-import com.hainam.worksphere.shared.audit.domain.AuditLog;
-import com.hainam.worksphere.shared.audit.domain.AuditLogDetail;
-import com.hainam.worksphere.shared.audit.domain.AuditStatus;
-import com.hainam.worksphere.shared.domain.EntityType;
 import com.hainam.worksphere.user.domain.User;
 import com.hainam.worksphere.department.domain.Department;
 import com.hainam.worksphere.employee.domain.Employee;
@@ -65,21 +60,6 @@ public class TestFixtures {
                 .build();
     }
 
-    public static User createGoogleUser() {
-        return User.builder()
-                .id(UUID.randomUUID())
-                .givenName("Jane")
-                .familyName("Smith")
-                .email("jane.smith@gmail.com")
-                .googleId("google123")
-                .name("Jane Smith")
-                .avatarUrl("https://example.com/avatar.jpg")
-                .isEnabled(true)
-                .isDeleted(false)
-                .createdAt(Instant.now())
-                .build();
-    }
-
     // Role fixtures
     public static Role createTestRole() {
         return Role.builder()
@@ -87,18 +67,6 @@ public class TestFixtures {
                 .code("TEST_ROLE")
                 .displayName("Test Role")
                 .description("A test role")
-                .isSystem(false)
-                .isActive(true)
-                .createdAt(Instant.now())
-                .build();
-    }
-
-    public static Role createAdminRole() {
-        return Role.builder()
-                .id(UUID.randomUUID())
-                .code("ADMIN")
-                .displayName("Administrator")
-                .description("System administrator role")
                 .isSystem(false)
                 .isActive(true)
                 .createdAt(Instant.now())
@@ -129,55 +97,6 @@ public class TestFixtures {
                 .expiresAt(Instant.now().plus(7, ChronoUnit.DAYS))
                 .isRevoked(false)
                 .createdAt(Instant.now())
-                .build();
-    }
-
-    public static RefreshToken createExpiredRefreshToken() {
-        return RefreshToken.builder()
-                .id(UUID.randomUUID())
-                .token("expired-refresh-token")
-                .user(createTestUser())
-                .expiresAt(Instant.now().minus(1, ChronoUnit.DAYS))
-                .isRevoked(false)
-                .createdAt(Instant.now().minus(8, ChronoUnit.DAYS))
-                .build();
-    }
-
-    public static RefreshToken createRevokedRefreshToken() {
-        return RefreshToken.builder()
-                .id(UUID.randomUUID())
-                .token("revoked-refresh-token")
-                .user(createTestUser())
-                .expiresAt(Instant.now().plus(7, ChronoUnit.DAYS))
-                .isRevoked(true)
-                .createdAt(Instant.now())
-                .build();
-    }
-
-    // Audit fixtures
-    public static AuditLog createTestAuditLog() {
-        return AuditLog.builder()
-                .id(UUID.randomUUID())
-                .actionType(ActionType.CREATE)
-                .actionCode("CREATE_USER")
-                .entityType(EntityType.USER)
-                .entityId(UUID.randomUUID().toString())
-                .userId(UUID.randomUUID().toString())
-                .username("test@example.com")
-                .ipAddress("192.168.1.1")
-                .userAgent("Test User Agent")
-                .requestId(UUID.randomUUID().toString())
-                .timestamp(Instant.now())
-                .build();
-    }
-
-    public static AuditLogDetail createTestAuditLogDetail() {
-        return AuditLogDetail.builder()
-                .id(1L)
-                .auditLogId(UUID.randomUUID())
-                .fieldName("email")
-                .oldValue("old@example.com")
-                .newValue("new@example.com")
                 .build();
     }
 

@@ -35,7 +35,7 @@ public class WorkShiftService {
     private final StoreRepository storeRepository;
     private final WorkShiftMapper workShiftMapper;
 
-    @Cacheable(value = CacheConfig.WORK_SHIFT_CACHE, key = "#workShiftId.toString()")
+    @Cacheable(value = CacheConfig.WORK_SHIFT_CACHE, key = "#workShiftId")
     public WorkShiftResponse getWorkShiftById(UUID workShiftId) {
         WorkShift workShift = workShiftRepository.findActiveById(workShiftId)
                 .orElseThrow(() -> WorkShiftNotFoundException.byId(workShiftId.toString()));

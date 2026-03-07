@@ -144,7 +144,6 @@ class UserServiceTest extends BaseUnitTest {
     void shouldGetAllActiveUsersSuccessfully() {
         // Given
         List<User> users = Arrays.asList(testUser, TestFixtures.createTestUser("another@test.com"));
-        List<UserResponse> userResponses = Arrays.asList(testUserResponse);
 
         when(userRepository.findAllActive()).thenReturn(users);
         when(userMapper.toUserResponse(any(User.class))).thenReturn(testUserResponse);
