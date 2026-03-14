@@ -2,6 +2,8 @@ package com.hainam.worksphere.employee.domain;
 
 import com.hainam.worksphere.department.domain.Department;
 import com.hainam.worksphere.shared.audit.annotation.AuditableEntity;
+import com.hainam.worksphere.shared.persistence.encryption.EncryptedLocalDateConverter;
+import com.hainam.worksphere.shared.persistence.encryption.EncryptedStringConverter;
 import com.hainam.worksphere.store.domain.Store;
 import com.hainam.worksphere.user.domain.User;
 import jakarta.persistence.*;
@@ -63,18 +65,23 @@ public class Employee {
     @Column(name = "gender", length = 10)
     private Gender gender;
 
-    @Column(name = "id_card_number", length = 20)
+    @Convert(converter = EncryptedStringConverter.class)
+    @Column(name = "id_card_number", length = 512)
     private String idCardNumber;
 
+    @Convert(converter = EncryptedLocalDateConverter.class)
     @Column(name = "id_card_issued_date")
     private LocalDate idCardIssuedDate;
 
-    @Column(name = "id_card_issued_place", length = 100)
+    @Convert(converter = EncryptedStringConverter.class)
+    @Column(name = "id_card_issued_place", length = 512)
     private String idCardIssuedPlace;
 
+    @Convert(converter = EncryptedStringConverter.class)
     @Column(name = "permanent_address", columnDefinition = "TEXT")
     private String permanentAddress;
 
+    @Convert(converter = EncryptedStringConverter.class)
     @Column(name = "current_address", columnDefinition = "TEXT")
     private String currentAddress;
 
@@ -103,22 +110,26 @@ public class Employee {
     @Builder.Default
     private EmploymentStatus employmentStatus = EmploymentStatus.ACTIVE;
 
-    @Column(name = "bank_account_number", length = 30)
+    @Convert(converter = EncryptedStringConverter.class)
+    @Column(name = "bank_account_number", length = 512)
     private String bankAccountNumber;
 
-    @Column(name = "bank_name", length = 100)
+    @Convert(converter = EncryptedStringConverter.class)
+    @Column(name = "bank_name", length = 512)
     private String bankName;
 
-    @Column(name = "tax_code", length = 20)
+    @Convert(converter = EncryptedStringConverter.class)
+    @Column(name = "tax_code", length = 512)
     private String taxCode;
 
-    @Column(name = "social_insurance_number", length = 20)
+    @Convert(converter = EncryptedStringConverter.class)
+    @Column(name = "social_insurance_number", length = 512)
     private String socialInsuranceNumber;
 
-    @Column(name = "health_insurance_number", length = 20)
+    @Convert(converter = EncryptedStringConverter.class)
+    @Column(name = "health_insurance_number", length = 512)
     private String healthInsuranceNumber;
 
-    // Face embedding for face recognition
     @Column(name = "embedding", columnDefinition = "jsonb")
     @JdbcTypeCode(SqlTypes.JSON)
     private String embedding;

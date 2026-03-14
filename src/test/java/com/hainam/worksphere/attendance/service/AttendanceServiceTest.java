@@ -151,9 +151,14 @@ class AttendanceServiceTest extends BaseUnitTest {
                 .build();
 
         Attendance existingAttendance = Attendance.builder()
+                .employee(testEmployee)
+                .workDate(LocalDate.now())
                 .checkInTime(LocalTime.of(8, 0))
                 .workShift(testWorkShift)
+                .isDeleted(false)
+                .status(AttendanceStatus.PRESENT)
                 .build();
+
 
         when(faceApiClient.verifyFace(mockPhoto, employeeId.toString())).thenReturn(true);
         when(employeeWorkShiftRepository.findActiveByEmployeeIdAndDate(eq(employeeId), any(LocalDate.class)))

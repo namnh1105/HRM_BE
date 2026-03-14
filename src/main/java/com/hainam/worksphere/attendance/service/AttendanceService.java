@@ -285,6 +285,12 @@ public class AttendanceService {
     private boolean isTimeInShiftWindow(LocalTime currentTime, LocalTime shiftStart, LocalTime shiftEnd) {
         LocalTime windowStart = shiftStart.minusMinutes(CHECKIN_EARLY_BUFFER);
         LocalTime windowEnd = shiftEnd.plusMinutes(CHECKOUT_LATE_BUFFER);
+
+        // Overnight window (crosses midnight), e.g. 22:00 -> 06:00
+        if (windowStart.isAfter(windowEnd)) {
+            return !currentTime.isBefore(windowStart) || !currentTime.isAfter(windowEnd);
+        }
+
         return !currentTime.isBefore(windowStart) && !currentTime.isAfter(windowEnd);
     }
 
