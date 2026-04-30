@@ -17,9 +17,6 @@ import java.util.stream.Collectors;
 public class UserPrincipal implements UserDetails {
 
     private UUID id;
-    private String givenName;
-    private String familyName;
-    private String name;
     private String email;
     private String password;
     private boolean isEnabled;
@@ -29,9 +26,6 @@ public class UserPrincipal implements UserDetails {
     public static UserPrincipal create(User user) {
         return new UserPrincipal(
                 user.getId(),
-                user.getGivenName(),
-                user.getFamilyName(),
-                user.getName(),
                 user.getEmail(),
                 user.getPassword(),
                 user.getIsEnabled(),
@@ -43,9 +37,6 @@ public class UserPrincipal implements UserDetails {
     public static UserPrincipal create(User user, List<Role> roles, List<Permission> permissions) {
         return new UserPrincipal(
                 user.getId(),
-                user.getGivenName(),
-                user.getFamilyName(),
-                user.getName(),
                 user.getEmail(),
                 user.getPassword(),
                 user.getIsEnabled(),

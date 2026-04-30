@@ -19,21 +19,15 @@ class UserTest extends BaseUnitTest {
     void shouldCreateUserWithBuilderPattern() {
         // Given
         UUID id = UUID.randomUUID();
-        String givenName = "John";
-        String familyName = "Doe";
         String email = "john.doe@example.com";
         String password = "encodedPassword";
-        String name = "John Doe";
         Instant now = Instant.now();
 
         // When
         User user = User.builder()
                 .id(id)
-                .givenName(givenName)
-                .familyName(familyName)
                 .email(email)
                 .password(password)
-                .name(name)
                 .isEnabled(true)
                 .isDeleted(false)
                 .createdAt(now)
@@ -42,11 +36,8 @@ class UserTest extends BaseUnitTest {
         // Then
         assertAll(
                 () -> assertThat(user.getId()).isEqualTo(id),
-                () -> assertThat(user.getGivenName()).isEqualTo(givenName),
-                () -> assertThat(user.getFamilyName()).isEqualTo(familyName),
                 () -> assertThat(user.getEmail()).isEqualTo(email),
                 () -> assertThat(user.getPassword()).isEqualTo(password),
-                () -> assertThat(user.getName()).isEqualTo(name),
                 () -> assertThat(user.getIsEnabled()).isTrue(),
                 () -> assertThat(user.getIsDeleted()).isFalse(),
                 () -> assertThat(user.getCreatedAt()).isEqualTo(now)
@@ -74,15 +65,11 @@ class UserTest extends BaseUnitTest {
     void shouldCreateGoogleUser() {
         // Given
         String googleId = "google123";
-        String avatarUrl = "https://lh3.googleusercontent.com/avatar.jpg";
 
         // When
         User googleUser = User.builder()
-                .givenName("Jane")
-                .familyName("Smith")
                 .email("jane.smith@gmail.com")
                 .googleId(googleId)
-                .avatarUrl(avatarUrl)
                 .isEnabled(true)
                 .isDeleted(false)
                 .build();
@@ -90,7 +77,6 @@ class UserTest extends BaseUnitTest {
         // Then
         assertAll(
                 () -> assertThat(googleUser.getGoogleId()).isEqualTo(googleId),
-                () -> assertThat(googleUser.getAvatarUrl()).isEqualTo(avatarUrl),
                 () -> assertThat(googleUser.getPassword()).isNull(), // Google users don't have passwords
                 () -> assertThat(googleUser.getIsEnabled()).isTrue()
         );
@@ -101,13 +87,9 @@ class UserTest extends BaseUnitTest {
     void shouldHandleUserWithAllConstructor() {
         // Given
         UUID id = UUID.randomUUID();
-        String givenName = "Alice";
-        String familyName = "Johnson";
         String email = "alice.johnson@example.com";
         String password = "hashedPassword";
-        String name = "Alice Johnson";
         String googleId = null;
-        String avatarUrl = null;
         Boolean isEnabled = true;
         Instant createdAt = Instant.now();
         Instant updatedAt = Instant.now();
@@ -118,20 +100,16 @@ class UserTest extends BaseUnitTest {
         UUID deletedBy = null;
 
         // When
-        User user = new User(id, givenName, familyName, email, password, name, googleId, avatarUrl,
+        User user = new User(id, email, password, googleId,
                            isEnabled, createdAt, updatedAt, createdBy, updatedBy, isDeleted,
                            deletedAt, deletedBy);
 
         // Then
         assertAll(
                 () -> assertThat(user.getId()).isEqualTo(id),
-                () -> assertThat(user.getGivenName()).isEqualTo(givenName),
-                () -> assertThat(user.getFamilyName()).isEqualTo(familyName),
                 () -> assertThat(user.getEmail()).isEqualTo(email),
                 () -> assertThat(user.getPassword()).isEqualTo(password),
-                () -> assertThat(user.getName()).isEqualTo(name),
                 () -> assertThat(user.getGoogleId()).isNull(),
-                () -> assertThat(user.getAvatarUrl()).isNull(),
                 () -> assertThat(user.getIsEnabled()).isTrue(),
                 () -> assertThat(user.getCreatedAt()).isEqualTo(createdAt),
                 () -> assertThat(user.getUpdatedAt()).isEqualTo(updatedAt),
@@ -223,45 +201,32 @@ class UserTest extends BaseUnitTest {
     @DisplayName("Should handle long text values")
     void shouldHandleLongTextValues() {
         // Given
-        String longName = "A".repeat(100);
         String longEmail = "a".repeat(80) + "@example.com";
 
         // When
         User user = User.builder()
-                .name(longName)
                 .email(longEmail)
                 .build();
 
         // Then
         assertAll(
-                () -> assertThat(user.getName()).isEqualTo(longName),
                 () -> assertThat(user.getEmail()).isEqualTo(longEmail)
         );
     }
 
     @Test
-    @DisplayName("Should handle user profile updates")
-    void shouldHandleUserProfileUpdates() {
+        @DisplayName("Should handle email updates")
+        void shouldHandleEmailUpdates() {
         // Given
         User user = User.builder()
-                .givenName("Original")
-                .familyName("Name")
                 .email("original@example.com")
                 .build();
 
         // When
-        user.setGivenName("Updated");
-        user.setFamilyName("Profile");
-        user.setName("Updated Profile");
-        user.setAvatarUrl("https://example.com/new-avatar.jpg");
+        user.setEmail("updated@example.com");
 
         // Then
-        assertAll(
-                () -> assertThat(user.getGivenName()).isEqualTo("Updated"),
-                () -> assertThat(user.getFamilyName()).isEqualTo("Profile"),
-                () -> assertThat(user.getName()).isEqualTo("Updated Profile"),
-                () -> assertThat(user.getAvatarUrl()).isEqualTo("https://example.com/new-avatar.jpg")
-        );
+        assertThat(user.getEmail()).isEqualTo("updated@example.com");
     }
 
     @Test
@@ -290,12 +255,10 @@ class UserTest extends BaseUnitTest {
 
         // When
         user.setGoogleId("google123456");
-        user.setAvatarUrl("https://lh3.googleusercontent.com/photo.jpg");
 
         // Then
         assertAll(
-                () -> assertThat(user.getGoogleId()).isEqualTo("google123456"),
-                () -> assertThat(user.getAvatarUrl()).isEqualTo("https://lh3.googleusercontent.com/photo.jpg")
+                () -> assertThat(user.getGoogleId()).isEqualTo("google123456")
         );
     }
 }

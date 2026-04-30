@@ -12,6 +12,8 @@ import com.hainam.worksphere.auth.mapper.UserAuthorizationMapper;
 import com.hainam.worksphere.auth.security.UserPrincipal;
 import com.hainam.worksphere.auth.util.JwtUtil;
 import com.hainam.worksphere.authorization.service.AuthorizationService;
+import com.hainam.worksphere.employee.domain.Employee;
+import com.hainam.worksphere.employee.repository.EmployeeRepository;
 import com.hainam.worksphere.shared.exception.EmailAlreadyExistsException;
 import com.hainam.worksphere.shared.exception.InvalidCredentialsException;
 import com.hainam.worksphere.user.domain.User;
@@ -30,6 +32,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Collections;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -68,6 +71,9 @@ class AuthenticationServiceTest extends BaseUnitTest {
     @Mock
     private UserAuthorizationMapper userAuthorizationMapper;
 
+        @Mock
+        private EmployeeRepository employeeRepository;
+
     @InjectMocks
     private AuthenticationService authenticationService;
 
@@ -77,12 +83,21 @@ class AuthenticationServiceTest extends BaseUnitTest {
     private RefreshToken testRefreshToken;
     private AuthenticationResponse authResponse;
     private UserPrincipal testUserPrincipal;
+        private Employee testEmployee;
 
     @BeforeEach
     void setUp() {
         testUser = TestFixtures.createTestUser();
         testRefreshToken = TestFixtures.createTestRefreshToken();
         testUserPrincipal = UserPrincipal.create(testUser);
+        testEmployee = Employee.builder()
+                .id(UUID.randomUUID())
+                .user(testUser)
+                .firstName("John")
+                .lastName("Doe")
+                .fullName("Doe John")
+                .email(testUser.getEmail())
+                .build();
 
         registerRequest = new RegisterRequest();
         registerRequest.setEmail(TEST_EMAIL);
@@ -111,12 +126,14 @@ class AuthenticationServiceTest extends BaseUnitTest {
         when(authMapper.toUser(registerRequest)).thenReturn(testUser);
         when(passwordEncoder.encode(TEST_PASSWORD)).thenReturn("encodedPassword");
         when(userRepository.save(any(User.class))).thenReturn(testUser);
+        when(employeeRepository.findActiveByUserId(testUser.getId())).thenReturn(Optional.empty());
+        when(employeeRepository.save(any(Employee.class))).thenReturn(testEmployee);
         when(authorizationService.getUserRoles(testUser.getId())).thenReturn(Collections.emptyList());
         when(authorizationService.getUserPermissions(testUser.getId())).thenReturn(Collections.emptyList());
         when(jwtUtil.generateAccessToken(any(UserPrincipal.class))).thenReturn("access-token");
         when(jwtUtil.getAccessTokenExpiration()).thenReturn(3600000L);
         when(refreshTokenService.createRefreshToken(testUser)).thenReturn(testRefreshToken);
-        when(userAuthorizationMapper.toUserWithAuthorizationResponse(any(), any(), any()))
+        when(userAuthorizationMapper.toUserWithAuthorizationResponse(any(), any(), any(), any()))
                 .thenReturn(mock(UserWithAuthorizationResponse.class));
         when(authResponseMapper.toAuthenticationResponse(anyString(), anyString(), any(Long.class), any()))
                 .thenReturn(authResponse);
@@ -165,7 +182,8 @@ class AuthenticationServiceTest extends BaseUnitTest {
         when(jwtUtil.generateAccessToken(any(UserPrincipal.class))).thenReturn("access-token");
         when(jwtUtil.getAccessTokenExpiration()).thenReturn(3600000L);
         when(refreshTokenService.createRefreshToken(testUser)).thenReturn(testRefreshToken);
-        when(userAuthorizationMapper.toUserWithAuthorizationResponse(any(), any(), any()))
+        when(employeeRepository.findActiveByUserId(testUser.getId())).thenReturn(Optional.of(testEmployee));
+        when(userAuthorizationMapper.toUserWithAuthorizationResponse(any(), any(), any(), any()))
                 .thenReturn(mock(UserWithAuthorizationResponse.class));
         when(authResponseMapper.toAuthenticationResponse(anyString(), anyString(), any(Long.class), any()))
                 .thenReturn(authResponse);

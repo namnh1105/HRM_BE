@@ -270,8 +270,7 @@ class EmployeeTest extends BaseUnitTest {
         // Then
         assertAll(
                 () -> assertThat(employee.getUser()).isNotNull(),
-                () -> assertThat(employee.getUser().getEmail()).isEqualTo("john.doe@example.com"),
-                () -> assertThat(employee.getUser().getName()).isEqualTo("John Doe")
+                () -> assertThat(employee.getUser().getEmail()).isEqualTo("john.doe@example.com")
         );
     }
 

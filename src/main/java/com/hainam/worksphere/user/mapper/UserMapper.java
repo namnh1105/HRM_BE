@@ -1,5 +1,6 @@
 package com.hainam.worksphere.user.mapper;
 
+import com.hainam.worksphere.employee.domain.Employee;
 import com.hainam.worksphere.user.domain.User;
 import com.hainam.worksphere.user.dto.response.UserResponse;
 import org.mapstruct.Mapper;
@@ -9,10 +10,9 @@ import org.mapstruct.MappingConstants;
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
 public interface UserMapper {
 
-    @Mapping(target = "givenName", source = "givenName")
-    @Mapping(target = "familyName", source = "familyName")
-    @Mapping(target = "name", source = "name")
-    @Mapping(target = "avatarUrl", source = "avatarUrl")
+    @Mapping(target = "givenName", source = "employee.firstName")
+    @Mapping(target = "familyName", source = "employee.lastName")
+    @Mapping(target = "avatarUrl", source = "employee.avatarUrl")
     @Mapping(target = "isActive", source = "isEnabled")
     @Mapping(target = "createdAt", source = "createdAt")
     @Mapping(target = "updatedAt", source = "updatedAt")
@@ -21,5 +21,5 @@ public interface UserMapper {
     @Mapping(target = "isDeleted", source = "isDeleted")
     @Mapping(target = "deletedAt", source = "deletedAt")
     @Mapping(target = "deletedBy", source = "deletedBy")
-    UserResponse toUserResponse(User user);
+    UserResponse toUserResponse(User user, Employee employee);
 }

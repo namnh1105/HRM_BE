@@ -36,7 +36,7 @@ public class Employee {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(name = "employee_code", nullable = false, unique = true, length = 20)
+    @Column(name = "employee_code", unique = true, length = 20)
     private String employeeCode;
 
     @OneToOne(fetch = FetchType.LAZY)

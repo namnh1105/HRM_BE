@@ -14,6 +14,8 @@ import com.hainam.worksphere.authorization.domain.Role;
 import com.hainam.worksphere.authorization.repository.RoleRepository;
 import com.hainam.worksphere.authorization.service.AuthorizationService;
 import com.hainam.worksphere.authorization.service.UserRoleService;
+import com.hainam.worksphere.employee.domain.Employee;
+import com.hainam.worksphere.employee.repository.EmployeeRepository;
 import com.hainam.worksphere.shared.audit.annotation.AuditAction;
 import com.hainam.worksphere.shared.audit.domain.ActionType;
 import com.hainam.worksphere.shared.audit.util.AuditContext;
@@ -51,6 +53,7 @@ public class AuthenticationService {
     private final UserAuthorizationMapper userAuthorizationMapper;
     private final UserRoleService userRoleService;
     private final RoleRepository roleRepository;
+    private final EmployeeRepository employeeRepository;
 
     @Transactional
     public AuthenticationResponse register(RegisterRequest request) {
@@ -65,6 +68,8 @@ public class AuthenticationService {
 
         savedUser.setCreatedBy(savedUser.getId());
         savedUser = userRepository.save(savedUser);
+
+        Employee employee = createEmployeeForUser(savedUser);
 
         // Auto-assign USER role to new user
         assignDefaultUserRole(savedUser.getId());
@@ -81,7 +86,7 @@ public class AuthenticationService {
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(savedUser);
 
         UserWithAuthorizationResponse userWithAuth = userAuthorizationMapper.toUserWithAuthorizationResponse(
-                savedUser, userRoles, userPermissions);
+            savedUser, employee, userRoles, userPermissions);
 
         return authResponseMapper.toAuthenticationResponse(
                 accessToken,
@@ -111,8 +116,9 @@ public class AuthenticationService {
             String accessToken = jwtUtil.generateAccessToken(enhancedUserPrincipal);
             RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
 
-            UserWithAuthorizationResponse userWithAuth = userAuthorizationMapper.toUserWithAuthorizationResponse(
-                    user, userRoles, userPermissions);
+                Employee employee = employeeRepository.findActiveByUserId(user.getId()).orElse(null);
+                UserWithAuthorizationResponse userWithAuth = userAuthorizationMapper.toUserWithAuthorizationResponse(
+                    user, employee, userRoles, userPermissions);
 
             return authResponseMapper.toAuthenticationResponse(
                     accessToken,
@@ -165,9 +171,6 @@ public class AuthenticationService {
         if (email == null || email.trim().isEmpty()) {
             throw new OAuth2ValidationException("Email is required for Google OAuth2 login");
         }
-        if (name == null || name.trim().isEmpty()) {
-            throw new OAuth2ValidationException("Name is required for Google OAuth2 login");
-        }
         if (googleId == null || googleId.trim().isEmpty()) {
             throw new OAuth2ValidationException("Google ID is required for Google OAuth2 login");
         }
@@ -185,15 +188,14 @@ public class AuthenticationService {
             isNewUser = true;
             User newUser = User.builder()
                     .email(email)
-                    .name(name)
-                    .givenName(givenName)
-                    .familyName(familyName)
                     .googleId(googleId)
                     .isEnabled(true)
                     .build();
             User savedUser = userRepository.save(newUser);
             savedUser.setCreatedBy(savedUser.getId());
             user = userRepository.save(savedUser);
+
+            createEmployeeForUser(user);
 
             // Auto-assign USER role to new OAuth2 user
             assignDefaultUserRole(user.getId());
@@ -214,8 +216,9 @@ public class AuthenticationService {
         String accessToken = jwtUtil.generateAccessToken(userPrincipal);
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
 
+        Employee employee = employeeRepository.findActiveByUserId(user.getId()).orElse(null);
         UserWithAuthorizationResponse userWithAuth = userAuthorizationMapper.toUserWithAuthorizationResponse(
-                user, userRoles, userPermissions);
+            user, employee, userRoles, userPermissions);
 
         return authResponseMapper.toAuthenticationResponse(
                 accessToken,
@@ -237,6 +240,22 @@ public class AuthenticationService {
         } catch (Exception e) {
             log.warn("Failed to assign default USER role to user: {}", userId, e);
         }
+    }
+
+    private Employee createEmployeeForUser(User user) {
+        return employeeRepository.findActiveByUserId(user.getId())
+                .orElseGet(() -> {
+                    Employee employee = Employee.builder()
+                            .user(user)
+                            .employeeCode(null)
+                            .firstName("")
+                            .lastName("")
+                            .fullName("")
+                            .email(user.getEmail())
+                            .createdBy(user.getId())
+                            .build();
+                    return employeeRepository.save(employee);
+                });
     }
 
     public UserPrincipal validateAccessToken(String token) {

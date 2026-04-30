@@ -3,6 +3,8 @@ package com.hainam.worksphere.user.service;
 import com.hainam.worksphere.BaseUnitTest;
 import com.hainam.worksphere.TestFixtures;
 import com.hainam.worksphere.auth.security.UserPrincipal;
+import com.hainam.worksphere.employee.domain.Employee;
+import com.hainam.worksphere.employee.repository.EmployeeRepository;
 import com.hainam.worksphere.shared.exception.UserNotFoundException;
 import com.hainam.worksphere.shared.exception.ValidationException;
 import com.hainam.worksphere.user.domain.User;
@@ -10,7 +12,6 @@ import com.hainam.worksphere.user.dto.request.ChangePasswordRequest;
 import com.hainam.worksphere.user.dto.request.UpdateProfileRequest;
 import com.hainam.worksphere.user.dto.response.UserResponse;
 import com.hainam.worksphere.user.mapper.UserMapper;
-import com.hainam.worksphere.user.mapper.UserUpdateMapper;
 import com.hainam.worksphere.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -39,30 +40,40 @@ class UserServiceTest extends BaseUnitTest {
     private UserRepository userRepository;
 
     @Mock
+    private EmployeeRepository employeeRepository;
+
+    @Mock
     private PasswordEncoder passwordEncoder;
 
     @Mock
     private UserMapper userMapper;
 
-    @Mock
-    private UserUpdateMapper userUpdateMapper;
-
     @InjectMocks
     private UserService userService;
 
     private User testUser;
+    private Employee testEmployee;
     private UserResponse testUserResponse;
     private UserPrincipal testUserPrincipal;
 
     @BeforeEach
     void setUp() {
         testUser = TestFixtures.createTestUser();
+        testEmployee = Employee.builder()
+            .id(UUID.randomUUID())
+            .user(testUser)
+            .firstName("John")
+            .lastName("Doe")
+            .fullName("Doe John")
+            .email(testUser.getEmail())
+            .avatarUrl("https://example.com/avatar.jpg")
+            .build();
         testUserResponse = UserResponse.builder()
                 .id(testUser.getId())
                 .email(testUser.getEmail())
-                .name(testUser.getName())
-                .givenName(testUser.getGivenName())
-                .familyName(testUser.getFamilyName())
+            .givenName(testEmployee.getFirstName())
+            .familyName(testEmployee.getLastName())
+            .avatarUrl(testEmployee.getAvatarUrl())
                 .isActive(testUser.getIsEnabled())
                 .createdAt(testUser.getCreatedAt())
                 .build();
@@ -75,7 +86,8 @@ class UserServiceTest extends BaseUnitTest {
     void shouldGetCurrentUserSuccessfully() {
         // Given
         when(userRepository.findActiveById(testUser.getId())).thenReturn(Optional.of(testUser));
-        when(userMapper.toUserResponse(testUser)).thenReturn(testUserResponse);
+        when(employeeRepository.findActiveByUserId(testUser.getId())).thenReturn(Optional.of(testEmployee));
+        when(userMapper.toUserResponse(testUser, testEmployee)).thenReturn(testUserResponse);
 
         // When
         UserResponse result = userService.getCurrentUser(testUserPrincipal);
@@ -86,7 +98,8 @@ class UserServiceTest extends BaseUnitTest {
             () -> assertThat(result.getId()).isEqualTo(testUser.getId()),
             () -> assertThat(result.getEmail()).isEqualTo(testUser.getEmail()),
             () -> verify(userRepository).findActiveById(testUser.getId()),
-            () -> verify(userMapper).toUserResponse(testUser)
+            () -> verify(employeeRepository).findActiveByUserId(testUser.getId()),
+            () -> verify(userMapper).toUserResponse(testUser, testEmployee)
         );
     }
 
@@ -110,7 +123,8 @@ class UserServiceTest extends BaseUnitTest {
         // Given
         UUID userId = testUser.getId();
         when(userRepository.findActiveById(userId)).thenReturn(Optional.of(testUser));
-        when(userMapper.toUserResponse(testUser)).thenReturn(testUserResponse);
+        when(employeeRepository.findActiveByUserId(userId)).thenReturn(Optional.of(testEmployee));
+        when(userMapper.toUserResponse(testUser, testEmployee)).thenReturn(testUserResponse);
 
         // When
         UserResponse result = userService.getUserById(userId);
@@ -120,7 +134,8 @@ class UserServiceTest extends BaseUnitTest {
             () -> assertThat(result).isNotNull(),
             () -> assertThat(result.getId()).isEqualTo(userId),
             () -> verify(userRepository).findActiveById(userId),
-            () -> verify(userMapper).toUserResponse(testUser)
+            () -> verify(employeeRepository).findActiveByUserId(userId),
+            () -> verify(userMapper).toUserResponse(testUser, testEmployee)
         );
     }
 
@@ -146,7 +161,8 @@ class UserServiceTest extends BaseUnitTest {
         List<User> users = Arrays.asList(testUser, TestFixtures.createTestUser("another@test.com"));
 
         when(userRepository.findAllActive()).thenReturn(users);
-        when(userMapper.toUserResponse(any(User.class))).thenReturn(testUserResponse);
+        when(employeeRepository.findActiveByUserId(any(UUID.class))).thenReturn(Optional.of(testEmployee));
+        when(userMapper.toUserResponse(any(User.class), any(Employee.class))).thenReturn(testUserResponse);
 
         // When
         List<UserResponse> result = userService.getAllActiveUsers();
@@ -155,7 +171,8 @@ class UserServiceTest extends BaseUnitTest {
         assertAll(
             () -> assertThat(result).hasSize(2),
             () -> verify(userRepository).findAllActive(),
-            () -> verify(userMapper, times(2)).toUserResponse(any(User.class))
+            () -> verify(employeeRepository, times(2)).findActiveByUserId(any(UUID.class)),
+            () -> verify(userMapper, times(2)).toUserResponse(any(User.class), any(Employee.class))
         );
     }
 
@@ -167,22 +184,20 @@ class UserServiceTest extends BaseUnitTest {
         request.setGivenName("Updated");
         request.setFamilyName("Name");
 
-        User updatedUser = User.builder()
-                .id(testUser.getId())
-                .email(testUser.getEmail())
-                .givenName("Updated")
-                .familyName("Name")
-                .name("Updated Name")
-                .password(testUser.getPassword())
-                .isEnabled(testUser.getIsEnabled())
-                .isDeleted(testUser.getIsDeleted())
-                .createdAt(testUser.getCreatedAt())
-                .build();
+        Employee updatedEmployee = Employee.builder()
+            .id(testEmployee.getId())
+            .user(testUser)
+            .firstName("Updated")
+            .lastName("Name")
+            .fullName("Name Updated")
+            .email(testUser.getEmail())
+            .avatarUrl(testEmployee.getAvatarUrl())
+            .build();
 
         when(userRepository.findActiveById(testUser.getId())).thenReturn(Optional.of(testUser));
-        doNothing().when(userUpdateMapper).updateUserFromRequest(request, testUser);
-        when(userRepository.save(any(User.class))).thenReturn(updatedUser);
-        when(userMapper.toUserResponse(updatedUser)).thenReturn(testUserResponse);
+        when(employeeRepository.findActiveByUserId(testUser.getId())).thenReturn(Optional.of(testEmployee));
+        when(employeeRepository.save(any(Employee.class))).thenReturn(updatedEmployee);
+        when(userMapper.toUserResponse(testUser, updatedEmployee)).thenReturn(testUserResponse);
 
         // When
         UserResponse result = userService.updateProfile(testUserPrincipal, request);
@@ -191,9 +206,9 @@ class UserServiceTest extends BaseUnitTest {
         assertAll(
             () -> assertThat(result).isNotNull(),
             () -> verify(userRepository).findActiveById(testUser.getId()),
-            () -> verify(userUpdateMapper).updateUserFromRequest(request, testUser),
-            () -> verify(userRepository).save(any(User.class)),
-            () -> verify(userMapper).toUserResponse(updatedUser)
+            () -> verify(employeeRepository).findActiveByUserId(testUser.getId()),
+            () -> verify(employeeRepository).save(any(Employee.class)),
+            () -> verify(userMapper).toUserResponse(testUser, updatedEmployee)
         );
     }
 
@@ -301,9 +316,6 @@ class UserServiceTest extends BaseUnitTest {
         User restoredUser = User.builder()
                 .id(testUser.getId())
                 .email(testUser.getEmail())
-                .givenName(testUser.getGivenName())
-                .familyName(testUser.getFamilyName())
-                .name(testUser.getName())
                 .password(testUser.getPassword())
                 .isEnabled(testUser.getIsEnabled())
                 .isDeleted(false)
@@ -314,7 +326,8 @@ class UserServiceTest extends BaseUnitTest {
 
         when(userRepository.findDeletedById(userId)).thenReturn(Optional.of(testUser));
         when(userRepository.save(any(User.class))).thenReturn(restoredUser);
-        when(userMapper.toUserResponse(restoredUser)).thenReturn(testUserResponse);
+        when(employeeRepository.findActiveByUserId(restoredUser.getId())).thenReturn(Optional.of(testEmployee));
+        when(userMapper.toUserResponse(restoredUser, testEmployee)).thenReturn(testUserResponse);
 
         // When
         UserResponse result = userService.restoreUser(userId, restoredBy);
@@ -324,7 +337,8 @@ class UserServiceTest extends BaseUnitTest {
             () -> assertThat(result).isNotNull(),
             () -> verify(userRepository).findDeletedById(userId),
             () -> verify(userRepository).save(any(User.class)),
-            () -> verify(userMapper).toUserResponse(restoredUser)
+            () -> verify(employeeRepository).findActiveByUserId(restoredUser.getId()),
+            () -> verify(userMapper).toUserResponse(restoredUser, testEmployee)
         );
     }
 
