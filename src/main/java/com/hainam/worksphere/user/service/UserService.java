@@ -7,12 +7,13 @@ import com.hainam.worksphere.shared.audit.util.AuditContext;
 import com.hainam.worksphere.shared.config.CacheConfig;
 import com.hainam.worksphere.shared.exception.UserNotFoundException;
 import com.hainam.worksphere.shared.exception.ValidationException;
+import com.hainam.worksphere.employee.domain.Employee;
+import com.hainam.worksphere.employee.repository.EmployeeRepository;
 import com.hainam.worksphere.user.domain.User;
 import com.hainam.worksphere.user.dto.request.ChangePasswordRequest;
 import com.hainam.worksphere.user.dto.request.UpdateProfileRequest;
 import com.hainam.worksphere.user.dto.response.UserResponse;
 import com.hainam.worksphere.user.mapper.UserMapper;
-import com.hainam.worksphere.user.mapper.UserUpdateMapper;
 import com.hainam.worksphere.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
@@ -32,27 +33,32 @@ import java.util.stream.Collectors;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final EmployeeRepository employeeRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
-    private final UserUpdateMapper userUpdateMapper;
 
     public UserResponse getCurrentUser(UserPrincipal userPrincipal) {
         User user = userRepository.findActiveById(userPrincipal.getId())
                 .orElseThrow(() -> UserNotFoundException.byId(userPrincipal.getId().toString()));
-        return userMapper.toUserResponse(user);
+        Employee employee = employeeRepository.findActiveByUserId(user.getId()).orElse(null);
+        return userMapper.toUserResponse(user, employee);
     }
 
     @Cacheable(value = CacheConfig.USER_CACHE, key = "#userId.toString()")
     public UserResponse getUserById(UUID userId) {
         User user = userRepository.findActiveById(userId)
                 .orElseThrow(() -> UserNotFoundException.byId(userId.toString()));
-        return userMapper.toUserResponse(user);
+        Employee employee = employeeRepository.findActiveByUserId(user.getId()).orElse(null);
+        return userMapper.toUserResponse(user, employee);
     }
 
     public List<UserResponse> getAllActiveUsers() {
         return userRepository.findAllActive()
                 .stream()
-                .map(userMapper::toUserResponse)
+                .map(user -> {
+                    Employee employee = employeeRepository.findActiveByUserId(user.getId()).orElse(null);
+                    return userMapper.toUserResponse(user, employee);
+                })
                 .collect(Collectors.toList());
     }
 
@@ -66,15 +72,37 @@ public class UserService {
         User user = userRepository.findActiveById(userPrincipal.getId())
                 .orElseThrow(() -> UserNotFoundException.byId(userPrincipal.getId().toString()));
 
-        AuditContext.snapshot(user);
+        Employee employee = employeeRepository.findActiveByUserId(user.getId())
+                .orElseGet(() -> Employee.builder()
+                        .user(user)
+                        .employeeCode(null)
+                .firstName("")
+                .lastName("")
+                .fullName("")
+                        .email(user.getEmail())
+                        .createdBy(userPrincipal.getId())
+                        .build());
 
-        userUpdateMapper.updateUserFromRequest(request, user);
-        user.setUpdatedBy(userPrincipal.getId());
-        User userAfter = userRepository.save(user);
+        AuditContext.snapshot(employee);
 
-        AuditContext.registerUpdated(userAfter);
+        if (request.getGivenName() != null) {
+            employee.setFirstName(request.getGivenName());
+        }
+        if (request.getFamilyName() != null) {
+            employee.setLastName(request.getFamilyName());
+        }
+        if (request.getGivenName() != null || request.getFamilyName() != null) {
+            employee.setFullName(buildFullName(employee.getLastName(), employee.getFirstName()));
+        }
+        if (request.getAvatarUrl() != null) {
+            employee.setAvatarUrl(request.getAvatarUrl());
+        }
+        employee.setUpdatedBy(userPrincipal.getId());
+        Employee savedEmployee = employeeRepository.save(employee);
 
-        return userMapper.toUserResponse(userAfter);
+        AuditContext.registerUpdated(savedEmployee);
+
+        return userMapper.toUserResponse(user, savedEmployee);
     }
 
     @Transactional
@@ -146,7 +174,8 @@ public class UserService {
         user.setUpdatedBy(restoredBy);
 
         User restoredUser = userRepository.save(user);
-        return userMapper.toUserResponse(restoredUser);
+        Employee employee = employeeRepository.findActiveByUserId(restoredUser.getId()).orElse(null);
+        return userMapper.toUserResponse(restoredUser, employee);
     }
 
     @Transactional
@@ -156,5 +185,11 @@ public class UserService {
                 .orElseThrow(() -> UserNotFoundException.byId(userId.toString()));
 
         userRepository.delete(user);
+    }
+
+    private String buildFullName(String familyName, String givenName) {
+        String safeFamilyName = familyName != null ? familyName.trim() : "";
+        String safeGivenName = givenName != null ? givenName.trim() : "";
+        return (safeFamilyName + " " + safeGivenName).trim();
     }
 }

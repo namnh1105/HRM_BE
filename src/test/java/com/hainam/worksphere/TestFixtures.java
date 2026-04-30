@@ -35,11 +35,8 @@ public class TestFixtures {
     public static User createTestUser() {
         return User.builder()
                 .id(UUID.randomUUID())
-                .givenName("John")
-                .familyName("Doe")
                 .email("john.doe@example.com")
                 .password("encodedPassword")
-                .name("John Doe")
                 .isEnabled(true)
                 .isDeleted(false)
                 .createdAt(Instant.now())
@@ -49,11 +46,8 @@ public class TestFixtures {
     public static User createTestUser(String email) {
         return User.builder()
                 .id(UUID.randomUUID())
-                .givenName("John")
-                .familyName("Doe")
                 .email(email)
                 .password("encodedPassword")
-                .name("John Doe")
                 .isEnabled(true)
                 .isDeleted(false)
                 .createdAt(Instant.now())
