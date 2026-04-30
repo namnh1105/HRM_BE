@@ -69,7 +69,7 @@ public class AuthenticationService {
         savedUser.setCreatedBy(savedUser.getId());
         savedUser = userRepository.save(savedUser);
 
-        Employee employee = createEmployeeForUser(savedUser);
+        Employee employee = createEmployeeForUser(savedUser, request.getGivenName(), request.getFamilyName());
 
         // Auto-assign USER role to new user
         assignDefaultUserRole(savedUser.getId());
@@ -195,7 +195,7 @@ public class AuthenticationService {
             savedUser.setCreatedBy(savedUser.getId());
             user = userRepository.save(savedUser);
 
-            createEmployeeForUser(user);
+            createEmployeeForUser(user, givenName, familyName);
 
             // Auto-assign USER role to new OAuth2 user
             assignDefaultUserRole(user.getId());
@@ -242,15 +242,16 @@ public class AuthenticationService {
         }
     }
 
-    private Employee createEmployeeForUser(User user) {
+    private Employee createEmployeeForUser(User user, String givenName, String familyName) {
         return employeeRepository.findActiveByUserId(user.getId())
                 .orElseGet(() -> {
+                    String fullName = (givenName != null ? givenName : "") + " " + (familyName != null ? familyName : "");
                     Employee employee = Employee.builder()
                             .user(user)
                             .employeeCode(null)
-                            .firstName("")
-                            .lastName("")
-                            .fullName("")
+                            .firstName(givenName != null ? givenName : "")
+                            .lastName(familyName != null ? familyName : "")
+                            .fullName(fullName.trim())
                             .email(user.getEmail())
                             .createdBy(user.getId())
                             .build();

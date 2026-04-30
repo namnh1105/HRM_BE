@@ -11,11 +11,19 @@ import org.mapstruct.Mapping;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = {com.hainam.worksphere.employee.mapper.EmployeeMapper.class})
 public interface UserAuthorizationMapper {
 
-    @Mapping(target = "givenName", source = "employee.firstName")
-    @Mapping(target = "familyName", source = "employee.lastName")
+    @Mapping(target = "id", source = "user.id")
+    @Mapping(target = "email", source = "user.email")
+    @Mapping(target = "createdAt", source = "user.createdAt")
+    @Mapping(target = "updatedAt", source = "user.updatedAt")
+    @Mapping(target = "createdBy", source = "user.createdBy")
+    @Mapping(target = "updatedBy", source = "user.updatedBy")
+    @Mapping(target = "isDeleted", source = "user.isDeleted")
+    @Mapping(target = "deletedAt", source = "user.deletedAt")
+    @Mapping(target = "deletedBy", source = "user.deletedBy")
+    @Mapping(target = "employee", source = "employee")
     @Mapping(target = "avatarUrl", source = "employee.avatarUrl")
     @Mapping(target = "roles", expression = "java(rolesToStringList(roles))")
     @Mapping(target = "permissions", expression = "java(permissionsToStringList(permissions))")

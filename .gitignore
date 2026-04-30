@@ -61,3 +61,4 @@ deployment/
 *.sh
 .gradle/
 *.class
+bin/
