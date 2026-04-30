@@ -4,6 +4,7 @@ import com.hainam.worksphere.BaseUnitTest;
 import com.hainam.worksphere.TestFixtures;
 import com.hainam.worksphere.auth.security.UserPrincipal;
 import com.hainam.worksphere.employee.domain.Employee;
+import com.hainam.worksphere.employee.dto.response.EmployeeResponse;
 import com.hainam.worksphere.employee.repository.EmployeeRepository;
 import com.hainam.worksphere.shared.exception.UserNotFoundException;
 import com.hainam.worksphere.shared.exception.ValidationException;
@@ -71,9 +72,13 @@ class UserServiceTest extends BaseUnitTest {
         testUserResponse = UserResponse.builder()
                 .id(testUser.getId())
                 .email(testUser.getEmail())
-            .givenName(testEmployee.getFirstName())
-            .familyName(testEmployee.getLastName())
-            .avatarUrl(testEmployee.getAvatarUrl())
+                .employee(EmployeeResponse.builder()
+                        .firstName(testEmployee.getFirstName())
+                        .lastName(testEmployee.getLastName())
+                        .fullName(testEmployee.getFullName())
+                        .avatarUrl(testEmployee.getAvatarUrl())
+                        .email(testEmployee.getEmail())
+                        .build())
                 .isActive(testUser.getIsEnabled())
                 .createdAt(testUser.getCreatedAt())
                 .build();
