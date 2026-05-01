@@ -61,14 +61,14 @@ public abstract class BaseIntegrationTest {
 
     @DynamicPropertySource
     static void configureDatabase(DynamicPropertyRegistry registry) {
-        if (POSTGRESQL_CONTAINER.isRunning()) {
+        if (org.testcontainers.DockerClientFactory.instance().isDockerAvailable()) {
             registry.add("spring.datasource.url", POSTGRESQL_CONTAINER::getJdbcUrl);
             registry.add("spring.datasource.username", POSTGRESQL_CONTAINER::getUsername);
             registry.add("spring.datasource.password", POSTGRESQL_CONTAINER::getPassword);
             registry.add("spring.datasource.driver-class-name", () -> "org.postgresql.Driver");
             registry.add("spring.jpa.database-platform", () -> "org.hibernate.dialect.PostgreSQLDialect");
         } else {
-            // Fallback to H2 if Docker/Testcontainers is not available
+            // Fallback to H2 if Docker is not available
             registry.add("spring.datasource.url", () -> "jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=PostgreSQL");
             registry.add("spring.datasource.driver-class-name", () -> "org.h2.Driver");
             registry.add("spring.jpa.database-platform", () -> "org.hibernate.dialect.H2Dialect");
