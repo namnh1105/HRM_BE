@@ -69,12 +69,13 @@ public class AuthenticationService {
         savedUser.setCreatedBy(savedUser.getId());
         savedUser = userRepository.save(savedUser);
 
-        Employee employee = createEmployeeForUser(savedUser);
+        Employee employee = createEmployeeForUser(savedUser, request.getGivenName(), request.getFamilyName());
 
         // Auto-assign USER role to new user
         assignDefaultUserRole(savedUser.getId());
 
-        // Register for audit via AuditContext (picked up by @Auditable on controller or logged inline)
+        // Register for audit via AuditContext (picked up by @Auditable on controller or
+        // logged inline)
         AuditContext.registerCreated(savedUser);
 
         List<Role> userRoles = authorizationService.getUserRoles(savedUser.getId());
@@ -86,23 +87,20 @@ public class AuthenticationService {
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(savedUser);
 
         UserWithAuthorizationResponse userWithAuth = userAuthorizationMapper.toUserWithAuthorizationResponse(
-            savedUser, employee, userRoles, userPermissions);
+                savedUser, employee, userRoles, userPermissions);
 
         return authResponseMapper.toAuthenticationResponse(
                 accessToken,
                 refreshToken.getToken(),
                 jwtUtil.getAccessTokenExpiration() / 1000,
-                userWithAuth
-        );
+                userWithAuth);
     }
-
 
     @Transactional
     public AuthenticationResponse login(LoginRequest request) {
         try {
             Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
-            );
+                    new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
 
             UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
             User user = userRepository.findActiveById(userPrincipal.getId())
@@ -116,16 +114,15 @@ public class AuthenticationService {
             String accessToken = jwtUtil.generateAccessToken(enhancedUserPrincipal);
             RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
 
-                Employee employee = employeeRepository.findActiveByUserId(user.getId()).orElse(null);
-                UserWithAuthorizationResponse userWithAuth = userAuthorizationMapper.toUserWithAuthorizationResponse(
+            Employee employee = employeeRepository.findActiveByUserId(user.getId()).orElse(null);
+            UserWithAuthorizationResponse userWithAuth = userAuthorizationMapper.toUserWithAuthorizationResponse(
                     user, employee, userRoles, userPermissions);
 
             return authResponseMapper.toAuthenticationResponse(
                     accessToken,
                     refreshToken.getToken(),
                     jwtUtil.getAccessTokenExpiration() / 1000,
-                    userWithAuth
-            );
+                    userWithAuth);
         } catch (BadCredentialsException e) {
             throw InvalidCredentialsException.create();
         }
@@ -147,8 +144,7 @@ public class AuthenticationService {
                     String accessToken = jwtUtil.generateAccessToken(userPrincipal);
                     return authResponseMapper.toTokenResponse(
                             accessToken,
-                            jwtUtil.getAccessTokenExpiration() / 1000
-                    );
+                            jwtUtil.getAccessTokenExpiration() / 1000);
                 })
                 .orElseThrow(RefreshTokenException::notFound);
     }
@@ -167,7 +163,8 @@ public class AuthenticationService {
     }
 
     @Transactional
-    public AuthenticationResponse processGoogleOAuth2Login(String email, String name, String googleId, String givenName, String familyName) {
+    public AuthenticationResponse processGoogleOAuth2Login(String email, String name, String googleId, String givenName,
+            String familyName) {
         if (email == null || email.trim().isEmpty()) {
             throw new OAuth2ValidationException("Email is required for Google OAuth2 login");
         }
@@ -195,7 +192,7 @@ public class AuthenticationService {
             savedUser.setCreatedBy(savedUser.getId());
             user = userRepository.save(savedUser);
 
-            createEmployeeForUser(user);
+            createEmployeeForUser(user, givenName, familyName);
 
             // Auto-assign USER role to new OAuth2 user
             assignDefaultUserRole(user.getId());
@@ -218,14 +215,13 @@ public class AuthenticationService {
 
         Employee employee = employeeRepository.findActiveByUserId(user.getId()).orElse(null);
         UserWithAuthorizationResponse userWithAuth = userAuthorizationMapper.toUserWithAuthorizationResponse(
-            user, employee, userRoles, userPermissions);
+                user, employee, userRoles, userPermissions);
 
         return authResponseMapper.toAuthenticationResponse(
                 accessToken,
                 refreshToken.getToken(),
                 jwtUtil.getAccessTokenExpiration() / 1000,
-                userWithAuth
-        );
+                userWithAuth);
     }
 
     /**
@@ -242,15 +238,17 @@ public class AuthenticationService {
         }
     }
 
-    private Employee createEmployeeForUser(User user) {
+    private Employee createEmployeeForUser(User user, String givenName, String familyName) {
         return employeeRepository.findActiveByUserId(user.getId())
                 .orElseGet(() -> {
+                    String fullName = (givenName != null ? givenName : "") + " "
+                            + (familyName != null ? familyName : "");
                     Employee employee = Employee.builder()
                             .user(user)
                             .employeeCode(null)
-                            .firstName("")
-                            .lastName("")
-                            .fullName("")
+                            .firstName(givenName != null ? givenName : "")
+                            .lastName(familyName != null ? familyName : "")
+                            .fullName(fullName.trim())
                             .email(user.getEmail())
                             .createdBy(user.getId())
                             .build();
@@ -276,4 +274,3 @@ public class AuthenticationService {
         return userPrincipal;
     }
 }
-

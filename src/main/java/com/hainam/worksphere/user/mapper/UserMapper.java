@@ -7,19 +7,21 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
 
-@Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
+@Mapper(componentModel = MappingConstants.ComponentModel.SPRING, uses = {
+        com.hainam.worksphere.employee.mapper.EmployeeMapper.class })
 public interface UserMapper {
 
-    @Mapping(target = "givenName", source = "employee.firstName")
-    @Mapping(target = "familyName", source = "employee.lastName")
+    @Mapping(target = "id", source = "user.id")
+    @Mapping(target = "email", source = "user.email")
     @Mapping(target = "avatarUrl", source = "employee.avatarUrl")
-    @Mapping(target = "isActive", source = "isEnabled")
-    @Mapping(target = "createdAt", source = "createdAt")
-    @Mapping(target = "updatedAt", source = "updatedAt")
-    @Mapping(target = "createdBy", source = "createdBy")
-    @Mapping(target = "updatedBy", source = "updatedBy")
-    @Mapping(target = "isDeleted", source = "isDeleted")
-    @Mapping(target = "deletedAt", source = "deletedAt")
-    @Mapping(target = "deletedBy", source = "deletedBy")
+    @Mapping(target = "employee", source = "employee")
+    @Mapping(target = "isActive", source = "user.isEnabled")
+    @Mapping(target = "createdAt", source = "user.createdAt")
+    @Mapping(target = "updatedAt", source = "user.updatedAt")
+    @Mapping(target = "createdBy", source = "user.createdBy")
+    @Mapping(target = "updatedBy", source = "user.updatedBy")
+    @Mapping(target = "isDeleted", source = "user.isDeleted")
+    @Mapping(target = "deletedAt", source = "user.deletedAt")
+    @Mapping(target = "deletedBy", source = "user.deletedBy")
     UserResponse toUserResponse(User user, Employee employee);
 }
