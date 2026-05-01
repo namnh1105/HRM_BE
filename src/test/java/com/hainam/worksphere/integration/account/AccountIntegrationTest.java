@@ -77,7 +77,11 @@ class AccountIntegrationTest extends BaseIntegrationTest {
             String duplicatedEmail = uniqueEmail();
 
             performRegister(buildRegisterBody("A", "User", duplicatedEmail, "Password123"))
-                    .andDo(org.springframework.test.web.servlet.result.MockMvcResultHandlers.print())
+                    .andExpect(result -> {
+                        if (result.getResponse().getStatus() != 200) {
+                            System.err.println("Unexpected response body: " + result.getResponse().getContentAsString());
+                        }
+                    })
                     .andExpect(status().isOk());
 
             performRegister(buildRegisterBody("B", "User", duplicatedEmail, "Password123"))

@@ -54,15 +54,23 @@ import java.util.stream.Collectors;
 )
 public abstract class BaseIntegrationTest {
 
-    @Container
-    protected static final PostgreSQLContainer<?> POSTGRESQL_CONTAINER = new PostgreSQLContainer<>("postgres:16-alpine")
-            .withDatabaseName("worksphere_test")
-            .withUsername("test")
-            .withPassword("test");
+    protected static final PostgreSQLContainer<?> POSTGRESQL_CONTAINER;
+
+    static {
+        if (org.testcontainers.DockerClientFactory.instance().isDockerAvailable()) {
+            POSTGRESQL_CONTAINER = new PostgreSQLContainer<>("postgres:16-alpine")
+                    .withDatabaseName("worksphere_test")
+                    .withUsername("test")
+                    .withPassword("test");
+            POSTGRESQL_CONTAINER.start();
+        } else {
+            POSTGRESQL_CONTAINER = null;
+        }
+    }
 
     @DynamicPropertySource
     static void configureDatabase(DynamicPropertyRegistry registry) {
-        if (org.testcontainers.DockerClientFactory.instance().isDockerAvailable()) {
+        if (POSTGRESQL_CONTAINER != null && POSTGRESQL_CONTAINER.isRunning()) {
             registry.add("spring.datasource.url", POSTGRESQL_CONTAINER::getJdbcUrl);
             registry.add("spring.datasource.username", POSTGRESQL_CONTAINER::getUsername);
             registry.add("spring.datasource.password", POSTGRESQL_CONTAINER::getPassword);
