@@ -45,20 +45,13 @@ jobs:
         run: chmod +x gradlew
 
       - name: Run tests
-        run: ./gradlew test --no-daemon
+        run: ./gradlew test -Dintegration.tests.enabled=true --no-daemon
         env:
-          SPRING_PROFILES_ACTIVE: development
+          SPRING_PROFILES_ACTIVE: test
           JWT_SECRET: test-secret-key-for-ci-testing-purposes-only-32chars
           JWT_ACCESS_TOKEN_EXPIRATION: 3600000
-          REDIS_HOST: localhost
-          REDIS_PORT: 6379
-          REDIS_PASSWORD: ""
           GOOGLE_OAUTH2_CLIENT_ID: test-client-id
           GOOGLE_OAUTH2_CLIENT_SECRET: test-client-secret
-          GOOGLE_OAUTH2_REDIRECT_URI: http://localhost:8080/login/oauth2/code/google
-          SERVER_PORT: 8080
-          FRONTEND_URL: http://localhost:3000
-          OAUTH_SUCCESS_REDIRECT_PATH: /oauth/callback
 
   build:
     name: Build Docker Image
