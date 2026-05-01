@@ -57,6 +57,7 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
+    testImplementation 'org.springframework.boot:spring-boot-testcontainers'
     testImplementation 'org.testcontainers:junit-jupiter'
     testImplementation 'org.testcontainers:postgresql'
     testImplementation 'org.testcontainers:testcontainers'
@@ -66,8 +67,8 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
-    // Exclude integration tests from regular test runs
-    systemProperty 'integration.tests.enabled', 'false'
+    // Exclude integration tests from regular test runs unless explicitly enabled
+    systemProperty 'integration.tests.enabled', System.getProperty('integration.tests.enabled', 'false')
 }
 
 // Task to run integration tests
