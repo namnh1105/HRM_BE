@@ -77,6 +77,7 @@ class AccountIntegrationTest extends BaseIntegrationTest {
             String duplicatedEmail = uniqueEmail();
 
             performRegister(buildRegisterBody("A", "User", duplicatedEmail, "Password123"))
+                    .andDo(org.springframework.test.web.servlet.result.MockMvcResultHandlers.print())
                     .andExpect(status().isOk());
 
             performRegister(buildRegisterBody("B", "User", duplicatedEmail, "Password123"))

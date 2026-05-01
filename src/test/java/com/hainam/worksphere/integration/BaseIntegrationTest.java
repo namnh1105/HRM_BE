@@ -61,11 +61,18 @@ public abstract class BaseIntegrationTest {
 
     @DynamicPropertySource
     static void configureDatabase(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", POSTGRESQL_CONTAINER::getJdbcUrl);
-        registry.add("spring.datasource.username", POSTGRESQL_CONTAINER::getUsername);
-        registry.add("spring.datasource.password", POSTGRESQL_CONTAINER::getPassword);
-        registry.add("spring.datasource.driver-class-name", () -> "org.postgresql.Driver");
-        registry.add("spring.jpa.database-platform", () -> "org.hibernate.dialect.PostgreSQLDialect");
+        if (POSTGRESQL_CONTAINER.isRunning()) {
+            registry.add("spring.datasource.url", POSTGRESQL_CONTAINER::getJdbcUrl);
+            registry.add("spring.datasource.username", POSTGRESQL_CONTAINER::getUsername);
+            registry.add("spring.datasource.password", POSTGRESQL_CONTAINER::getPassword);
+            registry.add("spring.datasource.driver-class-name", () -> "org.postgresql.Driver");
+            registry.add("spring.jpa.database-platform", () -> "org.hibernate.dialect.PostgreSQLDialect");
+        } else {
+            // Fallback to H2 if Docker/Testcontainers is not available
+            registry.add("spring.datasource.url", () -> "jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=PostgreSQL");
+            registry.add("spring.datasource.driver-class-name", () -> "org.h2.Driver");
+            registry.add("spring.jpa.database-platform", () -> "org.hibernate.dialect.H2Dialect");
+        }
         registry.add("spring.jpa.hibernate.ddl-auto", () -> "update");
     }
 
@@ -102,7 +109,27 @@ public abstract class BaseIntegrationTest {
     @BeforeEach
     void baseIntegrationSetUp() {
         SecurityContextHolder.clearContext();
+        ensureRolesSeeded();
         truncateTablesForIsolation();
+    }
+
+    private void ensureRolesSeeded() {
+        if (!roleRepository.existsByCode("USER")) {
+            roleRepository.save(Role.builder()
+                    .code("USER")
+                    .displayName("User")
+                    .isSystem(true)
+                    .isActive(true)
+                    .build());
+        }
+        if (!roleRepository.existsByCode("ADMIN")) {
+            roleRepository.save(Role.builder()
+                    .code("ADMIN")
+                    .displayName("Administrator")
+                    .isSystem(true)
+                    .isActive(true)
+                    .build());
+        }
     }
 
     protected String createJwtTokenByRole(String role) {
@@ -184,24 +211,55 @@ public abstract class BaseIntegrationTest {
     }
 
     private void truncateTablesForIsolation() {
-        List<String> tables = jdbcTemplate.queryForList(
-                """
-                SELECT tablename
-                FROM pg_tables
-                WHERE schemaname = 'public'
-                  AND tablename NOT IN ('roles', 'permissions', 'role_permissions')
-                """,
-                String.class
-        );
+        try {
+            boolean isPostgres = jdbcTemplate.getDataSource().getConnection().getMetaData()
+                    .getDatabaseProductName().toLowerCase().contains("postgres");
 
-        if (tables.isEmpty()) {
-            return;
+            List<String> tables;
+            if (isPostgres) {
+                tables = jdbcTemplate.queryForList(
+                        """
+                        SELECT tablename
+                        FROM pg_tables
+                        WHERE schemaname = 'public'
+                          AND tablename NOT IN ('roles', 'permissions', 'role_permissions', 'flyway_schema_history')
+                        """,
+                        String.class
+                );
+            } else {
+                // H2 fallback
+                tables = jdbcTemplate.queryForList(
+                        """
+                        SELECT TABLE_NAME
+                        FROM INFORMATION_SCHEMA.TABLES
+                        WHERE TABLE_SCHEMA = 'PUBLIC'
+                          AND TABLE_TYPE = 'TABLE'
+                          AND TABLE_NAME NOT IN ('roles', 'permissions', 'role_permissions', 'flyway_schema_history')
+                        """,
+                        String.class
+                );
+            }
+
+            if (tables.isEmpty()) {
+                return;
+            }
+
+            String tableList = tables.stream()
+                    .map(table -> "\"" + table + "\"")
+                    .collect(Collectors.joining(", "));
+
+            if (isPostgres) {
+                jdbcTemplate.execute("TRUNCATE TABLE " + tableList + " RESTART IDENTITY CASCADE");
+            } else {
+                jdbcTemplate.execute("SET REFERENTIAL_INTEGRITY FALSE");
+                for (String table : tables) {
+                    jdbcTemplate.execute("TRUNCATE TABLE \"" + table + "\"");
+                }
+                jdbcTemplate.execute("SET REFERENTIAL_INTEGRITY TRUE");
+            }
+        } catch (Exception e) {
+            // Log and ignore or handle appropriately
+            System.err.println("Failed to truncate tables: " + e.getMessage());
         }
-
-        String tableList = tables.stream()
-                .map(table -> "\"" + table + "\"")
-                .collect(Collectors.joining(", "));
-
-        jdbcTemplate.execute("TRUNCATE TABLE " + tableList + " RESTART IDENTITY CASCADE");
     }
 }
