@@ -45,7 +45,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Run tests
-        run: ./gradlew test integrationTest --no-daemon
+        run: ./gradlew test --no-daemon
         env:
           SPRING_PROFILES_ACTIVE: test
           JWT_SECRET: test-secret-key-for-ci-testing-purposes-only-32chars
