@@ -5,8 +5,12 @@ import jakarta.persistence.Converter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import lombok.extern.slf4j.Slf4j;
+import java.time.format.DateTimeParseException;
+
 import java.time.LocalDate;
 
+@Slf4j
 @Component
 @Converter
 public class EncryptedLocalDateConverter implements AttributeConverter<LocalDate, String> {
@@ -35,9 +39,23 @@ public class EncryptedLocalDateConverter implements AttributeConverter<LocalDate
             return null;
         }
         if (encryptor == null) {
-            throw new IllegalStateException("EncryptedLocalDateConverter is not initialized");
+            log.warn("EncryptedLocalDateConverter is not initialized yet. Trying to parse raw dbData as LocalDate.");
+            try {
+                return LocalDate.parse(dbData);
+            } catch (DateTimeParseException e) {
+                log.error("Failed to parse raw dbData as LocalDate: {}", dbData);
+                return null;
+            }
         }
         String plainDate = encryptor.decrypt(dbData);
-        return LocalDate.parse(plainDate);
+        if (plainDate == null) {
+            return null;
+        }
+        try {
+            return LocalDate.parse(plainDate);
+        } catch (DateTimeParseException e) {
+            log.error("Failed to parse decrypted date '{}' for dbData '{}'. Error: {}", plainDate, dbData, e.getMessage());
+            return null;
+        }
     }
 }

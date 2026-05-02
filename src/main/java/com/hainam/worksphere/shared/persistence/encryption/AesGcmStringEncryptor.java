@@ -84,7 +84,8 @@ public class AesGcmStringEncryptor {
 
             return new String(plainBytes, StandardCharsets.UTF_8);
         } catch (Exception e) {
-            throw new IllegalStateException("Decrypt failed (data may be encrypted with a different key or corrupted)", e);
+            log.error("Decrypt failed for data (it might be encrypted with a different key or corrupted). Error: {}", e.getMessage());
+            return null;
         }
     }
 
