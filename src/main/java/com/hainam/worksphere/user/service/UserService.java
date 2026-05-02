@@ -41,7 +41,8 @@ public class UserService {
         User user = userRepository.findActiveById(userPrincipal.getId())
                 .orElseThrow(() -> UserNotFoundException.byId(userPrincipal.getId().toString()));
         Employee employee = employeeRepository.findActiveByUserId(user.getId()).orElse(null);
-        return userMapper.toUserResponse(user, employee);
+        
+        return mapToUserResponseWithAuthorities(user, employee, userPrincipal);
     }
 
     @Cacheable(value = CacheConfig.USER_CACHE, key = "#userId.toString()")
@@ -102,7 +103,7 @@ public class UserService {
 
         AuditContext.registerUpdated(savedEmployee);
 
-        return userMapper.toUserResponse(user, savedEmployee);
+        return mapToUserResponseWithAuthorities(user, savedEmployee, userPrincipal);
     }
 
     @Transactional
@@ -185,6 +186,23 @@ public class UserService {
                 .orElseThrow(() -> UserNotFoundException.byId(userId.toString()));
 
         userRepository.delete(user);
+    }
+
+    private UserResponse mapToUserResponseWithAuthorities(User user, Employee employee, UserPrincipal userPrincipal) {
+        UserResponse response = userMapper.toUserResponse(user, employee);
+        if (userPrincipal != null) {
+            if (userPrincipal.getRoles() != null) {
+                response.setRoles(userPrincipal.getRoles().stream()
+                        .map(com.hainam.worksphere.authorization.domain.Role::getCode)
+                        .collect(Collectors.toList()));
+            }
+            if (userPrincipal.getPermissions() != null) {
+                response.setPermissions(userPrincipal.getPermissions().stream()
+                        .map(com.hainam.worksphere.authorization.domain.Permission::getCode)
+                        .collect(Collectors.toList()));
+            }
+        }
+        return response;
     }
 
     private String buildFullName(String familyName, String givenName) {

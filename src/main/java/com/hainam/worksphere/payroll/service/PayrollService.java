@@ -1,9 +1,10 @@
 package com.hainam.worksphere.payroll.service;
 
+import com.hainam.worksphere.contract.domain.Contract;
+import com.hainam.worksphere.contract.domain.ContractStatus;
+import com.hainam.worksphere.contract.repository.ContractRepository;
 import com.hainam.worksphere.employee.domain.Employee;
-import com.hainam.worksphere.employee.domain.EmployeeSalary;
 import com.hainam.worksphere.employee.repository.EmployeeRepository;
-import com.hainam.worksphere.employee.repository.EmployeeSalaryRepository;
 import com.hainam.worksphere.payroll.domain.Payroll;
 import com.hainam.worksphere.payroll.domain.PayrollStatus;
 import com.hainam.worksphere.payroll.dto.request.CreatePayrollRequest;
@@ -38,7 +39,7 @@ public class PayrollService {
     private final PayrollRepository payrollRepository;
     private final PayrollMapper payrollMapper;
     private final EmployeeRepository employeeRepository;
-    private final EmployeeSalaryRepository employeeSalaryRepository;
+    private final ContractRepository contractRepository;
     private final NotificationService notificationService;
 
     @Cacheable(value = CacheConfig.PAYROLL_CACHE, key = "'all'")
@@ -85,12 +86,14 @@ public class PayrollService {
             throw new ValidationException("Payroll already exists for this employee in " + request.getMonth() + "/" + request.getYear());
         });
 
-        // Resolve baseSalary: use provided value, or look up from employee_salaries
+        // Resolve baseSalary: use provided value, or look up from active contract
         Double baseSalary = request.getBaseSalary();
         if (baseSalary == null) {
-            baseSalary = employeeSalaryRepository.findCurrentByEmployeeId(request.getEmployeeId())
-                    .map(EmployeeSalary::getBaseSalary)
-                    .orElseThrow(() -> new ValidationException("No current salary found for employee. Please provide base_salary or create an employee salary record."));
+            baseSalary = contractRepository.findActiveByEmployeeIdAndStatus(request.getEmployeeId(), ContractStatus.ACTIVE)
+                    .stream()
+                    .findFirst()
+                    .map(Contract::getBaseSalary)
+                    .orElseThrow(() -> new ValidationException("No active contract found for employee. Please provide base_salary or create an employee contract record."));
         }
 
         Payroll payroll = Payroll.builder()

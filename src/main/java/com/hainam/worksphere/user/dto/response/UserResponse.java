@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -22,6 +23,9 @@ public class UserResponse {
     private String avatarUrl;
 
     private EmployeeResponse employee;
+
+    private List<String> roles;
+    private List<String> permissions;
 
     private Boolean isActive;
 
