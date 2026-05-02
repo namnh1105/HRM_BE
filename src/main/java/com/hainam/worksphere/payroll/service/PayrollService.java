@@ -11,6 +11,8 @@ import com.hainam.worksphere.payroll.dto.request.UpdatePayrollRequest;
 import com.hainam.worksphere.payroll.dto.response.PayrollResponse;
 import com.hainam.worksphere.payroll.mapper.PayrollMapper;
 import com.hainam.worksphere.payroll.repository.PayrollRepository;
+import com.hainam.worksphere.notification.domain.NotificationType;
+import com.hainam.worksphere.notification.service.NotificationService;
 import com.hainam.worksphere.shared.config.CacheConfig;
 import com.hainam.worksphere.shared.exception.EmployeeNotFoundException;
 import com.hainam.worksphere.shared.exception.PayrollNotFoundException;
@@ -37,6 +39,7 @@ public class PayrollService {
     private final PayrollMapper payrollMapper;
     private final EmployeeRepository employeeRepository;
     private final EmployeeSalaryRepository employeeSalaryRepository;
+    private final NotificationService notificationService;
 
     @Cacheable(value = CacheConfig.PAYROLL_CACHE, key = "'all'")
     public List<PayrollResponse> getAllPayrolls() {
@@ -115,6 +118,16 @@ public class PayrollService {
 
         Payroll saved = payrollRepository.save(payroll);
         AuditContext.registerCreated(saved);
+        
+        if (saved.getEmployee().getUser() != null) {
+            notificationService.sendNotification(
+                saved.getEmployee().getUser().getId(),
+                NotificationType.SALARY,
+                "New Salary Slip",
+                String.format("Your salary slip for %d/%d has been generated.", saved.getMonth(), saved.getYear())
+            );
+        }
+        
         return payrollMapper.toPayrollResponse(saved);
     }
 
@@ -178,6 +191,16 @@ public class PayrollService {
 
         Payroll saved = payrollRepository.save(payroll);
         AuditContext.registerUpdated(saved);
+
+        if (saved.getEmployee().getUser() != null) {
+            notificationService.sendNotification(
+                saved.getEmployee().getUser().getId(),
+                NotificationType.SALARY,
+                "Salary Slip Updated",
+                String.format("Your salary slip for %d/%d has been updated.", saved.getMonth(), saved.getYear())
+            );
+        }
+
         return payrollMapper.toPayrollResponse(saved);
     }
 

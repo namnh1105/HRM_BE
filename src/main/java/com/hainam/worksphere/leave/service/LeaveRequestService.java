@@ -9,6 +9,8 @@ import com.hainam.worksphere.leave.dto.request.CreateLeaveRequestDto;
 import com.hainam.worksphere.leave.dto.response.LeaveRequestResponse;
 import com.hainam.worksphere.leave.mapper.LeaveRequestMapper;
 import com.hainam.worksphere.leave.repository.LeaveRequestRepository;
+import com.hainam.worksphere.notification.domain.NotificationType;
+import com.hainam.worksphere.notification.service.NotificationService;
 import com.hainam.worksphere.shared.config.CacheConfig;
 import com.hainam.worksphere.shared.exception.EmployeeNotFoundException;
 import com.hainam.worksphere.shared.exception.LeaveRequestNotFoundException;
@@ -36,6 +38,7 @@ public class LeaveRequestService {
     private final LeaveRequestRepository leaveRequestRepository;
     private final EmployeeRepository employeeRepository;
     private final LeaveRequestMapper leaveRequestMapper;
+    private final NotificationService notificationService;
 
     @Transactional
     @CacheEvict(value = CacheConfig.LEAVE_REQUEST_CACHE, allEntries = true)
@@ -94,6 +97,22 @@ public class LeaveRequestService {
 
         LeaveRequest saved = leaveRequestRepository.save(leaveRequest);
         AuditContext.registerUpdated(saved);
+        
+        // Send notification
+        if (saved.getEmployee().getUser() != null) {
+            NotificationType notifType = request.getApproved() ? NotificationType.LEAVE_APPROVED : NotificationType.LEAVE_REJECTED;
+            String title = request.getApproved() ? "Leave Request Approved" : "Leave Request Rejected";
+            String approverName = approver.getFullName();
+            
+            notificationService.sendNotification(
+                saved.getEmployee().getUser().getId(),
+                notifType,
+                title,
+                String.format("Your leave request for %s to %s has been %s by %s.", 
+                    saved.getStartDate(), saved.getEndDate(), request.getApproved() ? "approved" : "rejected", approverName)
+            );
+        }
+
         return leaveRequestMapper.toLeaveRequestResponse(saved);
     }
 

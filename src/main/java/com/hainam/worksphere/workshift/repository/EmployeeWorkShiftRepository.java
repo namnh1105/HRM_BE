@@ -44,4 +44,8 @@ public interface EmployeeWorkShiftRepository extends JpaRepository<EmployeeWorkS
             @Param("workShiftId") UUID workShiftId,
             @Param("date") LocalDate date
     );
+
+    @Query("SELECT ews FROM EmployeeWorkShift ews JOIN FETCH ews.workShift ws JOIN FETCH ews.employee emp " +
+           "WHERE ews.date = :date AND ews.isDeleted = false")
+    List<EmployeeWorkShift> findActiveByDate(@Param("date") LocalDate date);
 }
