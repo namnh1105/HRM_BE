@@ -152,4 +152,11 @@ public class EmployeeWorkShiftService {
                 .map(employeeWorkShiftMapper::toResponse)
                 .collect(Collectors.toList());
     }
+
+    public List<EmployeeWorkShiftResponse> getByStoreId(UUID storeId) {
+        return employeeWorkShiftRepository.findActiveByStoreId(storeId)
+                .stream()
+                .map(employeeWorkShiftMapper::toResponse)
+                .collect(Collectors.toList());
+    }
 }
