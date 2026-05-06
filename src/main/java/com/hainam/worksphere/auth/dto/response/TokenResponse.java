@@ -1,5 +1,6 @@
 package com.hainam.worksphere.auth.dto.response;
 
+import com.hainam.worksphere.user.dto.response.UserWithAuthorizationResponse;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -17,4 +18,6 @@ public class TokenResponse {
     private String tokenType = "Bearer";
 
     private Long expiresIn;
+    
+    private UserWithAuthorizationResponse user;
 }

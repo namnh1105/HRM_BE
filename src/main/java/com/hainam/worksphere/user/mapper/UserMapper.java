@@ -23,5 +23,7 @@ public interface UserMapper {
     @Mapping(target = "isDeleted", source = "user.isDeleted")
     @Mapping(target = "deletedAt", source = "user.deletedAt")
     @Mapping(target = "deletedBy", source = "user.deletedBy")
+    @Mapping(target = "roles", ignore = true)
+    @Mapping(target = "permissions", ignore = true)
     UserResponse toUserResponse(User user, Employee employee);
 }

@@ -142,9 +142,15 @@ public class AuthenticationService {
 
                     UserPrincipal userPrincipal = UserPrincipal.create(activeUser, userRoles, userPermissions);
                     String accessToken = jwtUtil.generateAccessToken(userPrincipal);
+
+                    Employee employee = employeeRepository.findActiveByUserId(activeUser.getId()).orElse(null);
+                    UserWithAuthorizationResponse userWithAuth = userAuthorizationMapper.toUserWithAuthorizationResponse(
+                            activeUser, employee, userRoles, userPermissions);
+
                     return authResponseMapper.toTokenResponse(
                             accessToken,
-                            jwtUtil.getAccessTokenExpiration() / 1000);
+                            jwtUtil.getAccessTokenExpiration() / 1000,
+                            userWithAuth);
                 })
                 .orElseThrow(RefreshTokenException::notFound);
     }

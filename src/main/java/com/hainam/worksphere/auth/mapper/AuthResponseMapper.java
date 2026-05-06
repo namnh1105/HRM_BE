@@ -20,5 +20,5 @@ public interface AuthResponseMapper {
     );
 
     @Mapping(target = "tokenType", constant = "Bearer")
-    TokenResponse toTokenResponse(String accessToken, Long expiresIn);
+    TokenResponse toTokenResponse(String accessToken, Long expiresIn, UserWithAuthorizationResponse user);
 }

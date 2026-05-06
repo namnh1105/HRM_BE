@@ -1,6 +1,7 @@
  package com.hainam.worksphere.auth.util;
 
 import com.hainam.worksphere.auth.config.JwtProperties;
+import com.hainam.worksphere.auth.security.UserPrincipal;
 import com.hainam.worksphere.shared.exception.InvalidTokenException;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
@@ -64,7 +65,16 @@ public class JwtUtil {
     }
 
     public String generateAccessToken(UserDetails userDetails) {
-        return generateAccessToken(new HashMap<>(), userDetails);
+        Map<String, Object> extraClaims = new HashMap<>();
+        if (userDetails instanceof UserPrincipal principal) {
+            extraClaims.put("roles", principal.getRoles().stream()
+                    .map(com.hainam.worksphere.authorization.domain.Role::getCode)
+                    .collect(java.util.stream.Collectors.toList()));
+            extraClaims.put("permissions", principal.getPermissions().stream()
+                    .map(com.hainam.worksphere.authorization.domain.Permission::getCode)
+                    .collect(java.util.stream.Collectors.toList()));
+        }
+        return generateAccessToken(extraClaims, userDetails);
     }
 
     public String generateAccessToken(Map<String, Object> extraClaims, UserDetails userDetails) {
