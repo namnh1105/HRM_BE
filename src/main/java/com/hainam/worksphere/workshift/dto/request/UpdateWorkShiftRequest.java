@@ -1,5 +1,6 @@
 package com.hainam.worksphere.workshift.dto.request;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -17,8 +18,10 @@ public class UpdateWorkShiftRequest {
     @Size(max = 100, message = "Work shift name must not exceed 100 characters")
     private String name;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH:mm")
     private LocalTime startTime;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH:mm")
     private LocalTime endTime;
 
     private Double breakDuration;
