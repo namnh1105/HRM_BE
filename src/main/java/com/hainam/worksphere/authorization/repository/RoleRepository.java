@@ -44,7 +44,7 @@ public interface RoleRepository extends JpaRepository<Role, UUID> {
 
     List<Role> findByIsDeletedTrue();
     List<Role> findByIsDeletedFalse();
-    List<Role> findByIsDeletedFalse(org.springframework.data.domain.Pageable pageable);
+    org.springframework.data.domain.Page<Role> findByIsDeletedFalse(org.springframework.data.domain.Pageable pageable);
 
     @Query("SELECT COUNT(ur) > 0 FROM UserRole ur WHERE ur.userId = :userId AND ur.role.id = :roleId AND ur.isActive = true")
     boolean userHasRole(@Param("userId") UUID userId, @Param("roleId") UUID roleId);

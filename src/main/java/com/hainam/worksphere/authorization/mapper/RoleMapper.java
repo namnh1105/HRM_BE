@@ -18,6 +18,9 @@ public interface RoleMapper {
     @Mapping(target = "rolePermissions", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "isDeleted", ignore = true)
+    @Mapping(target = "deletedAt", ignore = true)
+    @Mapping(target = "deletedBy", ignore = true)
     Role toEntity(CreateRoleRequest request);
 
     @Mapping(target = "id", ignore = true)
@@ -25,6 +28,9 @@ public interface RoleMapper {
     @Mapping(target = "rolePermissions", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "isDeleted", ignore = true)
+    @Mapping(target = "deletedAt", ignore = true)
+    @Mapping(target = "deletedBy", ignore = true)
     void updateEntity(@MappingTarget Role entity, UpdateRoleRequest request);
 
     @Mapping(target = "permissions", ignore = true)
@@ -35,7 +41,7 @@ public interface RoleMapper {
         if (entity.getRolePermissions() != null) {
             Set<com.hainam.worksphere.authorization.dto.response.PermissionResponse> permissions = entity.getRolePermissions()
                 .stream()
-                .filter(rp -> rp.getPermission() != null)
+                .filter(rp -> rp.getPermission() != null && rp.getIsActive() && !rp.getPermission().getIsDeleted())
                 .map(rp -> {
                     com.hainam.worksphere.authorization.domain.Permission p = rp.getPermission();
                     return com.hainam.worksphere.authorization.dto.response.PermissionResponse.builder()
@@ -60,5 +66,6 @@ public interface RoleMapper {
     }
 
     @Named("toSimpleResponse")
+    @Mapping(target = "permissions", ignore = true)
     RoleResponse toSimpleResponse(Role entity);
 }

@@ -16,6 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -76,11 +77,11 @@ public class RoleService {
     }
 
     public List<Role> getAllActiveRoles() {
-        return roleRepository.findByIsActiveTrue();
+        return roleRepository.findByIsActiveTrueAndIsDeletedFalse();
     }
 
     public List<Role> getAllSystemRoles() {
-        return roleRepository.findByIsSystemTrue();
+        return roleRepository.findByIsSystemTrueAndIsDeletedFalse();
     }
 
     @Cacheable(value = CacheConfig.USER_ROLES_CACHE, key = "#userId.toString()")
@@ -93,7 +94,7 @@ public class RoleService {
     }
 
     public List<Role> getRolesByCodes(Set<String> codes) {
-        return roleRepository.findByCodeIn(codes);
+        return roleRepository.findByCodeInAndIsDeletedFalse(codes);
     }
 
     public List<Role> searchRoles(String search) {
