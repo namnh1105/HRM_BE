@@ -47,6 +47,7 @@ public interface RoleMapper {
                         .action(p.getAction())
                         .isSystem(p.getIsSystem())
                         .isActive(p.getIsActive())
+                        .isDeleted(p.getIsDeleted())
                         .createdAt(p.getCreatedAt())
                         .updatedAt(p.getUpdatedAt())
                         .build();

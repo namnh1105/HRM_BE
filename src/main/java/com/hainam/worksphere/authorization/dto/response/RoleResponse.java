@@ -21,6 +21,7 @@ public class RoleResponse {
     private String description;
     private Boolean isSystem;
     private Boolean isActive;
+    private Boolean isDeleted;
     private Set<PermissionResponse> permissions;
 
     private Instant createdAt;

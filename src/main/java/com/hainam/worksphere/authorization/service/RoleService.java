@@ -118,10 +118,8 @@ public class RoleService {
     public void deleteRole(UUID roleId) {
         Role role = getRoleById(roleId);
 
-        if (role.getIsSystem()) {
-            throw new BusinessRuleViolationException("Cannot delete system role: " + role.getCode());
-        }
-
+        role.setIsDeleted(true);
+        role.setDeletedAt(Instant.now());
         role.setIsActive(false);
         roleRepository.save(role);
     }
@@ -131,23 +129,22 @@ public class RoleService {
         @CacheEvict(value = CacheConfig.ROLE_CACHE, key = "#roleId.toString()"),
         @CacheEvict(value = CacheConfig.USER_ROLES_CACHE, allEntries = true)
     })
-    public void activateRole(UUID roleId) {
+    public void restoreRole(UUID roleId) {
         Role role = roleRepository.findById(roleId)
                 .orElseThrow(() -> new ResourceNotFoundException("Role not found with ID: " + roleId));
+        role.setIsDeleted(false);
+        role.setDeletedAt(null);
         role.setIsActive(true);
         roleRepository.save(role);
     }
 
-    @Transactional
-    @Caching(evict = {
-        @CacheEvict(value = CacheConfig.ROLE_CACHE, key = "#roleId.toString()"),
-        @CacheEvict(value = CacheConfig.USER_ROLES_CACHE, allEntries = true)
-    })
-    public void deactivateRole(UUID roleId) {
-        Role role = roleRepository.findById(roleId)
-                .orElseThrow(() -> new ResourceNotFoundException("Role not found with ID: " + roleId));
-        role.setIsActive(false);
-        roleRepository.save(role);
+    public Page<Role> getAllRoles(Pageable pageable, boolean includeDeleted) {
+        if (includeDeleted) return roleRepository.findAll(pageable);
+        return roleRepository.findByIsDeletedFalse(pageable);
+    }
+
+    public List<Role> getAllDeletedRoles() {
+        return roleRepository.findByIsDeletedTrue();
     }
 
     public boolean existsByCode(String code) {

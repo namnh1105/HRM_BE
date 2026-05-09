@@ -48,6 +48,16 @@ public class Permission {
     @Builder.Default
     private Boolean isActive = true;
 
+    @Column(name = "is_deleted", nullable = false)
+    @Builder.Default
+    private Boolean isDeleted = false;
+
+    @Column(name = "deleted_at")
+    private Instant deletedAt;
+
+    @Column(name = "deleted_by")
+    private UUID deletedBy;
+
     @OneToMany(mappedBy = "permission", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default
     private Set<RolePermission> rolePermissions = new HashSet<>();

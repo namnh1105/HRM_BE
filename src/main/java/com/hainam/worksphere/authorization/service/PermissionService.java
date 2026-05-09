@@ -75,28 +75,29 @@ public class PermissionService {
         return permissionRepository.findByCode(code);
     }
 
-    public Page<Permission> getAllPermissions(Pageable pageable) {
-        return permissionRepository.findAll(pageable);
+    public Page<Permission> getAllPermissions(Pageable pageable, boolean includeDeleted) {
+        if (includeDeleted) return permissionRepository.findAll(pageable);
+        return permissionRepository.findByIsDeletedFalse(pageable);
     }
 
     public List<Permission> getAllActivePermissions() {
-        return permissionRepository.findByIsActiveTrue();
+        return permissionRepository.findByIsActiveTrueAndIsDeletedFalse();
     }
 
     public List<Permission> getAllSystemPermissions() {
-        return permissionRepository.findByIsSystemTrue();
+        return permissionRepository.findByIsSystemTrueAndIsDeletedFalse();
     }
 
     public List<Permission> getPermissionsByResource(String resource) {
-        return permissionRepository.findByResource(resource);
+        return permissionRepository.findByResourceAndIsDeletedFalse(resource);
     }
 
     public List<Permission> getPermissionsByAction(String action) {
-        return permissionRepository.findByAction(action);
+        return permissionRepository.findByActionAndIsDeletedFalse(action);
     }
 
     public List<Permission> getPermissionsByResourceAndAction(String resource, String action) {
-        return permissionRepository.findByResourceAndAction(resource, action);
+        return permissionRepository.findByResourceAndActionAndIsDeletedFalse(resource, action);
     }
 
     @Cacheable(value = CacheConfig.ROLE_PERMISSIONS_CACHE, key = "#roleId.toString()")
@@ -114,7 +115,7 @@ public class PermissionService {
     }
 
     public List<Permission> getPermissionsByCodes(Set<String> codes) {
-        return permissionRepository.findByCodeIn(codes);
+        return permissionRepository.findByCodeInAndIsDeletedFalse(codes);
     }
 
     public List<Permission> searchPermissions(String search) {
@@ -130,12 +131,24 @@ public class PermissionService {
     })
     public void deletePermission(UUID permissionId) {
         Permission permission = getPermissionById(permissionId);
-
-        if (permission.getIsSystem()) {
-            throw new BusinessRuleViolationException("Cannot delete system permission: " + permission.getCode());
-        }
-
+        
+        permission.setIsDeleted(true);
         permission.setIsActive(false);
+        permission.setDeletedAt(java.time.Instant.now());
+        permissionRepository.save(permission);
+    }
+
+    @Transactional
+    @Caching(evict = {
+        @CacheEvict(value = CacheConfig.PERMISSION_CACHE, key = "#permissionId.toString()"),
+        @CacheEvict(value = CacheConfig.USER_PERMISSIONS_CACHE, allEntries = true)
+    })
+    public void restorePermission(UUID permissionId) {
+        Permission permission = permissionRepository.findById(permissionId)
+                .orElseThrow(() -> new ResourceNotFoundException("Permission not found with ID: " + permissionId));
+        permission.setIsDeleted(false);
+        permission.setDeletedAt(null);
+        permission.setIsActive(true);
         permissionRepository.save(permission);
     }
 

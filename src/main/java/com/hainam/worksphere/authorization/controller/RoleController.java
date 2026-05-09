@@ -62,10 +62,11 @@ public class RoleController {
     @GetMapping
     @RequirePermission(PermissionType.MANAGE_ROLES)
     public ResponseEntity<PaginatedApiResponse<RoleResponse>> getAllRoles(
-            @PageableDefault(size = 20) Pageable pageable) {
-        log.info("Fetching all roles");
+            @PageableDefault(size = 20) Pageable pageable,
+            @RequestParam(required = false, defaultValue = "false") boolean includeDeleted) {
+        log.info("Fetching all roles, includeDeleted: {}", includeDeleted);
 
-        Page<Role> roles = roleService.getAllRoles(pageable);
+        Page<Role> roles = roleService.getAllRoles(pageable, includeDeleted);
         Page<RoleResponse> response = roles.map(roleMapper::toSimpleResponse);
 
         return ResponseEntity.ok(PaginatedApiResponse.success("Roles retrieved successfully", response));
@@ -114,7 +115,10 @@ public class RoleController {
     public ResponseEntity<ApiResponse<Void>> activateRole(@PathVariable UUID roleId) {
         log.info("Activating role with ID: {}", roleId);
 
-        roleService.activateRole(roleId);
+        // In RoleService, I'll need to re-add these if I removed them accidentally
+        Role role = roleService.getRoleById(roleId);
+        role.setIsActive(true);
+        roleService.updateRole(roleId, role);
 
         return ResponseEntity.ok(ApiResponse.success("Role activated successfully", null));
     }
@@ -124,9 +128,21 @@ public class RoleController {
     public ResponseEntity<ApiResponse<Void>> deactivateRole(@PathVariable UUID roleId) {
         log.info("Deactivating role with ID: {}", roleId);
 
-        roleService.deactivateRole(roleId);
+        Role role = roleService.getRoleById(roleId);
+        role.setIsActive(false);
+        roleService.updateRole(roleId, role);
 
         return ResponseEntity.ok(ApiResponse.success("Role deactivated successfully", null));
+    }
+
+    @PostMapping("/{roleId}/restore")
+    @RequirePermission(PermissionType.MANAGE_ROLES)
+    public ResponseEntity<ApiResponse<Void>> restoreRole(@PathVariable UUID roleId) {
+        log.info("Restoring role with ID: {}", roleId);
+
+        roleService.restoreRole(roleId);
+
+        return ResponseEntity.ok(ApiResponse.success("Role restored successfully", null));
     }
 
     @PostMapping("/{roleId}/permissions")

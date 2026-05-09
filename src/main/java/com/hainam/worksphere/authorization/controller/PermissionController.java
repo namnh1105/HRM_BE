@@ -55,8 +55,9 @@ public class PermissionController {
     @GetMapping
     @RequirePermission(PermissionType.MANAGE_PERMISSIONS)
     public ResponseEntity<PaginatedApiResponse<PermissionResponse>> getAllPermissions(
-            @PageableDefault(size = 20) Pageable pageable) {
-        Page<Permission> permissions = permissionService.getAllPermissions(pageable);
+            @PageableDefault(size = 20) Pageable pageable,
+            @RequestParam(required = false, defaultValue = "false") boolean includeDeleted) {
+        Page<Permission> permissions = permissionService.getAllPermissions(pageable, includeDeleted);
         Page<PermissionResponse> response = permissions.map(permissionMapper::toResponse);
 
         return ResponseEntity.ok(PaginatedApiResponse.success("Permissions retrieved successfully", response));
@@ -131,6 +132,14 @@ public class PermissionController {
         permissionService.deactivatePermission(permissionId);
 
         return ResponseEntity.ok(ApiResponse.success("Permission deactivated successfully", null));
+    }
+
+    @PostMapping("/{permissionId}/restore")
+    @RequirePermission(PermissionType.MANAGE_PERMISSIONS)
+    public ResponseEntity<ApiResponse<Void>> restorePermission(@PathVariable UUID permissionId) {
+        permissionService.restorePermission(permissionId);
+
+        return ResponseEntity.ok(ApiResponse.success("Permission restored successfully", null));
     }
 
     @GetMapping("/search")

@@ -17,34 +17,38 @@ public interface PermissionRepository extends JpaRepository<Permission, UUID> {
 
     Optional<Permission> findByCode(String code);
 
-    List<Permission> findByIsActiveTrue();
+    List<Permission> findByIsActiveTrueAndIsDeletedFalse();
 
-    List<Permission> findByIsSystemTrue();
+    List<Permission> findByIsSystemTrueAndIsDeletedFalse();
 
-    List<Permission> findByResource(String resource);
+    List<Permission> findByResourceAndIsDeletedFalse(String resource);
 
-    List<Permission> findByAction(String action);
+    List<Permission> findByActionAndIsDeletedFalse(String action);
 
-    List<Permission> findByResourceAndAction(String resource, String action);
+    List<Permission> findByResourceAndActionAndIsDeletedFalse(String resource, String action);
 
-    @Query("SELECT p FROM Permission p JOIN p.rolePermissions rp WHERE rp.role.id = :roleId AND rp.isActive = true AND p.isActive = true")
+    @Query("SELECT p FROM Permission p JOIN p.rolePermissions rp WHERE rp.role.id = :roleId AND rp.isActive = true AND p.isActive = true AND p.isDeleted = false")
     List<Permission> findByRoleId(@Param("roleId") UUID roleId);
 
-    @Query("SELECT p FROM Permission p JOIN p.rolePermissions rp WHERE rp.role.code = :roleCode AND rp.isActive = true AND p.isActive = true")
+    @Query("SELECT p FROM Permission p JOIN p.rolePermissions rp WHERE rp.role.code = :roleCode AND rp.isActive = true AND p.isActive = true AND p.isDeleted = false")
     List<Permission> findByRoleCode(@Param("roleCode") String roleCode);
 
     @Query("SELECT DISTINCT p FROM Permission p " +
            "JOIN p.rolePermissions rp " +
            "JOIN rp.role r " +
            "JOIN UserRole ur ON ur.role.id = r.id " +
-           "WHERE ur.userId = :userId AND ur.isActive = true AND rp.isActive = true AND p.isActive = true")
+           "WHERE ur.userId = :userId AND ur.isActive = true AND rp.isActive = true AND p.isActive = true AND p.isDeleted = false")
     List<Permission> findByUserId(@Param("userId") UUID userId);
 
-    List<Permission> findByCodeIn(Set<String> codes);
+    List<Permission> findByCodeInAndIsDeletedFalse(Set<String> codes);
 
     @Query("SELECT p FROM Permission p WHERE " +
            "(LOWER(p.code) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
            "LOWER(p.displayName) LIKE LOWER(CONCAT('%', :search, '%'))) AND " +
-           "p.isActive = true")
+           "p.isActive = true AND p.isDeleted = false")
     List<Permission> searchByCodeOrDisplayName(@Param("search") String search);
+
+    List<Permission> findByIsDeletedTrue();
+    List<Permission> findByIsDeletedFalse();
+    List<Permission> findByIsDeletedFalse(org.springframework.data.domain.Pageable pageable);
 }
