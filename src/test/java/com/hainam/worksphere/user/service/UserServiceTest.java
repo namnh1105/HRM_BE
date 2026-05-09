@@ -89,7 +89,7 @@ class UserServiceTest extends BaseUnitTest {
     void shouldGetCurrentUserSuccessfully() {
         // Given
         when(userRepository.findActiveById(testUser.getId())).thenReturn(Optional.of(testUser));
-        when(employeeRepository.findActiveByUserId(testUser.getId())).thenReturn(Optional.of(testEmployee));
+        when(employeeRepository.findByUserId(testUser.getId())).thenReturn(Optional.of(testEmployee));
         when(userMapper.toUserResponse(testUser, testEmployee)).thenReturn(testUserResponse);
 
         // When
@@ -101,7 +101,7 @@ class UserServiceTest extends BaseUnitTest {
             () -> assertThat(result.getId()).isEqualTo(testUser.getId()),
             () -> assertThat(result.getEmail()).isEqualTo(testUser.getEmail()),
             () -> verify(userRepository).findActiveById(testUser.getId()),
-            () -> verify(employeeRepository).findActiveByUserId(testUser.getId()),
+            () -> verify(employeeRepository).findByUserId(testUser.getId()),
             () -> verify(userMapper).toUserResponse(testUser, testEmployee)
         );
     }
@@ -126,7 +126,7 @@ class UserServiceTest extends BaseUnitTest {
         // Given
         UUID userId = testUser.getId();
         when(userRepository.findActiveById(userId)).thenReturn(Optional.of(testUser));
-        when(employeeRepository.findActiveByUserId(userId)).thenReturn(Optional.of(testEmployee));
+        when(employeeRepository.findByUserId(userId)).thenReturn(Optional.of(testEmployee));
         when(userMapper.toUserResponse(testUser, testEmployee)).thenReturn(testUserResponse);
 
         // When
@@ -137,7 +137,7 @@ class UserServiceTest extends BaseUnitTest {
             () -> assertThat(result).isNotNull(),
             () -> assertThat(result.getId()).isEqualTo(userId),
             () -> verify(userRepository).findActiveById(userId),
-            () -> verify(employeeRepository).findActiveByUserId(userId),
+            () -> verify(employeeRepository).findByUserId(userId),
             () -> verify(userMapper).toUserResponse(testUser, testEmployee)
         );
     }
@@ -164,7 +164,7 @@ class UserServiceTest extends BaseUnitTest {
         List<User> users = Arrays.asList(testUser, TestFixtures.createTestUser("another@test.com"));
 
         when(userRepository.findAllActive()).thenReturn(users);
-        when(employeeRepository.findActiveByUserId(any(UUID.class))).thenReturn(Optional.of(testEmployee));
+        when(employeeRepository.findByUserId(any(UUID.class))).thenReturn(Optional.of(testEmployee));
         when(userMapper.toUserResponse(any(User.class), any(Employee.class))).thenReturn(testUserResponse);
 
         // When
@@ -174,7 +174,7 @@ class UserServiceTest extends BaseUnitTest {
         assertAll(
             () -> assertThat(result).hasSize(2),
             () -> verify(userRepository).findAllActive(),
-            () -> verify(employeeRepository, times(2)).findActiveByUserId(any(UUID.class)),
+            () -> verify(employeeRepository, times(2)).findByUserId(any(UUID.class)),
             () -> verify(userMapper, times(2)).toUserResponse(any(User.class), any(Employee.class))
         );
     }
@@ -198,7 +198,7 @@ class UserServiceTest extends BaseUnitTest {
             .build();
 
         when(userRepository.findActiveById(testUser.getId())).thenReturn(Optional.of(testUser));
-        when(employeeRepository.findActiveByUserId(testUser.getId())).thenReturn(Optional.of(testEmployee));
+        when(employeeRepository.findByUserId(testUser.getId())).thenReturn(Optional.of(testEmployee));
         when(employeeRepository.save(any(Employee.class))).thenReturn(updatedEmployee);
         when(userMapper.toUserResponse(testUser, updatedEmployee)).thenReturn(testUserResponse);
 
@@ -209,7 +209,7 @@ class UserServiceTest extends BaseUnitTest {
         assertAll(
             () -> assertThat(result).isNotNull(),
             () -> verify(userRepository).findActiveById(testUser.getId()),
-            () -> verify(employeeRepository).findActiveByUserId(testUser.getId()),
+            () -> verify(employeeRepository).findByUserId(testUser.getId()),
             () -> verify(employeeRepository).save(any(Employee.class)),
             () -> verify(userMapper).toUserResponse(testUser, updatedEmployee)
         );
@@ -329,7 +329,7 @@ class UserServiceTest extends BaseUnitTest {
 
         when(userRepository.findDeletedById(userId)).thenReturn(Optional.of(testUser));
         when(userRepository.save(any(User.class))).thenReturn(restoredUser);
-        when(employeeRepository.findActiveByUserId(restoredUser.getId())).thenReturn(Optional.of(testEmployee));
+        when(employeeRepository.findByUserId(restoredUser.getId())).thenReturn(Optional.of(testEmployee));
         when(userMapper.toUserResponse(restoredUser, testEmployee)).thenReturn(testUserResponse);
 
         // When
@@ -340,7 +340,7 @@ class UserServiceTest extends BaseUnitTest {
             () -> assertThat(result).isNotNull(),
             () -> verify(userRepository).findDeletedById(userId),
             () -> verify(userRepository).save(any(User.class)),
-            () -> verify(employeeRepository).findActiveByUserId(restoredUser.getId()),
+            () -> verify(employeeRepository).findByUserId(restoredUser.getId()),
             () -> verify(userMapper).toUserResponse(restoredUser, testEmployee)
         );
     }

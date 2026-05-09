@@ -32,12 +32,25 @@ public interface RoleMapper {
 
     @AfterMapping
     default void mapPermissions(@MappingTarget RoleResponse response, Role entity) {
-        PermissionMapper permissionMapper = org.mapstruct.factory.Mappers.getMapper(PermissionMapper.class);
         if (entity.getRolePermissions() != null) {
             Set<com.hainam.worksphere.authorization.dto.response.PermissionResponse> permissions = entity.getRolePermissions()
                 .stream()
                 .filter(rp -> rp.getPermission() != null)
-                .map(rp -> permissionMapper.toResponse(rp.getPermission()))
+                .map(rp -> {
+                    com.hainam.worksphere.authorization.domain.Permission p = rp.getPermission();
+                    return com.hainam.worksphere.authorization.dto.response.PermissionResponse.builder()
+                        .id(p.getId())
+                        .code(p.getCode())
+                        .displayName(p.getDisplayName())
+                        .description(p.getDescription())
+                        .resource(p.getResource())
+                        .action(p.getAction())
+                        .isSystem(p.getIsSystem())
+                        .isActive(p.getIsActive())
+                        .createdAt(p.getCreatedAt())
+                        .updatedAt(p.getUpdatedAt())
+                        .build();
+                })
                 .collect(Collectors.toSet());
             response.setPermissions(permissions);
         } else {

@@ -84,7 +84,7 @@ public class UserService {
         user.setIsEnabled(true);
         user.setUpdatedBy(updatedBy);
         User savedUser = userRepository.save(user);
-        Employee employee = employeeRepository.findActiveByUserId(savedUser.getId()).orElse(null);
+        Employee employee = employeeRepository.findByUserId(savedUser.getId()).orElse(null);
         return userMapper.toUserResponse(savedUser, employee);
     }
 
@@ -99,7 +99,7 @@ public class UserService {
         user.setIsEnabled(false);
         user.setUpdatedBy(updatedBy);
         User savedUser = userRepository.save(user);
-        Employee employee = employeeRepository.findActiveByUserId(savedUser.getId()).orElse(null);
+        Employee employee = employeeRepository.findByUserId(savedUser.getId()).orElse(null);
         return userMapper.toUserResponse(savedUser, employee);
     }
 
@@ -113,7 +113,7 @@ public class UserService {
         User user = userRepository.findActiveById(userPrincipal.getId())
                 .orElseThrow(() -> UserNotFoundException.byId(userPrincipal.getId().toString()));
 
-        Employee employee = employeeRepository.findActiveByUserId(user.getId())
+        Employee employee = employeeRepository.findByUserId(user.getId())
                 .orElseGet(() -> Employee.builder()
                         .user(user)
                         .employeeCode(null)
@@ -215,7 +215,7 @@ public class UserService {
         user.setUpdatedBy(restoredBy);
 
         User restoredUser = userRepository.save(user);
-        Employee employee = employeeRepository.findActiveByUserId(restoredUser.getId()).orElse(null);
+        Employee employee = employeeRepository.findByUserId(restoredUser.getId()).orElse(null);
         return userMapper.toUserResponse(restoredUser, employee);
     }
 
