@@ -58,6 +58,5 @@ public interface RoleMapper {
     }
 
     @Named("toSimpleResponse")
-    @Mapping(target = "permissions", ignore = true)
     RoleResponse toSimpleResponse(Role entity);
 }

@@ -141,6 +141,18 @@ public class RoleController {
         return ResponseEntity.ok(ApiResponse.success("Permissions assigned to role successfully", null));
     }
 
+    @PutMapping("/{roleId}/permissions")
+    @RequirePermission(PermissionType.MANAGE_ROLES)
+    public ResponseEntity<ApiResponse<Void>> syncPermissionsToRole(
+            @PathVariable UUID roleId,
+            @Valid @RequestBody AssignPermissionsToRoleRequest request) {
+        log.info("Syncing {} permissions for role {}", request.getPermissionIds().size(), roleId);
+
+        rolePermissionService.syncPermissionsToRole(roleId, request.getPermissionIds());
+
+        return ResponseEntity.ok(ApiResponse.success("Permissions synced for role successfully", null));
+    }
+
     @DeleteMapping("/{roleId}/permissions")
     @RequirePermission(PermissionType.MANAGE_ROLES)
     public ResponseEntity<ApiResponse<Void>> removePermissionsFromRole(

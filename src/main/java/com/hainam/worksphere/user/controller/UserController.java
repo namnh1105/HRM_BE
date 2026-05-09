@@ -38,6 +38,16 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
+    @GetMapping("/all")
+    @Operation(summary = "Get all users (optional include deleted)")
+    @RequirePermission(PermissionType.VIEW_USER)
+    public ResponseEntity<ApiResponse<List<UserResponse>>> getAllUsers(
+            @RequestParam(defaultValue = "false") boolean includeDeleted
+    ) {
+        List<UserResponse> response = userService.getAllUsers(includeDeleted);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
     @GetMapping("/me")
     @Operation(summary = "Get current user profile")
     @RequirePermission(PermissionType.VIEW_PROFILE)
@@ -99,6 +109,28 @@ public class UserController {
     ) {
         userService.softDeleteUser(userId, userPrincipal.getId());
         return ResponseEntity.ok(ApiResponse.success("User deleted successfully", null));
+    }
+
+    @PostMapping("/{userId}/activate")
+    @Operation(summary = "Activate user by ID")
+    @RequirePermission(PermissionType.UPDATE_USER)
+    public ResponseEntity<ApiResponse<UserResponse>> activateUser(
+            @PathVariable UUID userId,
+            @AuthenticationPrincipal UserPrincipal userPrincipal
+    ) {
+        UserResponse response = userService.activateUser(userId, userPrincipal.getId());
+        return ResponseEntity.ok(ApiResponse.success("User activated successfully", response));
+    }
+
+    @PostMapping("/{userId}/deactivate")
+    @Operation(summary = "Deactivate user by ID")
+    @RequirePermission(PermissionType.UPDATE_USER)
+    public ResponseEntity<ApiResponse<UserResponse>> deactivateUser(
+            @PathVariable UUID userId,
+            @AuthenticationPrincipal UserPrincipal userPrincipal
+    ) {
+        UserResponse response = userService.deactivateUser(userId, userPrincipal.getId());
+        return ResponseEntity.ok(ApiResponse.success("User deactivated successfully", response));
     }
 
     @PostMapping("/{userId}/restore")

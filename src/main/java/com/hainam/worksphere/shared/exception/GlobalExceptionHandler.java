@@ -99,8 +99,9 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ApiResponse<Void>> handleRuntimeException(RuntimeException ex) {
-        log.error("Runtime exception: ", ex);
-        return ResponseEntity.badRequest().body(ApiResponse.error(ex.getMessage()));
+        log.error("Unhandled runtime exception: ", ex);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponse.error("An internal server error occurred: " + ex.getMessage()));
     }
 
     @ExceptionHandler(Exception.class)

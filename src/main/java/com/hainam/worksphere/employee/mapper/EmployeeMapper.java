@@ -10,10 +10,10 @@ import org.mapstruct.MappingConstants;
 public interface EmployeeMapper {
 
     @Mapping(target = "userId", source = "user.id")
-    @Mapping(target = "departmentId", source = "department.id")
-    @Mapping(target = "departmentName", source = "department.name")
-    @Mapping(target = "storeId", source = "store.id")
-    @Mapping(target = "storeName", source = "store.name")
+    @Mapping(target = "departmentId", expression = "java(employee.getDepartment() != null ? employee.getDepartment().getId() : null)")
+    @Mapping(target = "departmentName", expression = "java(employee.getDepartment() != null ? employee.getDepartment().getName() : null)")
+    @Mapping(target = "storeId", expression = "java(employee.getStore() != null ? employee.getStore().getId() : null)")
+    @Mapping(target = "storeName", expression = "java(employee.getStore() != null ? employee.getStore().getName() : null)")
     @Mapping(target = "gender", expression = "java(employee.getGender() != null ? employee.getGender().name() : null)")
     @Mapping(target = "employmentStatus", expression = "java(employee.getEmploymentStatus() != null ? employee.getEmploymentStatus().name() : null)")
     EmployeeResponse toEmployeeResponse(Employee employee);

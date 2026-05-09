@@ -30,6 +30,7 @@ public class RolePermissionService {
 
     @Transactional
     @Caching(evict = {
+        @CacheEvict(value = CacheConfig.ROLE_CACHE, key = "#roleId.toString()"),
         @CacheEvict(value = CacheConfig.ROLE_PERMISSIONS_CACHE, key = "#roleId"),
         @CacheEvict(value = CacheConfig.USER_PERMISSIONS_CACHE, allEntries = true)
     })
@@ -58,6 +59,7 @@ public class RolePermissionService {
 
     @Transactional
     @Caching(evict = {
+        @CacheEvict(value = CacheConfig.ROLE_CACHE, key = "#roleId.toString()"),
         @CacheEvict(value = CacheConfig.ROLE_PERMISSIONS_CACHE, key = "#roleId"),
         @CacheEvict(value = CacheConfig.USER_PERMISSIONS_CACHE, allEntries = true)
     })
@@ -99,6 +101,7 @@ public class RolePermissionService {
 
     @Transactional
     @Caching(evict = {
+        @CacheEvict(value = CacheConfig.ROLE_CACHE, key = "#roleId.toString()"),
         @CacheEvict(value = CacheConfig.ROLE_PERMISSIONS_CACHE, key = "#roleId"),
         @CacheEvict(value = CacheConfig.USER_PERMISSIONS_CACHE, allEntries = true)
     })
@@ -118,6 +121,7 @@ public class RolePermissionService {
 
     @Transactional
     @Caching(evict = {
+        @CacheEvict(value = CacheConfig.ROLE_CACHE, key = "#roleId.toString()"),
         @CacheEvict(value = CacheConfig.ROLE_PERMISSIONS_CACHE, key = "#roleId"),
         @CacheEvict(value = CacheConfig.USER_PERMISSIONS_CACHE, allEntries = true)
     })
@@ -127,11 +131,44 @@ public class RolePermissionService {
 
     @Transactional
     @Caching(evict = {
+        @CacheEvict(value = CacheConfig.ROLE_CACHE, key = "#roleId.toString()"),
         @CacheEvict(value = CacheConfig.ROLE_PERMISSIONS_CACHE, key = "#roleId"),
         @CacheEvict(value = CacheConfig.USER_PERMISSIONS_CACHE, allEntries = true)
     })
     public void deactivateRolePermission(UUID roleId, UUID permissionId) {
         rolePermissionRepository.deactivate(roleId, permissionId);
+    }
+
+    @Transactional
+    @Caching(evict = {
+        @CacheEvict(value = CacheConfig.ROLE_CACHE, key = "#roleId.toString()"),
+        @CacheEvict(value = CacheConfig.ROLE_PERMISSIONS_CACHE, key = "#roleId"),
+        @CacheEvict(value = CacheConfig.USER_PERMISSIONS_CACHE, allEntries = true)
+    })
+    public void syncPermissionsToRole(UUID roleId, List<UUID> permissionIds) {
+        log.info("Syncing {} permissions for role {}", permissionIds.size(), roleId);
+        
+        // 1. Deactivate all existing permissions for this role
+        rolePermissionRepository.deactivateByRoleId(roleId);
+        
+        // 2. Assign/Reactivate requested permissions
+        for (UUID permissionId : permissionIds) {
+            Optional<RolePermission> existing = rolePermissionRepository.findByRoleIdAndPermissionId(roleId, permissionId);
+            if (existing.isPresent()) {
+                RolePermission rp = existing.get();
+                rp.setIsActive(true);
+                rolePermissionRepository.save(rp);
+            } else {
+                Role role = roleService.getRoleById(roleId);
+                Permission permission = permissionService.getPermissionById(permissionId);
+                RolePermission rolePermission = RolePermission.builder()
+                        .role(role)
+                        .permission(permission)
+                        .isActive(true)
+                        .build();
+                rolePermissionRepository.save(rolePermission);
+            }
+        }
     }
 
     @Transactional

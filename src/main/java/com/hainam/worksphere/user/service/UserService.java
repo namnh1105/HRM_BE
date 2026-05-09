@@ -63,6 +63,46 @@ public class UserService {
                 .collect(Collectors.toList());
     }
 
+    public List<UserResponse> getAllUsers(boolean includeDeleted) {
+        List<User> users = includeDeleted ? userRepository.findAll() : userRepository.findAllActive();
+        return users.stream()
+                .map(user -> {
+                    Employee employee = employeeRepository.findActiveByUserId(user.getId()).orElse(null);
+                    return userMapper.toUserResponse(user, employee);
+                })
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    @Caching(evict = {
+        @CacheEvict(value = CacheConfig.USER_CACHE, key = "#userId.toString()"),
+        @CacheEvict(value = CacheConfig.USER_BY_EMAIL_CACHE, allEntries = true)
+    })
+    public UserResponse activateUser(UUID userId, UUID updatedBy) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> UserNotFoundException.byId(userId.toString()));
+        user.setIsEnabled(true);
+        user.setUpdatedBy(updatedBy);
+        User savedUser = userRepository.save(user);
+        Employee employee = employeeRepository.findActiveByUserId(savedUser.getId()).orElse(null);
+        return userMapper.toUserResponse(savedUser, employee);
+    }
+
+    @Transactional
+    @Caching(evict = {
+        @CacheEvict(value = CacheConfig.USER_CACHE, key = "#userId.toString()"),
+        @CacheEvict(value = CacheConfig.USER_BY_EMAIL_CACHE, allEntries = true)
+    })
+    public UserResponse deactivateUser(UUID userId, UUID updatedBy) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> UserNotFoundException.byId(userId.toString()));
+        user.setIsEnabled(false);
+        user.setUpdatedBy(updatedBy);
+        User savedUser = userRepository.save(user);
+        Employee employee = employeeRepository.findActiveByUserId(savedUser.getId()).orElse(null);
+        return userMapper.toUserResponse(savedUser, employee);
+    }
+
     @Transactional
     @Caching(evict = {
         @CacheEvict(value = CacheConfig.USER_CACHE, key = "#userPrincipal.id.toString()"),
