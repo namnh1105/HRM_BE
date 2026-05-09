@@ -40,7 +40,7 @@ public class UserService {
     public UserResponse getCurrentUser(UserPrincipal userPrincipal) {
         User user = userRepository.findActiveById(userPrincipal.getId())
                 .orElseThrow(() -> UserNotFoundException.byId(userPrincipal.getId().toString()));
-        Employee employee = employeeRepository.findActiveByUserId(user.getId()).orElse(null);
+        Employee employee = employeeRepository.findByUserId(user.getId()).orElse(null);
         
         return mapToUserResponseWithAuthorities(user, employee, userPrincipal);
     }
@@ -49,7 +49,7 @@ public class UserService {
     public UserResponse getUserById(UUID userId) {
         User user = userRepository.findActiveById(userId)
                 .orElseThrow(() -> UserNotFoundException.byId(userId.toString()));
-        Employee employee = employeeRepository.findActiveByUserId(user.getId()).orElse(null);
+        Employee employee = employeeRepository.findByUserId(user.getId()).orElse(null);
         return userMapper.toUserResponse(user, employee);
     }
 
@@ -57,7 +57,7 @@ public class UserService {
         return userRepository.findAllActive()
                 .stream()
                 .map(user -> {
-                    Employee employee = employeeRepository.findActiveByUserId(user.getId()).orElse(null);
+                    Employee employee = employeeRepository.findByUserId(user.getId()).orElse(null);
                     return userMapper.toUserResponse(user, employee);
                 })
                 .collect(Collectors.toList());
@@ -67,7 +67,7 @@ public class UserService {
         List<User> users = includeDeleted ? userRepository.findAll() : userRepository.findAllActive();
         return users.stream()
                 .map(user -> {
-                    Employee employee = employeeRepository.findActiveByUserId(user.getId()).orElse(null);
+                    Employee employee = employeeRepository.findByUserId(user.getId()).orElse(null);
                     return userMapper.toUserResponse(user, employee);
                 })
                 .collect(Collectors.toList());

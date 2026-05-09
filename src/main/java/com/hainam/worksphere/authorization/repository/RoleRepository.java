@@ -39,6 +39,9 @@ public interface RoleRepository extends JpaRepository<Role, UUID> {
            "r.isActive = true")
     List<Role> searchByCodeOrDisplayName(@Param("search") String search);
 
+    @Query("SELECT r FROM Role r LEFT JOIN FETCH r.rolePermissions rp LEFT JOIN FETCH rp.permission WHERE r.id = :id")
+    Optional<Role> findByIdWithPermissions(@Param("id") UUID id);
+
     @Query("SELECT COUNT(ur) > 0 FROM UserRole ur WHERE ur.userId = :userId AND ur.role.id = :roleId AND ur.isActive = true")
     boolean userHasRole(@Param("userId") UUID userId, @Param("roleId") UUID roleId);
 

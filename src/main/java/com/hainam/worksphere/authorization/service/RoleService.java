@@ -62,7 +62,7 @@ public class RoleService {
 
     @Cacheable(value = CacheConfig.ROLE_CACHE, key = "#roleId.toString()")
     public Role getRoleById(UUID roleId) {
-        return roleRepository.findById(roleId)
+        return roleRepository.findByIdWithPermissions(roleId)
                 .orElseThrow(() -> new ResourceNotFoundException("Role not found with ID: " + roleId));
     }
 

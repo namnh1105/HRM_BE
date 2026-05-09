@@ -1,5 +1,6 @@
 package com.hainam.worksphere.authorization.mapper;
 
+import com.hainam.worksphere.authorization.domain.Permission;
 import com.hainam.worksphere.authorization.domain.Role;
 import com.hainam.worksphere.authorization.dto.request.CreateRoleRequest;
 import com.hainam.worksphere.authorization.dto.request.UpdateRoleRequest;
@@ -31,29 +32,16 @@ public interface RoleMapper {
 
     @AfterMapping
     default void mapPermissions(@MappingTarget RoleResponse response, Role entity) {
+        PermissionMapper permissionMapper = org.mapstruct.factory.Mappers.getMapper(PermissionMapper.class);
         if (entity.getRolePermissions() != null) {
             Set<com.hainam.worksphere.authorization.dto.response.PermissionResponse> permissions = entity.getRolePermissions()
                 .stream()
-                .filter(rp -> rp.getIsActive())
-                .map(rp -> {
-                    // MapStruct will auto-inject the PermissionMapper instance
-                    return com.hainam.worksphere.authorization.dto.response.PermissionResponse.builder()
-                        .id(rp.getPermission().getId())
-                        .code(rp.getPermission().getCode())
-                        .displayName(rp.getPermission().getDisplayName())
-                        .description(rp.getPermission().getDescription())
-                        .resource(rp.getPermission().getResource())
-                        .action(rp.getPermission().getAction())
-                        .isSystem(rp.getPermission().getIsSystem())
-                        .isActive(rp.getPermission().getIsActive())
-                        .createdAt(rp.getPermission().getCreatedAt())
-                        .updatedAt(rp.getPermission().getUpdatedAt())
-                        .build();
-                })
+                .filter(rp -> rp.getPermission() != null)
+                .map(rp -> permissionMapper.toResponse(rp.getPermission()))
                 .collect(Collectors.toSet());
             response.setPermissions(permissions);
         } else {
-            response.setPermissions(Set.of());
+            response.setPermissions(new java.util.HashSet<>());
         }
     }
 
