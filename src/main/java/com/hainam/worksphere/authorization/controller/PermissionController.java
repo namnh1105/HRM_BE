@@ -64,7 +64,7 @@ public class PermissionController {
     }
 
     @GetMapping("/active")
-    @RequirePermission(PermissionType.MANAGE_PERMISSIONS)
+    @RequirePermission(PermissionType.MANAGE_ROLES)
     public ResponseEntity<ApiResponse<List<PermissionResponse>>> getActivePermissions() {
         List<Permission> permissions = permissionService.getAllActivePermissions();
         List<PermissionResponse> response = permissions.stream()

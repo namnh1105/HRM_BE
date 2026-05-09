@@ -5,8 +5,12 @@ import com.hainam.worksphere.authorization.dto.request.AssignPermissionsToRoleRe
 import com.hainam.worksphere.authorization.dto.request.CreateRoleRequest;
 import com.hainam.worksphere.authorization.dto.request.UpdateRoleRequest;
 import com.hainam.worksphere.authorization.dto.response.RoleResponse;
+import com.hainam.worksphere.authorization.domain.Permission;
+import com.hainam.worksphere.authorization.dto.response.PermissionResponse;
+import com.hainam.worksphere.authorization.mapper.PermissionMapper;
 import com.hainam.worksphere.authorization.mapper.RoleMapper;
 import com.hainam.worksphere.authorization.security.RequirePermission;
+import com.hainam.worksphere.authorization.service.PermissionService;
 import com.hainam.worksphere.authorization.service.RolePermissionService;
 import com.hainam.worksphere.authorization.service.RoleService;
 import com.hainam.worksphere.shared.constant.PermissionType;
@@ -33,7 +37,9 @@ public class RoleController {
 
     private final RoleService roleService;
     private final RolePermissionService rolePermissionService;
+    private final PermissionService permissionService;
     private final RoleMapper roleMapper;
+    private final PermissionMapper permissionMapper;
 
     @PostMapping
     @RequirePermission(PermissionType.MANAGE_ROLES)
@@ -155,6 +161,18 @@ public class RoleController {
         rolePermissionService.assignPermissionsToRole(roleId, request.getPermissionIds());
 
         return ResponseEntity.ok(ApiResponse.success("Permissions assigned to role successfully", null));
+    }
+
+    @GetMapping("/{roleId}/permissions")
+    @RequirePermission(PermissionType.MANAGE_ROLES)
+    public ResponseEntity<ApiResponse<List<PermissionResponse>>> getRolePermissions(@PathVariable UUID roleId) {
+        log.info("Fetching permissions for role ID: {}", roleId);
+        List<Permission> permissions = permissionService.getPermissionsByRoleId(roleId);
+        log.info("Found {} permissions for role ID: {}", permissions.size(), roleId);
+        List<PermissionResponse> response = permissions.stream()
+                .map(permissionMapper::toResponse)
+                .toList();
+        return ResponseEntity.ok(ApiResponse.success("Role permissions retrieved successfully", response));
     }
 
     @PutMapping("/{roleId}/permissions")

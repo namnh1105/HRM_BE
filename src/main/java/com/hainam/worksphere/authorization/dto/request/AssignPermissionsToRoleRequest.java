@@ -19,6 +19,5 @@ public class AssignPermissionsToRoleRequest {
     @NotNull(message = "Role ID is required")
     private UUID roleId;
 
-    @NotEmpty(message = "At least one permission ID is required")
     private List<UUID> permissionIds;
 }
