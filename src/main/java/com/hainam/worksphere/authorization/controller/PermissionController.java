@@ -10,6 +10,7 @@ import com.hainam.worksphere.authorization.service.PermissionService;
 import com.hainam.worksphere.shared.constant.PermissionType;
 import com.hainam.worksphere.shared.dto.ApiResponse;
 import com.hainam.worksphere.shared.dto.PaginatedApiResponse;
+import com.hainam.worksphere.shared.dto.ResourceStatsResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -151,5 +152,13 @@ public class PermissionController {
                 .toList();
 
         return ResponseEntity.ok(ApiResponse.success("Permissions search completed", response));
+    }
+
+    @GetMapping("/stats")
+    @RequirePermission(PermissionType.MANAGE_PERMISSIONS)
+    public ResponseEntity<ApiResponse<ResourceStatsResponse>> getPermissionStats() {
+        log.info("Fetching permission statistics");
+        ResourceStatsResponse stats = permissionService.getPermissionStats();
+        return ResponseEntity.ok(ApiResponse.success("Permission statistics retrieved successfully", stats));
     }
 }

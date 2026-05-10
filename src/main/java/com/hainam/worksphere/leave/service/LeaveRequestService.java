@@ -12,6 +12,7 @@ import com.hainam.worksphere.leave.repository.LeaveRequestRepository;
 import com.hainam.worksphere.notification.domain.NotificationType;
 import com.hainam.worksphere.notification.service.NotificationService;
 import com.hainam.worksphere.shared.config.CacheConfig;
+import com.hainam.worksphere.shared.dto.ResourceStatsResponse;
 import com.hainam.worksphere.shared.exception.EmployeeNotFoundException;
 import com.hainam.worksphere.shared.exception.LeaveRequestNotFoundException;
 import com.hainam.worksphere.shared.exception.ValidationException;
@@ -160,5 +161,16 @@ public class LeaveRequestService {
         LeaveRequest leaveRequest = leaveRequestRepository.findActiveById(id)
                 .orElseThrow(() -> LeaveRequestNotFoundException.byId(id.toString()));
         return leaveRequestMapper.toLeaveRequestResponse(leaveRequest);
+    }
+
+    public ResourceStatsResponse getLeaveRequestStats() {
+        return ResourceStatsResponse.builder()
+                .total(leaveRequestRepository.count())
+                .active(leaveRequestRepository.countByStatusAndIsDeletedFalse(LeaveRequestStatus.PENDING))
+                .inactive(leaveRequestRepository.countByStatusAndIsDeletedFalse(LeaveRequestStatus.APPROVED) +
+                        leaveRequestRepository.countByStatusAndIsDeletedFalse(LeaveRequestStatus.REJECTED) +
+                        leaveRequestRepository.countByStatusAndIsDeletedFalse(LeaveRequestStatus.CANCELLED))
+                .deleted(leaveRequestRepository.countByIsDeletedTrue())
+                .build();
     }
 }

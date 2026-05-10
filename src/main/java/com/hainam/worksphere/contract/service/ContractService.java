@@ -10,6 +10,7 @@ import com.hainam.worksphere.contract.repository.ContractRepository;
 import com.hainam.worksphere.employee.domain.Employee;
 import com.hainam.worksphere.employee.repository.EmployeeRepository;
 import com.hainam.worksphere.shared.config.CacheConfig;
+import com.hainam.worksphere.shared.dto.ResourceStatsResponse;
 import com.hainam.worksphere.shared.exception.ContractNotFoundException;
 import com.hainam.worksphere.shared.exception.EmployeeNotFoundException;
 import com.hainam.worksphere.shared.exception.ValidationException;
@@ -146,5 +147,15 @@ public class ContractService {
     public Page<ContractResponse> getActiveContracts(Pageable pageable) {
         return contractRepository.findActiveByStatus(ContractStatus.ACTIVE, pageable)
                 .map(contractMapper::toContractResponse);
+    }
+
+    public ResourceStatsResponse getContractStats() {
+        return ResourceStatsResponse.builder()
+                .total(contractRepository.count())
+                .active(contractRepository.countByStatusAndIsDeletedFalse(ContractStatus.ACTIVE))
+                .inactive(contractRepository.countByStatusAndIsDeletedFalse(ContractStatus.EXPIRED) +
+                        contractRepository.countByStatusAndIsDeletedFalse(ContractStatus.TERMINATED))
+                .deleted(contractRepository.countByIsDeletedTrue())
+                .build();
     }
 }

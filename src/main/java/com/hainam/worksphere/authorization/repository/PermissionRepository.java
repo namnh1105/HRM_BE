@@ -51,4 +51,9 @@ public interface PermissionRepository extends JpaRepository<Permission, UUID> {
     List<Permission> findByIsDeletedTrue();
     List<Permission> findByIsDeletedFalse();
     org.springframework.data.domain.Page<Permission> findByIsDeletedFalse(org.springframework.data.domain.Pageable pageable);
+
+    long countByIsDeletedFalse();
+    long countByIsActiveTrueAndIsDeletedFalse();
+    long countByIsActiveFalseAndIsDeletedFalse();
+    long countByIsDeletedTrue();
 }

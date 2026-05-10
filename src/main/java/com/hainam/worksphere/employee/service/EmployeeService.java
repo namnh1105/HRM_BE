@@ -14,6 +14,7 @@ import com.hainam.worksphere.shared.audit.annotation.AuditAction;
 import com.hainam.worksphere.shared.audit.domain.ActionType;
 import com.hainam.worksphere.shared.audit.util.AuditContext;
 import com.hainam.worksphere.shared.config.CacheConfig;
+import com.hainam.worksphere.shared.dto.ResourceStatsResponse;
 import com.hainam.worksphere.shared.exception.DepartmentNotFoundException;
 import com.hainam.worksphere.shared.exception.EmployeeNotFoundException;
 import com.hainam.worksphere.shared.exception.StoreNotFoundException;
@@ -206,5 +207,15 @@ public class EmployeeService {
         employee.setDeletedBy(deletedBy);
         employee.setEmploymentStatus(EmploymentStatus.TERMINATED);
         employeeRepository.save(employee);
+    }
+
+    public ResourceStatsResponse getEmployeeStats() {
+        return ResourceStatsResponse.builder()
+                .total(employeeRepository.count())
+                .active(employeeRepository.countByEmploymentStatusAndIsDeletedFalse(EmploymentStatus.ACTIVE))
+                .inactive(employeeRepository.countByEmploymentStatusAndIsDeletedFalse(EmploymentStatus.ON_LEAVE) +
+                        employeeRepository.countByEmploymentStatusAndIsDeletedFalse(EmploymentStatus.PROBATION))
+                .deleted(employeeRepository.countByIsDeletedTrue())
+                .build();
     }
 }

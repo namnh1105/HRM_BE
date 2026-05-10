@@ -9,6 +9,7 @@ import com.hainam.worksphere.employee.service.EmployeeService;
 import com.hainam.worksphere.shared.constant.PermissionType;
 import com.hainam.worksphere.shared.dto.ApiResponse;
 import com.hainam.worksphere.shared.dto.PaginatedApiResponse;
+import com.hainam.worksphere.shared.dto.ResourceStatsResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -118,5 +119,13 @@ public class EmployeeController {
     ) {
         employeeService.softDeleteEmployee(employeeId, userPrincipal.getId());
         return ResponseEntity.ok(ApiResponse.success("Employee deleted successfully", null));
+    }
+
+    @GetMapping("/stats")
+    @Operation(summary = "Get employee statistics")
+    @RequirePermission(PermissionType.VIEW_EMPLOYEE)
+    public ResponseEntity<ApiResponse<ResourceStatsResponse>> getEmployeeStats() {
+        ResourceStatsResponse stats = employeeService.getEmployeeStats();
+        return ResponseEntity.ok(ApiResponse.success("Employee statistics retrieved successfully", stats));
     }
 }

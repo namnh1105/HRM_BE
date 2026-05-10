@@ -9,6 +9,7 @@ import com.hainam.worksphere.shared.dto.PaginatedApiResponse;
 import com.hainam.worksphere.user.dto.request.ChangePasswordRequest;
 import com.hainam.worksphere.user.dto.request.UpdateProfileRequest;
 import com.hainam.worksphere.user.dto.response.UserResponse;
+import com.hainam.worksphere.user.dto.response.UserStatsResponse;
 import com.hainam.worksphere.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -53,6 +54,14 @@ public class UserController {
     ) {
         Page<UserResponse> response = userService.getAllUsers(includeDeleted, pageable);
         return ResponseEntity.ok(PaginatedApiResponse.success(response));
+    }
+
+    @GetMapping("/stats")
+    @Operation(summary = "Get user account statistics")
+    @RequirePermission(PermissionType.VIEW_USER)
+    public ResponseEntity<ApiResponse<UserStatsResponse>> getUserStats() {
+        UserStatsResponse response = userService.getUserStats();
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     @GetMapping("/me")

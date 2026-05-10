@@ -3,6 +3,7 @@ package com.hainam.worksphere.authorization.service;
 import com.hainam.worksphere.authorization.domain.Role;
 import com.hainam.worksphere.authorization.repository.RoleRepository;
 import com.hainam.worksphere.shared.config.CacheConfig;
+import com.hainam.worksphere.shared.dto.ResourceStatsResponse;
 import com.hainam.worksphere.shared.exception.BusinessRuleViolationException;
 import com.hainam.worksphere.shared.exception.DuplicateResourceException;
 import com.hainam.worksphere.shared.exception.ResourceNotFoundException;
@@ -150,5 +151,14 @@ public class RoleService {
 
     public boolean existsByCode(String code) {
         return roleRepository.existsByCode(code);
+    }
+
+    public ResourceStatsResponse getRoleStats() {
+        return ResourceStatsResponse.builder()
+                .total(roleRepository.count())
+                .active(roleRepository.countByIsActiveTrueAndIsDeletedFalse())
+                .inactive(roleRepository.countByIsActiveFalseAndIsDeletedFalse())
+                .deleted(roleRepository.countByIsDeletedTrue())
+                .build();
     }
 }

@@ -48,4 +48,8 @@ public interface EmployeeRepository extends JpaRepository<Employee, UUID> {
 
     @Query("SELECT e FROM Employee e WHERE e.store.id = :storeId AND e.isDeleted = false")
     Page<Employee> findActiveByStoreId(@Param("storeId") UUID storeId, Pageable pageable);
+
+    long countByIsDeletedFalse();
+    long countByEmploymentStatusAndIsDeletedFalse(EmploymentStatus status);
+    long countByIsDeletedTrue();
 }

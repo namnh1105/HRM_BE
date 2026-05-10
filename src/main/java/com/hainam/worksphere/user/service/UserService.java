@@ -13,6 +13,7 @@ import com.hainam.worksphere.user.domain.User;
 import com.hainam.worksphere.user.dto.request.ChangePasswordRequest;
 import com.hainam.worksphere.user.dto.request.UpdateProfileRequest;
 import com.hainam.worksphere.user.dto.response.UserResponse;
+import com.hainam.worksphere.user.dto.response.UserStatsResponse;
 import com.hainam.worksphere.user.mapper.UserMapper;
 import com.hainam.worksphere.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -69,6 +70,15 @@ public class UserService {
                     Employee employee = employeeRepository.findByUserId(user.getId()).orElse(null);
                     return userMapper.toUserResponse(user, employee);
                 });
+    }
+
+    public UserStatsResponse getUserStats() {
+        return UserStatsResponse.builder()
+                .totalAccounts(userRepository.count())
+                .activeAccounts(userRepository.countByIsEnabledTrueAndIsDeletedFalse())
+                .inactiveAccounts(userRepository.countByIsEnabledFalseAndIsDeletedFalse())
+                .deletedAccounts(userRepository.countByIsDeletedTrue())
+                .build();
     }
 
     @Transactional

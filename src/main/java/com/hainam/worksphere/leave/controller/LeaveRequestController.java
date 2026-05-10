@@ -11,6 +11,7 @@ import com.hainam.worksphere.leave.service.LeaveRequestService;
 import com.hainam.worksphere.shared.constant.PermissionType;
 import com.hainam.worksphere.shared.dto.ApiResponse;
 import com.hainam.worksphere.shared.dto.PaginatedApiResponse;
+import com.hainam.worksphere.shared.dto.ResourceStatsResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -106,4 +107,11 @@ public class LeaveRequestController {
         return ResponseEntity.ok(ApiResponse.success("Leave request cancelled successfully", response));
     }
 
+    @GetMapping("/stats")
+    @Operation(summary = "Get leave request statistics")
+    @RequirePermission(PermissionType.VIEW_LEAVE_REQUEST)
+    public ResponseEntity<ApiResponse<ResourceStatsResponse>> getLeaveRequestStats() {
+        ResourceStatsResponse stats = leaveRequestService.getLeaveRequestStats();
+        return ResponseEntity.ok(ApiResponse.success("Leave request statistics retrieved successfully", stats));
+    }
 }

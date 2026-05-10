@@ -11,6 +11,7 @@ import com.hainam.worksphere.employee.service.EmployeeService;
 import com.hainam.worksphere.shared.constant.PermissionType;
 import com.hainam.worksphere.shared.dto.ApiResponse;
 import com.hainam.worksphere.shared.dto.PaginatedApiResponse;
+import com.hainam.worksphere.shared.dto.ResourceStatsResponse;
 import com.hainam.worksphere.shared.util.IpAddressUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -163,4 +164,11 @@ public class AttendanceController {
         return ResponseEntity.ok(PaginatedApiResponse.success(response));
     }
 
+    @GetMapping("/stats")
+    @Operation(summary = "Get attendance statistics")
+    @RequirePermission(PermissionType.VIEW_ATTENDANCE)
+    public ResponseEntity<ApiResponse<ResourceStatsResponse>> getAttendanceStats() {
+        ResourceStatsResponse stats = attendanceService.getAttendanceStats();
+        return ResponseEntity.ok(ApiResponse.success("Attendance statistics retrieved successfully", stats));
+    }
 }

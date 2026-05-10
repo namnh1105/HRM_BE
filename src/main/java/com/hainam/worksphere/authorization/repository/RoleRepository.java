@@ -53,4 +53,9 @@ public interface RoleRepository extends JpaRepository<Role, UUID> {
 
     @Query("SELECT COUNT(ur) > 0 FROM UserRole ur WHERE ur.userId = :userId AND ur.role.code = :roleCode AND ur.isActive = true")
     boolean userHasRoleByCode(@Param("userId") UUID userId, @Param("roleCode") String roleCode);
+
+    long countByIsDeletedFalse();
+    long countByIsActiveTrueAndIsDeletedFalse();
+    long countByIsActiveFalseAndIsDeletedFalse();
+    long countByIsDeletedTrue();
 }

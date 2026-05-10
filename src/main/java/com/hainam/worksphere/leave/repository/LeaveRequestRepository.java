@@ -34,4 +34,8 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, UUID
 
     @Query("SELECT lr FROM LeaveRequest lr WHERE lr.employee.id = :employeeId AND lr.startDate BETWEEN :start AND :end AND lr.isDeleted = false")
     List<LeaveRequest> findActiveByEmployeeIdAndStartDateBetween(@Param("employeeId") UUID employeeId, @Param("start") LocalDate start, @Param("end") LocalDate end);
+
+    long countByIsDeletedFalse();
+    long countByStatusAndIsDeletedFalse(LeaveRequestStatus status);
+    long countByIsDeletedTrue();
 }

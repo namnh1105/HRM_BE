@@ -208,4 +208,11 @@ public class RoleController {
         Page<RoleResponse> response = roles.map(roleMapper::toSimpleResponse);
         return ResponseEntity.ok(PaginatedApiResponse.success("Roles search completed", response));
     }
+    @GetMapping("/stats")
+    @RequirePermission(PermissionType.MANAGE_ROLES)
+    public ResponseEntity<ApiResponse<ResourceStatsResponse>> getRoleStats() {
+        log.info("Fetching role statistics");
+        ResourceStatsResponse stats = roleService.getRoleStats();
+        return ResponseEntity.ok(ApiResponse.success("Role statistics retrieved successfully", stats));
+    }
 }

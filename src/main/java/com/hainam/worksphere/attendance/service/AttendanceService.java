@@ -13,6 +13,7 @@ import com.hainam.worksphere.shared.audit.annotation.AuditAction;
 import com.hainam.worksphere.shared.audit.domain.ActionType;
 import com.hainam.worksphere.shared.audit.util.AuditContext;
 import com.hainam.worksphere.shared.config.CacheConfig;
+import com.hainam.worksphere.shared.dto.ResourceStatsResponse;
 import com.hainam.worksphere.shared.exception.AttendanceNotFoundException;
 import com.hainam.worksphere.shared.exception.ValidationException;
 import com.hainam.worksphere.shared.util.FaceApiClient;
@@ -307,5 +308,15 @@ public class AttendanceService {
     private double calculateWorkingHours(LocalTime checkIn, LocalTime checkOut, double breakDuration) {
         double totalHours = Duration.between(checkIn, checkOut).toMinutes() / 60.0;
         return Math.max(0, totalHours - breakDuration);
+    }
+
+    public ResourceStatsResponse getAttendanceStats() {
+        LocalDate today = LocalDate.now();
+        return ResourceStatsResponse.builder()
+                .total(attendanceRepository.count())
+                .active(attendanceRepository.countByWorkDateAndIsDeletedFalse(today))
+                .inactive(attendanceRepository.countLateByDate(today))
+                .deleted(attendanceRepository.countByIsDeletedTrue())
+                .build();
     }
 }

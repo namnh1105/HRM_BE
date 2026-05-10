@@ -9,6 +9,7 @@ import com.hainam.worksphere.contract.service.ContractService;
 import com.hainam.worksphere.shared.constant.PermissionType;
 import com.hainam.worksphere.shared.dto.ApiResponse;
 import com.hainam.worksphere.shared.dto.PaginatedApiResponse;
+import com.hainam.worksphere.shared.dto.ResourceStatsResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -108,5 +109,13 @@ public class ContractController {
     ) {
         contractService.deleteContract(id, userPrincipal.getId());
         return ResponseEntity.ok(ApiResponse.success("Contract deleted successfully", null));
+    }
+
+    @GetMapping("/stats")
+    @Operation(summary = "Get contract statistics")
+    @RequirePermission(PermissionType.VIEW_CONTRACT)
+    public ResponseEntity<ApiResponse<ResourceStatsResponse>> getContractStats() {
+        ResourceStatsResponse stats = contractService.getContractStats();
+        return ResponseEntity.ok(ApiResponse.success("Contract statistics retrieved successfully", stats));
     }
 }

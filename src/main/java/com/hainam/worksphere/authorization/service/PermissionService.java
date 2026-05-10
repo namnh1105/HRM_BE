@@ -3,6 +3,7 @@ package com.hainam.worksphere.authorization.service;
 import com.hainam.worksphere.authorization.domain.Permission;
 import com.hainam.worksphere.authorization.repository.PermissionRepository;
 import com.hainam.worksphere.shared.config.CacheConfig;
+import com.hainam.worksphere.shared.dto.ResourceStatsResponse;
 import com.hainam.worksphere.shared.exception.BusinessRuleViolationException;
 import com.hainam.worksphere.shared.exception.DuplicateResourceException;
 import com.hainam.worksphere.shared.exception.ResourceNotFoundException;
@@ -178,5 +179,14 @@ public class PermissionService {
 
     public boolean existsByCode(String code) {
         return permissionRepository.existsByCode(code);
+    }
+
+    public ResourceStatsResponse getPermissionStats() {
+        return ResourceStatsResponse.builder()
+                .total(permissionRepository.count())
+                .active(permissionRepository.countByIsActiveTrueAndIsDeletedFalse())
+                .inactive(permissionRepository.countByIsActiveFalseAndIsDeletedFalse())
+                .deleted(permissionRepository.countByIsDeletedTrue())
+                .build();
     }
 }
