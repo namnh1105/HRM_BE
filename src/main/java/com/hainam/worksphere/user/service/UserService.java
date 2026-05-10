@@ -19,6 +19,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -53,24 +55,20 @@ public class UserService {
         return userMapper.toUserResponse(user, employee);
     }
 
-    public List<UserResponse> getAllActiveUsers() {
-        return userRepository.findAllActive()
-                .stream()
+    public Page<UserResponse> getAllActiveUsers(Pageable pageable) {
+        return userRepository.findAllActive(pageable)
                 .map(user -> {
                     Employee employee = employeeRepository.findByUserId(user.getId()).orElse(null);
                     return userMapper.toUserResponse(user, employee);
-                })
-                .collect(Collectors.toList());
+                });
     }
 
-    public List<UserResponse> getAllUsers(boolean includeDeleted) {
-        List<User> users = includeDeleted ? userRepository.findAll() : userRepository.findAllActive();
-        return users.stream()
-                .map(user -> {
+    public Page<UserResponse> getAllUsers(boolean includeDeleted, Pageable pageable) {
+        Page<User> users = includeDeleted ? userRepository.findAll(pageable) : userRepository.findAllActive(pageable);
+        return users.map(user -> {
                     Employee employee = employeeRepository.findByUserId(user.getId()).orElse(null);
                     return userMapper.toUserResponse(user, employee);
-                })
-                .collect(Collectors.toList());
+                });
     }
 
     @Transactional

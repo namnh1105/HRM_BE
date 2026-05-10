@@ -76,8 +76,8 @@ public class RoleService {
         return roleRepository.findAll(pageable);
     }
 
-    public List<Role> getAllActiveRoles() {
-        return roleRepository.findByIsActiveTrueAndIsDeletedFalse();
+    public Page<Role> getAllActiveRoles(Pageable pageable) {
+        return roleRepository.findAllActive(pageable);
     }
 
     public List<Role> getAllSystemRoles() {
@@ -97,8 +97,8 @@ public class RoleService {
         return roleRepository.findByCodeInAndIsDeletedFalse(codes);
     }
 
-    public List<Role> searchRoles(String search) {
-        return roleRepository.searchByCodeOrDisplayName(search);
+    public Page<Role> searchRoles(String search, Pageable pageable) {
+        return roleRepository.searchRoles(search, pageable);
     }
 
 

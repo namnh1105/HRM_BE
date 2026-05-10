@@ -10,11 +10,15 @@ import com.hainam.worksphere.leave.dto.response.LeaveRequestResponse;
 import com.hainam.worksphere.leave.service.LeaveRequestService;
 import com.hainam.worksphere.shared.constant.PermissionType;
 import com.hainam.worksphere.shared.dto.ApiResponse;
+import com.hainam.worksphere.shared.dto.PaginatedApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -48,20 +52,23 @@ public class LeaveRequestController {
     @GetMapping("/me")
     @Operation(summary = "Get my leave requests")
     @RequirePermission(PermissionType.VIEW_LEAVE_REQUEST)
-    public ResponseEntity<ApiResponse<List<LeaveRequestResponse>>> getMyLeaveRequests(
-            @AuthenticationPrincipal UserPrincipal userPrincipal
+    public ResponseEntity<PaginatedApiResponse<LeaveRequestResponse>> getMyLeaveRequests(
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @PageableDefault(size = 10) Pageable pageable
     ) {
         EmployeeResponse employee = employeeService.getEmployeeByUserId(userPrincipal.getId());
-        List<LeaveRequestResponse> response = leaveRequestService.getMyLeaveRequests(employee.getId());
-        return ResponseEntity.ok(ApiResponse.success(response));
+        Page<LeaveRequestResponse> response = leaveRequestService.getMyLeaveRequests(employee.getId(), pageable);
+        return ResponseEntity.ok(PaginatedApiResponse.success(response));
     }
 
     @GetMapping("/pending")
     @Operation(summary = "Get all pending leave requests (admin)")
     @RequirePermission(PermissionType.APPROVE_LEAVE_REQUEST)
-    public ResponseEntity<ApiResponse<List<LeaveRequestResponse>>> getPendingLeaveRequests() {
-        List<LeaveRequestResponse> response = leaveRequestService.getPendingLeaveRequests();
-        return ResponseEntity.ok(ApiResponse.success(response));
+    public ResponseEntity<PaginatedApiResponse<LeaveRequestResponse>> getPendingLeaveRequests(
+            @PageableDefault(size = 10) Pageable pageable
+    ) {
+        Page<LeaveRequestResponse> response = leaveRequestService.getPendingLeaveRequests(pageable);
+        return ResponseEntity.ok(PaginatedApiResponse.success(response));
     }
 
     @GetMapping("/{id}")

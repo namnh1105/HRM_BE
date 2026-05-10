@@ -25,6 +25,8 @@ import com.hainam.worksphere.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -56,25 +58,19 @@ public class EmployeeService {
         return employeeMapper.toEmployeeResponse(employee);
     }
 
-    public List<EmployeeResponse> getAllActiveEmployees() {
-        return employeeRepository.findAllActive()
-                .stream()
-                .map(employeeMapper::toEmployeeResponse)
-                .collect(Collectors.toList());
+    public Page<EmployeeResponse> getAllActiveEmployees(Pageable pageable) {
+        return employeeRepository.findAllActive(pageable)
+                .map(employeeMapper::toEmployeeResponse);
     }
 
-    public List<EmployeeResponse> getEmployeesByDepartment(UUID departmentId) {
-        return employeeRepository.findActiveByDepartmentId(departmentId)
-                .stream()
-                .map(employeeMapper::toEmployeeResponse)
-                .collect(Collectors.toList());
+    public Page<EmployeeResponse> getEmployeesByDepartment(UUID departmentId, Pageable pageable) {
+        return employeeRepository.findActiveByDepartmentId(departmentId, pageable)
+                .map(employeeMapper::toEmployeeResponse);
     }
 
-    public List<EmployeeResponse> getEmployeesByStore(UUID storeId) {
-        return employeeRepository.findActiveByStoreId(storeId)
-                .stream()
-                .map(employeeMapper::toEmployeeResponse)
-                .collect(Collectors.toList());
+    public Page<EmployeeResponse> getEmployeesByStore(UUID storeId, Pageable pageable) {
+        return employeeRepository.findActiveByStoreId(storeId, pageable)
+                .map(employeeMapper::toEmployeeResponse);
     }
 
     @Transactional

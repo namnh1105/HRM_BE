@@ -8,11 +8,15 @@ import com.hainam.worksphere.contract.dto.response.ContractResponse;
 import com.hainam.worksphere.contract.service.ContractService;
 import com.hainam.worksphere.shared.constant.PermissionType;
 import com.hainam.worksphere.shared.dto.ApiResponse;
+import com.hainam.worksphere.shared.dto.PaginatedApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -45,9 +49,11 @@ public class ContractController {
     @GetMapping
     @Operation(summary = "Get all contracts")
     @RequirePermission(PermissionType.VIEW_CONTRACT)
-    public ResponseEntity<ApiResponse<List<ContractResponse>>> getAllContracts() {
-        List<ContractResponse> response = contractService.getAllContracts();
-        return ResponseEntity.ok(ApiResponse.success(response));
+    public ResponseEntity<PaginatedApiResponse<ContractResponse>> getAllContracts(
+            @PageableDefault(size = 10) Pageable pageable
+    ) {
+        Page<ContractResponse> response = contractService.getAllContracts(pageable);
+        return ResponseEntity.ok(PaginatedApiResponse.success(response));
     }
 
     @GetMapping("/{id}")
@@ -63,19 +69,22 @@ public class ContractController {
     @GetMapping("/employee/{employeeId}")
     @Operation(summary = "Get contracts by employee ID")
     @RequirePermission(PermissionType.VIEW_CONTRACT)
-    public ResponseEntity<ApiResponse<List<ContractResponse>>> getByEmployeeId(
-            @PathVariable UUID employeeId
+    public ResponseEntity<PaginatedApiResponse<ContractResponse>> getByEmployeeId(
+            @PathVariable UUID employeeId,
+            @PageableDefault(size = 10) Pageable pageable
     ) {
-        List<ContractResponse> response = contractService.getByEmployeeId(employeeId);
-        return ResponseEntity.ok(ApiResponse.success(response));
+        Page<ContractResponse> response = contractService.getByEmployeeId(employeeId, pageable);
+        return ResponseEntity.ok(PaginatedApiResponse.success(response));
     }
 
     @GetMapping("/active")
     @Operation(summary = "Get all active contracts")
     @RequirePermission(PermissionType.VIEW_CONTRACT)
-    public ResponseEntity<ApiResponse<List<ContractResponse>>> getActiveContracts() {
-        List<ContractResponse> response = contractService.getActiveContracts();
-        return ResponseEntity.ok(ApiResponse.success(response));
+    public ResponseEntity<PaginatedApiResponse<ContractResponse>> getActiveContracts(
+            @PageableDefault(size = 10) Pageable pageable
+    ) {
+        Page<ContractResponse> response = contractService.getActiveContracts(pageable);
+        return ResponseEntity.ok(PaginatedApiResponse.success(response));
     }
 
     @PutMapping("/{id}")

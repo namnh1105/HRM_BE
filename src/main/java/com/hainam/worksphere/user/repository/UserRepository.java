@@ -1,6 +1,8 @@
 package com.hainam.worksphere.user.repository;
 
 import com.hainam.worksphere.user.domain.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -22,7 +24,9 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByGoogleId(String googleId);
 
     @Query("SELECT u FROM User u WHERE u.isDeleted = false")
-    List<User> findAllActive();
+    Page<User> findAllActive(Pageable pageable);
+
+    Page<User> findAllByIsDeleted(boolean isDeleted, Pageable pageable);
 
     @Query("SELECT u FROM User u WHERE u.id = :id AND u.isDeleted = false")
     Optional<User> findActiveById(@Param("id") UUID id);

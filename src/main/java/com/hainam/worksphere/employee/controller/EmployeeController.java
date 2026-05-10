@@ -8,11 +8,15 @@ import com.hainam.worksphere.employee.dto.response.EmployeeResponse;
 import com.hainam.worksphere.employee.service.EmployeeService;
 import com.hainam.worksphere.shared.constant.PermissionType;
 import com.hainam.worksphere.shared.dto.ApiResponse;
+import com.hainam.worksphere.shared.dto.PaginatedApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -33,9 +37,11 @@ public class EmployeeController {
     @GetMapping
     @Operation(summary = "Get all active employees")
     @RequirePermission(PermissionType.VIEW_EMPLOYEE)
-    public ResponseEntity<ApiResponse<List<EmployeeResponse>>> getAllEmployees() {
-        List<EmployeeResponse> response = employeeService.getAllActiveEmployees();
-        return ResponseEntity.ok(ApiResponse.success(response));
+    public ResponseEntity<PaginatedApiResponse<EmployeeResponse>> getAllEmployees(
+            @PageableDefault(size = 10) Pageable pageable
+    ) {
+        Page<EmployeeResponse> response = employeeService.getAllActiveEmployees(pageable);
+        return ResponseEntity.ok(PaginatedApiResponse.success(response));
     }
 
     @GetMapping("/{employeeId}")
@@ -61,21 +67,23 @@ public class EmployeeController {
     @GetMapping("/department/{departmentId}")
     @Operation(summary = "Get employees by department")
     @RequirePermission(PermissionType.VIEW_EMPLOYEE)
-    public ResponseEntity<ApiResponse<List<EmployeeResponse>>> getEmployeesByDepartment(
-            @PathVariable UUID departmentId
+    public ResponseEntity<PaginatedApiResponse<EmployeeResponse>> getEmployeesByDepartment(
+            @PathVariable UUID departmentId,
+            @PageableDefault(size = 10) Pageable pageable
     ) {
-        List<EmployeeResponse> response = employeeService.getEmployeesByDepartment(departmentId);
-        return ResponseEntity.ok(ApiResponse.success(response));
+        Page<EmployeeResponse> response = employeeService.getEmployeesByDepartment(departmentId, pageable);
+        return ResponseEntity.ok(PaginatedApiResponse.success(response));
     }
 
     @GetMapping("/store/{storeId}")
     @Operation(summary = "Get employees by store")
     @RequirePermission(PermissionType.VIEW_EMPLOYEE)
-    public ResponseEntity<ApiResponse<List<EmployeeResponse>>> getEmployeesByStore(
-            @PathVariable UUID storeId
+    public ResponseEntity<PaginatedApiResponse<EmployeeResponse>> getEmployeesByStore(
+            @PathVariable UUID storeId,
+            @PageableDefault(size = 10) Pageable pageable
     ) {
-        List<EmployeeResponse> response = employeeService.getEmployeesByStore(storeId);
-        return ResponseEntity.ok(ApiResponse.success(response));
+        Page<EmployeeResponse> response = employeeService.getEmployeesByStore(storeId, pageable);
+        return ResponseEntity.ok(PaginatedApiResponse.success(response));
     }
 
     @PostMapping

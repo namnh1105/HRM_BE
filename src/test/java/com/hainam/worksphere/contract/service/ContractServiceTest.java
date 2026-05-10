@@ -19,6 +19,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
 import java.util.Arrays;
@@ -203,16 +207,19 @@ class ContractServiceTest extends BaseUnitTest {
         // Given
         UUID employeeId = testEmployee.getId();
         List<Contract> contracts = Arrays.asList(testContract);
-        when(contractRepository.findActiveByEmployeeId(employeeId)).thenReturn(contracts);
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Contract> contractPage = new PageImpl<>(contracts, pageable, contracts.size());
+
+        when(contractRepository.findActiveByEmployeeId(employeeId, pageable)).thenReturn(contractPage);
         when(contractMapper.toContractResponse(any(Contract.class))).thenReturn(testContractResponse);
 
         // When
-        List<ContractResponse> result = contractService.getByEmployeeId(employeeId);
+        Page<ContractResponse> result = contractService.getByEmployeeId(employeeId, pageable);
 
         // Then
         assertAll(
-            () -> assertThat(result).hasSize(1),
-            () -> verify(contractRepository).findActiveByEmployeeId(employeeId),
+            () -> assertThat(result.getContent()).hasSize(1),
+            () -> verify(contractRepository).findActiveByEmployeeId(employeeId, pageable),
             () -> verify(contractMapper).toContractResponse(testContract)
         );
     }

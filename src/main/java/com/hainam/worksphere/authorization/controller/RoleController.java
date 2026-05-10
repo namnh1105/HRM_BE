@@ -80,15 +80,13 @@ public class RoleController {
 
     @GetMapping("/active")
     @RequirePermission(PermissionType.MANAGE_ROLES)
-    public ResponseEntity<ApiResponse<List<RoleResponse>>> getActiveRoles() {
+    public ResponseEntity<PaginatedApiResponse<RoleResponse>> getActiveRoles(
+            @PageableDefault(size = 20) Pageable pageable
+    ) {
         log.info("Fetching active roles");
-
-        List<Role> roles = roleService.getAllActiveRoles();
-        List<RoleResponse> response = roles.stream()
-                .map(roleMapper::toSimpleResponse)
-                .toList();
-
-        return ResponseEntity.ok(ApiResponse.success("Active roles retrieved successfully", response));
+        Page<Role> roles = roleService.getAllActiveRoles(pageable);
+        Page<RoleResponse> response = roles.map(roleMapper::toSimpleResponse);
+        return ResponseEntity.ok(PaginatedApiResponse.success("Active roles retrieved successfully", response));
     }
 
     @PutMapping("/{roleId}")
@@ -201,14 +199,13 @@ public class RoleController {
 
     @GetMapping("/search")
     @RequirePermission(PermissionType.MANAGE_ROLES)
-    public ResponseEntity<ApiResponse<List<RoleResponse>>> searchRoles(@RequestParam String query) {
+    public ResponseEntity<PaginatedApiResponse<RoleResponse>> searchRoles(
+            @RequestParam String query,
+            @PageableDefault(size = 20) Pageable pageable
+    ) {
         log.info("Searching roles with query: {}", query);
-
-        List<Role> roles = roleService.searchRoles(query);
-        List<RoleResponse> response = roles.stream()
-                .map(roleMapper::toSimpleResponse)
-                .toList();
-
-        return ResponseEntity.ok(ApiResponse.success("Roles search completed", response));
+        Page<Role> roles = roleService.searchRoles(query, pageable);
+        Page<RoleResponse> response = roles.map(roleMapper::toSimpleResponse);
+        return ResponseEntity.ok(PaginatedApiResponse.success("Roles search completed", response));
     }
 }

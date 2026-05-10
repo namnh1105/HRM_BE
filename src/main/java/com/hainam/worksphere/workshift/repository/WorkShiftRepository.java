@@ -1,6 +1,8 @@
 package com.hainam.worksphere.workshift.repository;
 
 import com.hainam.worksphere.workshift.domain.WorkShift;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -14,7 +16,7 @@ import java.util.UUID;
 public interface WorkShiftRepository extends JpaRepository<WorkShift, UUID> {
 
     @Query("SELECT ws FROM WorkShift ws WHERE ws.isDeleted = false")
-    List<WorkShift> findAllActive();
+    Page<WorkShift> findAllActive(Pageable pageable);
 
     @Query("SELECT ws FROM WorkShift ws WHERE ws.id = :id AND ws.isDeleted = false")
     Optional<WorkShift> findActiveById(@Param("id") UUID id);
@@ -26,8 +28,8 @@ public interface WorkShiftRepository extends JpaRepository<WorkShift, UUID> {
     boolean existsActiveByCode(@Param("code") String code);
 
     @Query("SELECT ws FROM WorkShift ws WHERE ws.isActive = true AND ws.isDeleted = false")
-    List<WorkShift> findAllActiveAndEnabled();
+    Page<WorkShift> findAllActiveAndEnabled(Pageable pageable);
 
     @Query("SELECT ws FROM WorkShift ws WHERE ws.store.id = :storeId AND ws.isDeleted = false")
-    List<WorkShift> findActiveByStoreId(@Param("storeId") UUID storeId);
+    Page<WorkShift> findActiveByStoreId(@Param("storeId") UUID storeId, Pageable pageable);
 }

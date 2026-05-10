@@ -2,6 +2,8 @@ package com.hainam.worksphere.employee.repository;
 
 import com.hainam.worksphere.employee.domain.Employee;
 import com.hainam.worksphere.employee.domain.EmploymentStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -15,7 +17,7 @@ import java.util.UUID;
 public interface EmployeeRepository extends JpaRepository<Employee, UUID> {
 
     @Query("SELECT e FROM Employee e WHERE e.isDeleted = false")
-    List<Employee> findAllActive();
+    Page<Employee> findAllActive(Pageable pageable);
 
     @Query("SELECT e FROM Employee e WHERE e.id = :id AND e.isDeleted = false")
     Optional<Employee> findActiveById(@Param("id") UUID id);
@@ -39,11 +41,11 @@ public interface EmployeeRepository extends JpaRepository<Employee, UUID> {
     boolean existsActiveByEmail(@Param("email") String email);
 
     @Query("SELECT e FROM Employee e WHERE e.department.id = :departmentId AND e.isDeleted = false")
-    List<Employee> findActiveByDepartmentId(@Param("departmentId") UUID departmentId);
+    Page<Employee> findActiveByDepartmentId(@Param("departmentId") UUID departmentId, Pageable pageable);
 
     @Query("SELECT e FROM Employee e WHERE e.employmentStatus = :status AND e.isDeleted = false")
-    List<Employee> findActiveByEmploymentStatus(@Param("status") EmploymentStatus status);
+    Page<Employee> findActiveByEmploymentStatus(@Param("status") EmploymentStatus status, Pageable pageable);
 
     @Query("SELECT e FROM Employee e WHERE e.store.id = :storeId AND e.isDeleted = false")
-    List<Employee> findActiveByStoreId(@Param("storeId") UUID storeId);
+    Page<Employee> findActiveByStoreId(@Param("storeId") UUID storeId, Pageable pageable);
 }

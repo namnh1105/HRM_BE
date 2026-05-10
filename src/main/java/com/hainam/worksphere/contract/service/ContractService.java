@@ -19,6 +19,8 @@ import com.hainam.worksphere.shared.audit.util.AuditContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -122,11 +124,9 @@ public class ContractService {
     }
 
     @Cacheable(value = CacheConfig.CONTRACT_CACHE, key = "'all'")
-    public List<ContractResponse> getAllContracts() {
-        return contractRepository.findAllActive()
-                .stream()
-                .map(contractMapper::toContractResponse)
-                .collect(Collectors.toList());
+    public Page<ContractResponse> getAllContracts(Pageable pageable) {
+        return contractRepository.findAllActive(pageable)
+                .map(contractMapper::toContractResponse);
     }
 
     @Cacheable(value = CacheConfig.CONTRACT_CACHE, key = "#id.toString()")
@@ -136,19 +136,15 @@ public class ContractService {
         return contractMapper.toContractResponse(contract);
     }
 
-    @Cacheable(value = CacheConfig.CONTRACT_CACHE, key = "'employee:' + #employeeId")
-    public List<ContractResponse> getByEmployeeId(UUID employeeId) {
-        return contractRepository.findActiveByEmployeeId(employeeId)
-                .stream()
-                .map(contractMapper::toContractResponse)
-                .collect(Collectors.toList());
+    @Cacheable(value = CacheConfig.CONTRACT_CACHE, key = "'employee:' + #employeeId + ':' + #pageable.pageNumber")
+    public Page<ContractResponse> getByEmployeeId(UUID employeeId, Pageable pageable) {
+        return contractRepository.findActiveByEmployeeId(employeeId, pageable)
+                .map(contractMapper::toContractResponse);
     }
 
     @Cacheable(value = CacheConfig.CONTRACT_CACHE, key = "'active'")
-    public List<ContractResponse> getActiveContracts() {
-        return contractRepository.findActiveByStatus(ContractStatus.ACTIVE)
-                .stream()
-                .map(contractMapper::toContractResponse)
-                .collect(Collectors.toList());
+    public Page<ContractResponse> getActiveContracts(Pageable pageable) {
+        return contractRepository.findActiveByStatus(ContractStatus.ACTIVE, pageable)
+                .map(contractMapper::toContractResponse);
     }
 }

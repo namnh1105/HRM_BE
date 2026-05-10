@@ -18,6 +18,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
 import java.util.Arrays;
@@ -112,17 +116,19 @@ class EmployeeServiceTest extends BaseUnitTest {
         // Given
         Employee anotherEmployee = TestFixtures.createTestEmployee("another@example.com");
         List<Employee> employees = Arrays.asList(testEmployee, anotherEmployee);
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Employee> employeePage = new PageImpl<>(employees, pageable, employees.size());
 
-        when(employeeRepository.findAllActive()).thenReturn(employees);
+        when(employeeRepository.findAllActive(pageable)).thenReturn(employeePage);
         when(employeeMapper.toEmployeeResponse(any(Employee.class))).thenReturn(testEmployeeResponse);
 
         // When
-        List<EmployeeResponse> result = employeeService.getAllActiveEmployees();
+        Page<EmployeeResponse> result = employeeService.getAllActiveEmployees(pageable);
 
         // Then
         assertAll(
-            () -> assertThat(result).hasSize(2),
-            () -> verify(employeeRepository).findAllActive(),
+            () -> assertThat(result.getContent()).hasSize(2),
+            () -> verify(employeeRepository).findAllActive(pageable),
             () -> verify(employeeMapper, times(2)).toEmployeeResponse(any(Employee.class))
         );
     }

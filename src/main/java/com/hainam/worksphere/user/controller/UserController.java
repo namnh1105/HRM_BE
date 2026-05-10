@@ -5,6 +5,7 @@ import com.hainam.worksphere.authorization.security.RequirePermission;
 import com.hainam.worksphere.shared.audit.annotation.Auditable;
 import com.hainam.worksphere.shared.constant.PermissionType;
 import com.hainam.worksphere.shared.dto.ApiResponse;
+import com.hainam.worksphere.shared.dto.PaginatedApiResponse;
 import com.hainam.worksphere.user.dto.request.ChangePasswordRequest;
 import com.hainam.worksphere.user.dto.request.UpdateProfileRequest;
 import com.hainam.worksphere.user.dto.response.UserResponse;
@@ -14,6 +15,9 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -33,19 +37,22 @@ public class UserController {
     @GetMapping
     @Operation(summary = "Get all active users")
     @RequirePermission(PermissionType.VIEW_USER)
-    public ResponseEntity<ApiResponse<List<UserResponse>>> getAllUsers() {
-        List<UserResponse> response = userService.getAllActiveUsers();
-        return ResponseEntity.ok(ApiResponse.success(response));
+    public ResponseEntity<PaginatedApiResponse<UserResponse>> getAllUsers(
+            @PageableDefault(size = 10) Pageable pageable
+    ) {
+        Page<UserResponse> response = userService.getAllActiveUsers(pageable);
+        return ResponseEntity.ok(PaginatedApiResponse.success(response));
     }
 
     @GetMapping("/all")
     @Operation(summary = "Get all users (optional include deleted)")
     @RequirePermission(PermissionType.VIEW_USER)
-    public ResponseEntity<ApiResponse<List<UserResponse>>> getAllUsers(
-            @RequestParam(defaultValue = "false") boolean includeDeleted
+    public ResponseEntity<PaginatedApiResponse<UserResponse>> getAllUsers(
+            @RequestParam(defaultValue = "false") boolean includeDeleted,
+            @PageableDefault(size = 10) Pageable pageable
     ) {
-        List<UserResponse> response = userService.getAllUsers(includeDeleted);
-        return ResponseEntity.ok(ApiResponse.success(response));
+        Page<UserResponse> response = userService.getAllUsers(includeDeleted, pageable);
+        return ResponseEntity.ok(PaginatedApiResponse.success(response));
     }
 
     @GetMapping("/me")

@@ -4,6 +4,7 @@ import com.hainam.worksphere.auth.security.UserPrincipal;
 import com.hainam.worksphere.authorization.security.RequirePermission;
 import com.hainam.worksphere.shared.constant.PermissionType;
 import com.hainam.worksphere.shared.dto.ApiResponse;
+import com.hainam.worksphere.shared.dto.PaginatedApiResponse;
 import com.hainam.worksphere.workshift.dto.request.CreateWorkShiftRequest;
 import com.hainam.worksphere.workshift.dto.request.UpdateWorkShiftRequest;
 import com.hainam.worksphere.workshift.dto.response.WorkShiftResponse;
@@ -13,6 +14,9 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -33,27 +37,32 @@ public class WorkShiftController {
     @GetMapping
     @Operation(summary = "Get all active work shifts")
     @RequirePermission(PermissionType.VIEW_WORK_SHIFT)
-    public ResponseEntity<ApiResponse<List<WorkShiftResponse>>> getAllWorkShifts() {
-        List<WorkShiftResponse> response = workShiftService.getAllActiveWorkShifts();
-        return ResponseEntity.ok(ApiResponse.success(response));
+    public ResponseEntity<PaginatedApiResponse<WorkShiftResponse>> getAllWorkShifts(
+            @PageableDefault(size = 10) Pageable pageable
+    ) {
+        Page<WorkShiftResponse> response = workShiftService.getAllActiveWorkShifts(pageable);
+        return ResponseEntity.ok(PaginatedApiResponse.success(response));
     }
 
     @GetMapping("/enabled")
     @Operation(summary = "Get all active and enabled work shifts")
     @RequirePermission(PermissionType.VIEW_WORK_SHIFT)
-    public ResponseEntity<ApiResponse<List<WorkShiftResponse>>> getAllEnabledWorkShifts() {
-        List<WorkShiftResponse> response = workShiftService.getAllActiveAndEnabledWorkShifts();
-        return ResponseEntity.ok(ApiResponse.success(response));
+    public ResponseEntity<PaginatedApiResponse<WorkShiftResponse>> getAllEnabledWorkShifts(
+            @PageableDefault(size = 10) Pageable pageable
+    ) {
+        Page<WorkShiftResponse> response = workShiftService.getAllActiveAndEnabledWorkShifts(pageable);
+        return ResponseEntity.ok(PaginatedApiResponse.success(response));
     }
 
     @GetMapping("/store/{storeId}")
     @Operation(summary = "Get work shifts by store")
     @RequirePermission(PermissionType.VIEW_WORK_SHIFT)
-    public ResponseEntity<ApiResponse<List<WorkShiftResponse>>> getWorkShiftsByStore(
-            @PathVariable UUID storeId
+    public ResponseEntity<PaginatedApiResponse<WorkShiftResponse>> getWorkShiftsByStore(
+            @PathVariable UUID storeId,
+            @PageableDefault(size = 10) Pageable pageable
     ) {
-        List<WorkShiftResponse> response = workShiftService.getWorkShiftsByStore(storeId);
-        return ResponseEntity.ok(ApiResponse.success(response));
+        Page<WorkShiftResponse> response = workShiftService.getWorkShiftsByStore(storeId, pageable);
+        return ResponseEntity.ok(PaginatedApiResponse.success(response));
     }
 
     @GetMapping("/{workShiftId}")

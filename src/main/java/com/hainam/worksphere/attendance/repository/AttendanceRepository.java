@@ -1,6 +1,8 @@
 package com.hainam.worksphere.attendance.repository;
 
 import com.hainam.worksphere.attendance.domain.Attendance;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -27,7 +29,7 @@ public interface AttendanceRepository extends JpaRepository<Attendance, UUID> {
     Optional<Attendance> findActiveByEmployeeIdAndWorkDate(@Param("employeeId") UUID employeeId, @Param("workDate") LocalDate workDate);
 
     @Query("SELECT a FROM Attendance a WHERE a.employee.id = :employeeId AND a.workDate BETWEEN :startDate AND :endDate AND a.isDeleted = false")
-    List<Attendance> findActiveByEmployeeIdAndWorkDateBetween(@Param("employeeId") UUID employeeId, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+    Page<Attendance> findActiveByEmployeeIdAndWorkDateBetween(@Param("employeeId") UUID employeeId, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate, Pageable pageable);
 
     @Query("SELECT CASE WHEN COUNT(a) > 0 THEN true ELSE false END FROM Attendance a WHERE a.employee.id = :employeeId AND a.workDate = :workDate AND a.isDeleted = false")
     boolean existsActiveByEmployeeIdAndWorkDate(@Param("employeeId") UUID employeeId, @Param("workDate") LocalDate workDate);
@@ -47,11 +49,11 @@ public interface AttendanceRepository extends JpaRepository<Attendance, UUID> {
     );
 
     @Query("SELECT a FROM Attendance a WHERE a.store.id = :storeId AND a.isDeleted = false")
-    List<Attendance> findActiveByStoreId(@Param("storeId") UUID storeId);
+    Page<Attendance> findActiveByStoreId(@Param("storeId") UUID storeId, Pageable pageable);
 
     @Query("SELECT a FROM Attendance a WHERE a.store.id = :storeId AND a.workDate BETWEEN :startDate AND :endDate AND a.isDeleted = false")
-    List<Attendance> findActiveByStoreIdAndWorkDateBetween(@Param("storeId") UUID storeId, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+    Page<Attendance> findActiveByStoreIdAndWorkDateBetween(@Param("storeId") UUID storeId, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate, Pageable pageable);
 
     @Query("SELECT a FROM Attendance a WHERE a.store.id = :storeId AND a.workDate = :workDate AND a.isDeleted = false")
-    List<Attendance> findActiveByStoreIdAndWorkDate(@Param("storeId") UUID storeId, @Param("workDate") LocalDate workDate);
+    Page<Attendance> findActiveByStoreIdAndWorkDate(@Param("storeId") UUID storeId, @Param("workDate") LocalDate workDate, Pageable pageable);
 }

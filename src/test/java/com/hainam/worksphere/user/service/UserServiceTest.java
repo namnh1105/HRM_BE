@@ -18,6 +18,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.Instant;
@@ -162,18 +166,20 @@ class UserServiceTest extends BaseUnitTest {
     void shouldGetAllActiveUsersSuccessfully() {
         // Given
         List<User> users = Arrays.asList(testUser, TestFixtures.createTestUser("another@test.com"));
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<User> userPage = new PageImpl<>(users, pageable, users.size());
 
-        when(userRepository.findAllActive()).thenReturn(users);
+        when(userRepository.findAllActive(pageable)).thenReturn(userPage);
         when(employeeRepository.findByUserId(any(UUID.class))).thenReturn(Optional.of(testEmployee));
         when(userMapper.toUserResponse(any(User.class), any(Employee.class))).thenReturn(testUserResponse);
 
         // When
-        List<UserResponse> result = userService.getAllActiveUsers();
+        Page<UserResponse> result = userService.getAllActiveUsers(pageable);
 
         // Then
         assertAll(
-            () -> assertThat(result).hasSize(2),
-            () -> verify(userRepository).findAllActive(),
+            () -> assertThat(result.getContent()).hasSize(2),
+            () -> verify(userRepository).findAllActive(pageable),
             () -> verify(employeeRepository, times(2)).findByUserId(any(UUID.class)),
             () -> verify(userMapper, times(2)).toUserResponse(any(User.class), any(Employee.class))
         );

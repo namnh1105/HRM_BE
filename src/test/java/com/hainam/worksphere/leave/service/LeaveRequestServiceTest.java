@@ -20,6 +20,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
 import java.time.Instant;
@@ -287,23 +291,25 @@ class LeaveRequestServiceTest extends BaseUnitTest {
     @DisplayName("Should get my leave requests successfully")
     void shouldGetMyLeaveRequestsSuccessfully() {
         // Given
+        Pageable pageable = PageRequest.of(0, 10);
         LeaveRequest leaveRequest1 = TestFixtures.createTestLeaveRequest();
         leaveRequest1.setEmployee(testEmployee);
         LeaveRequest leaveRequest2 = TestFixtures.createTestLeaveRequest();
         leaveRequest2.setEmployee(testEmployee);
 
         List<LeaveRequest> leaveRequests = Arrays.asList(leaveRequest1, leaveRequest2);
+        Page<LeaveRequest> leaveRequestPage = new PageImpl<>(leaveRequests, pageable, leaveRequests.size());
 
-        when(leaveRequestRepository.findActiveByEmployeeId(employeeId)).thenReturn(leaveRequests);
+        when(leaveRequestRepository.findActiveByEmployeeId(eq(employeeId), eq(pageable))).thenReturn(leaveRequestPage);
         when(leaveRequestMapper.toLeaveRequestResponse(any(LeaveRequest.class))).thenReturn(testLeaveRequestResponse);
 
         // When
-        List<LeaveRequestResponse> result = leaveRequestService.getMyLeaveRequests(employeeId);
+        Page<LeaveRequestResponse> result = leaveRequestService.getMyLeaveRequests(employeeId, pageable);
 
         // Then
         assertAll(
-            () -> assertThat(result).hasSize(2),
-            () -> verify(leaveRequestRepository).findActiveByEmployeeId(employeeId),
+            () -> assertThat(result.getContent()).hasSize(2),
+            () -> verify(leaveRequestRepository).findActiveByEmployeeId(eq(employeeId), eq(pageable)),
             () -> verify(leaveRequestMapper, times(2)).toLeaveRequestResponse(any(LeaveRequest.class))
         );
     }
@@ -312,21 +318,23 @@ class LeaveRequestServiceTest extends BaseUnitTest {
     @DisplayName("Should get pending leave requests successfully")
     void shouldGetPendingLeaveRequestsSuccessfully() {
         // Given
+        Pageable pageable = PageRequest.of(0, 10);
         LeaveRequest pendingRequest1 = TestFixtures.createTestLeaveRequest();
         LeaveRequest pendingRequest2 = TestFixtures.createTestLeaveRequest();
 
         List<LeaveRequest> pendingRequests = Arrays.asList(pendingRequest1, pendingRequest2);
+        Page<LeaveRequest> pendingRequestPage = new PageImpl<>(pendingRequests, pageable, pendingRequests.size());
 
-        when(leaveRequestRepository.findActiveByStatus(LeaveRequestStatus.PENDING)).thenReturn(pendingRequests);
+        when(leaveRequestRepository.findActiveByStatus(eq(LeaveRequestStatus.PENDING), eq(pageable))).thenReturn(pendingRequestPage);
         when(leaveRequestMapper.toLeaveRequestResponse(any(LeaveRequest.class))).thenReturn(testLeaveRequestResponse);
 
         // When
-        List<LeaveRequestResponse> result = leaveRequestService.getPendingLeaveRequests();
+        Page<LeaveRequestResponse> result = leaveRequestService.getPendingLeaveRequests(pageable);
 
         // Then
         assertAll(
-            () -> assertThat(result).hasSize(2),
-            () -> verify(leaveRequestRepository).findActiveByStatus(LeaveRequestStatus.PENDING),
+            () -> assertThat(result.getContent()).hasSize(2),
+            () -> verify(leaveRequestRepository).findActiveByStatus(eq(LeaveRequestStatus.PENDING), eq(pageable)),
             () -> verify(leaveRequestMapper, times(2)).toLeaveRequestResponse(any(LeaveRequest.class))
         );
     }

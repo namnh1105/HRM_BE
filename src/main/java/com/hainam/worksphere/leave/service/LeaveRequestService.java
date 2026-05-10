@@ -21,6 +21,8 @@ import com.hainam.worksphere.shared.audit.util.AuditContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -142,19 +144,15 @@ public class LeaveRequestService {
     }
 
     @Cacheable(value = CacheConfig.LEAVE_REQUEST_CACHE, key = "'employee:' + #employeeId")
-    public List<LeaveRequestResponse> getMyLeaveRequests(UUID employeeId) {
-        return leaveRequestRepository.findActiveByEmployeeId(employeeId)
-                .stream()
-                .map(leaveRequestMapper::toLeaveRequestResponse)
-                .collect(Collectors.toList());
+    public Page<LeaveRequestResponse> getMyLeaveRequests(UUID employeeId, Pageable pageable) {
+        return leaveRequestRepository.findActiveByEmployeeId(employeeId, pageable)
+                .map(leaveRequestMapper::toLeaveRequestResponse);
     }
 
     @Cacheable(value = CacheConfig.LEAVE_REQUEST_CACHE, key = "'pending'")
-    public List<LeaveRequestResponse> getPendingLeaveRequests() {
-        return leaveRequestRepository.findActiveByStatus(LeaveRequestStatus.PENDING)
-                .stream()
-                .map(leaveRequestMapper::toLeaveRequestResponse)
-                .collect(Collectors.toList());
+    public Page<LeaveRequestResponse> getPendingLeaveRequests(Pageable pageable) {
+        return leaveRequestRepository.findActiveByStatus(LeaveRequestStatus.PENDING, pageable)
+                .map(leaveRequestMapper::toLeaveRequestResponse);
     }
 
     @Cacheable(value = CacheConfig.LEAVE_REQUEST_CACHE, key = "#id.toString()")

@@ -23,6 +23,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -215,12 +217,10 @@ public class AttendanceService {
 
     @Cacheable(value = CacheConfig.ATTENDANCE_CACHE,
                key = "'history:' + #employeeId + ':' + #startDate + ':' + #endDate")
-    public List<AttendanceResponse> getAttendanceHistory(UUID employeeId,
-                                                         LocalDate startDate, LocalDate endDate) {
-        return attendanceRepository.findActiveByEmployeeIdAndWorkDateBetween(employeeId, startDate, endDate)
-                .stream()
-                .map(attendanceMapper::toAttendanceResponse)
-                .collect(Collectors.toList());
+    public Page<AttendanceResponse> getAttendanceHistory(UUID employeeId,
+                                                         LocalDate startDate, LocalDate endDate, Pageable pageable) {
+        return attendanceRepository.findActiveByEmployeeIdAndWorkDateBetween(employeeId, startDate, endDate, pageable)
+                .map(attendanceMapper::toAttendanceResponse);
     }
 
     @Cacheable(value = CacheConfig.ATTENDANCE_CACHE, key = "'today:' + #employeeId")
@@ -229,26 +229,20 @@ public class AttendanceService {
                 .map(attendanceMapper::toAttendanceResponse);
     }
 
-    public List<AttendanceResponse> getAttendancesByStore(UUID storeId) {
-        return attendanceRepository.findActiveByStoreId(storeId)
-                .stream()
-                .map(attendanceMapper::toAttendanceResponse)
-                .collect(Collectors.toList());
+    public Page<AttendanceResponse> getAttendancesByStore(UUID storeId, Pageable pageable) {
+        return attendanceRepository.findActiveByStoreId(storeId, pageable)
+                .map(attendanceMapper::toAttendanceResponse);
     }
 
-    public List<AttendanceResponse> getAttendancesByStoreAndDateRange(UUID storeId,
-                                                                      LocalDate startDate, LocalDate endDate) {
-        return attendanceRepository.findActiveByStoreIdAndWorkDateBetween(storeId, startDate, endDate)
-                .stream()
-                .map(attendanceMapper::toAttendanceResponse)
-                .collect(Collectors.toList());
+    public Page<AttendanceResponse> getAttendancesByStoreAndDateRange(UUID storeId,
+                                                                       LocalDate startDate, LocalDate endDate, Pageable pageable) {
+        return attendanceRepository.findActiveByStoreIdAndWorkDateBetween(storeId, startDate, endDate, pageable)
+                .map(attendanceMapper::toAttendanceResponse);
     }
 
-    public List<AttendanceResponse> getAttendancesByStoreAndDate(UUID storeId, LocalDate workDate) {
-        return attendanceRepository.findActiveByStoreIdAndWorkDate(storeId, workDate)
-                .stream()
-                .map(attendanceMapper::toAttendanceResponse)
-                .collect(Collectors.toList());
+    public Page<AttendanceResponse> getAttendancesByStoreAndDate(UUID storeId, LocalDate workDate, Pageable pageable) {
+        return attendanceRepository.findActiveByStoreIdAndWorkDate(storeId, workDate, pageable)
+                .map(attendanceMapper::toAttendanceResponse);
     }
 
     // ── Shift matching ──────────────────────────────────────────────

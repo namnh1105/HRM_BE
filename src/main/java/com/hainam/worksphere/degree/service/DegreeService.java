@@ -16,6 +16,8 @@ import com.hainam.worksphere.shared.exception.EmployeeNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -102,11 +104,9 @@ public class DegreeService {
     }
 
     @Cacheable(value = CacheConfig.DEGREE_CACHE, key = "'all'")
-    public List<DegreeResponse> getAllDegrees() {
-        return degreeRepository.findAllActive()
-                .stream()
-                .map(degreeMapper::toDegreeResponse)
-                .collect(Collectors.toList());
+    public Page<DegreeResponse> getAllDegrees(Pageable pageable) {
+        return degreeRepository.findAllActive(pageable)
+                .map(degreeMapper::toDegreeResponse);
     }
 
     @Cacheable(value = CacheConfig.DEGREE_CACHE, key = "#id.toString()")
@@ -117,10 +117,8 @@ public class DegreeService {
     }
 
     @Cacheable(value = CacheConfig.DEGREE_CACHE, key = "'employee:' + #employeeId.toString()")
-    public List<DegreeResponse> getByEmployeeId(UUID employeeId) {
-        return degreeRepository.findActiveByEmployeeId(employeeId)
-                .stream()
-                .map(degreeMapper::toDegreeResponse)
-                .collect(Collectors.toList());
+    public Page<DegreeResponse> getByEmployeeId(UUID employeeId, Pageable pageable) {
+        return degreeRepository.findActiveByEmployeeId(employeeId, pageable)
+                .map(degreeMapper::toDegreeResponse);
     }
 }

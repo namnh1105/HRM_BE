@@ -10,12 +10,16 @@ import com.hainam.worksphere.employee.dto.response.EmployeeResponse;
 import com.hainam.worksphere.employee.service.EmployeeService;
 import com.hainam.worksphere.shared.constant.PermissionType;
 import com.hainam.worksphere.shared.dto.ApiResponse;
+import com.hainam.worksphere.shared.dto.PaginatedApiResponse;
 import com.hainam.worksphere.shared.util.IpAddressUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -100,58 +104,63 @@ public class AttendanceController {
     @GetMapping("/me/history")
     @Operation(summary = "Get current employee's attendance history")
     @RequirePermission(PermissionType.VIEW_ATTENDANCE)
-    public ResponseEntity<ApiResponse<List<AttendanceResponse>>> getMyAttendanceHistory(
+    public ResponseEntity<PaginatedApiResponse<AttendanceResponse>> getMyAttendanceHistory(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
             @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
+            @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @PageableDefault(size = 10) Pageable pageable
     ) {
         EmployeeResponse employee = employeeService.getEmployeeByUserId(userPrincipal.getId());
-        List<AttendanceResponse> response = attendanceService.getAttendanceHistory(employee.getId(), startDate, endDate);
-        return ResponseEntity.ok(ApiResponse.success(response));
+        Page<AttendanceResponse> response = attendanceService.getAttendanceHistory(employee.getId(), startDate, endDate, pageable);
+        return ResponseEntity.ok(PaginatedApiResponse.success(response));
     }
 
     @GetMapping("/employee/{employeeId}/history")
     @Operation(summary = "Get employee's attendance history (admin)")
     @RequirePermission(PermissionType.VIEW_ATTENDANCE)
-    public ResponseEntity<ApiResponse<List<AttendanceResponse>>> getEmployeeAttendanceHistory(
+    public ResponseEntity<PaginatedApiResponse<AttendanceResponse>> getEmployeeAttendanceHistory(
             @PathVariable UUID employeeId,
             @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
+            @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @PageableDefault(size = 10) Pageable pageable
     ) {
-        List<AttendanceResponse> response = attendanceService.getAttendanceHistory(employeeId, startDate, endDate);
-        return ResponseEntity.ok(ApiResponse.success(response));
+        Page<AttendanceResponse> response = attendanceService.getAttendanceHistory(employeeId, startDate, endDate, pageable);
+        return ResponseEntity.ok(PaginatedApiResponse.success(response));
     }
 
     @GetMapping("/store/{storeId}")
     @Operation(summary = "Get all attendances by store")
     @RequirePermission(PermissionType.VIEW_ATTENDANCE)
-    public ResponseEntity<ApiResponse<List<AttendanceResponse>>> getAttendancesByStore(
-            @PathVariable UUID storeId
+    public ResponseEntity<PaginatedApiResponse<AttendanceResponse>> getAttendancesByStore(
+            @PathVariable UUID storeId,
+            @PageableDefault(size = 10) Pageable pageable
     ) {
-        List<AttendanceResponse> response = attendanceService.getAttendancesByStore(storeId);
-        return ResponseEntity.ok(ApiResponse.success(response));
+        Page<AttendanceResponse> response = attendanceService.getAttendancesByStore(storeId, pageable);
+        return ResponseEntity.ok(PaginatedApiResponse.success(response));
     }
 
     @GetMapping("/store/{storeId}/history")
     @Operation(summary = "Get attendance history by store and date range")
     @RequirePermission(PermissionType.VIEW_ATTENDANCE)
-    public ResponseEntity<ApiResponse<List<AttendanceResponse>>> getAttendancesByStoreAndDateRange(
+    public ResponseEntity<PaginatedApiResponse<AttendanceResponse>> getAttendancesByStoreAndDateRange(
             @PathVariable UUID storeId,
             @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
+            @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @PageableDefault(size = 10) Pageable pageable
     ) {
-        List<AttendanceResponse> response = attendanceService.getAttendancesByStoreAndDateRange(storeId, startDate, endDate);
-        return ResponseEntity.ok(ApiResponse.success(response));
+        Page<AttendanceResponse> response = attendanceService.getAttendancesByStoreAndDateRange(storeId, startDate, endDate, pageable);
+        return ResponseEntity.ok(PaginatedApiResponse.success(response));
     }
 
     @GetMapping("/store/{storeId}/today")
     @Operation(summary = "Get today's attendances by store")
     @RequirePermission(PermissionType.VIEW_ATTENDANCE)
-    public ResponseEntity<ApiResponse<List<AttendanceResponse>>> getAttendancesByStoreToday(
-            @PathVariable UUID storeId
+    public ResponseEntity<PaginatedApiResponse<AttendanceResponse>> getAttendancesByStoreToday(
+            @PathVariable UUID storeId,
+            @PageableDefault(size = 10) Pageable pageable
     ) {
-        List<AttendanceResponse> response = attendanceService.getAttendancesByStoreAndDate(storeId, LocalDate.now());
-        return ResponseEntity.ok(ApiResponse.success(response));
+        Page<AttendanceResponse> response = attendanceService.getAttendancesByStoreAndDate(storeId, LocalDate.now(), pageable);
+        return ResponseEntity.ok(PaginatedApiResponse.success(response));
     }
 
 }

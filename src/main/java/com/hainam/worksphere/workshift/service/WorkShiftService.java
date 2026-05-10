@@ -15,6 +15,8 @@ import com.hainam.worksphere.workshift.repository.WorkShiftRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,25 +44,19 @@ public class WorkShiftService {
         return workShiftMapper.toWorkShiftResponse(workShift);
     }
 
-    public List<WorkShiftResponse> getAllActiveWorkShifts() {
-        return workShiftRepository.findAllActive()
-                .stream()
-                .map(workShiftMapper::toWorkShiftResponse)
-                .collect(Collectors.toList());
+    public Page<WorkShiftResponse> getAllActiveWorkShifts(Pageable pageable) {
+        return workShiftRepository.findAllActive(pageable)
+                .map(workShiftMapper::toWorkShiftResponse);
     }
 
-    public List<WorkShiftResponse> getAllActiveAndEnabledWorkShifts() {
-        return workShiftRepository.findAllActiveAndEnabled()
-                .stream()
-                .map(workShiftMapper::toWorkShiftResponse)
-                .collect(Collectors.toList());
+    public Page<WorkShiftResponse> getAllActiveAndEnabledWorkShifts(Pageable pageable) {
+        return workShiftRepository.findAllActiveAndEnabled(pageable)
+                .map(workShiftMapper::toWorkShiftResponse);
     }
 
-    public List<WorkShiftResponse> getWorkShiftsByStore(UUID storeId) {
-        return workShiftRepository.findActiveByStoreId(storeId)
-                .stream()
-                .map(workShiftMapper::toWorkShiftResponse)
-                .collect(Collectors.toList());
+    public Page<WorkShiftResponse> getWorkShiftsByStore(UUID storeId, Pageable pageable) {
+        return workShiftRepository.findActiveByStoreId(storeId, pageable)
+                .map(workShiftMapper::toWorkShiftResponse);
     }
 
     @Transactional

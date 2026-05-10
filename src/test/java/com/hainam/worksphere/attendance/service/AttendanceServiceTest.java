@@ -20,6 +20,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
@@ -275,6 +279,7 @@ class AttendanceServiceTest extends BaseUnitTest {
         // Given
         LocalDate startDate = LocalDate.now().minusDays(7);
         LocalDate endDate = LocalDate.now();
+        Pageable pageable = PageRequest.of(0, 10);
 
         Attendance attendance1 = TestFixtures.createTestAttendance();
         attendance1.setEmployee(testEmployee);
@@ -282,18 +287,19 @@ class AttendanceServiceTest extends BaseUnitTest {
         attendance2.setEmployee(testEmployee);
 
         List<Attendance> attendances = Arrays.asList(attendance1, attendance2);
+        Page<Attendance> attendancePage = new PageImpl<>(attendances, pageable, attendances.size());
 
-        when(attendanceRepository.findActiveByEmployeeIdAndWorkDateBetween(employeeId, startDate, endDate))
-                .thenReturn(attendances);
+        when(attendanceRepository.findActiveByEmployeeIdAndWorkDateBetween(eq(employeeId), eq(startDate), eq(endDate), eq(pageable)))
+                .thenReturn(attendancePage);
         when(attendanceMapper.toAttendanceResponse(any(Attendance.class))).thenReturn(testAttendanceResponse);
 
         // When
-        List<AttendanceResponse> result = attendanceService.getAttendanceHistory(employeeId, startDate, endDate);
+        Page<AttendanceResponse> result = attendanceService.getAttendanceHistory(employeeId, startDate, endDate, pageable);
 
         // Then
         assertAll(
-            () -> assertThat(result).hasSize(2),
-            () -> verify(attendanceRepository).findActiveByEmployeeIdAndWorkDateBetween(employeeId, startDate, endDate),
+            () -> assertThat(result.getContent()).hasSize(2),
+            () -> verify(attendanceRepository).findActiveByEmployeeIdAndWorkDateBetween(eq(employeeId), eq(startDate), eq(endDate), eq(pageable)),
             () -> verify(attendanceMapper, times(2)).toAttendanceResponse(any(Attendance.class))
         );
     }
