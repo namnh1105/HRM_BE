@@ -1,6 +1,7 @@
 package com.hainam.worksphere.workshift.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -15,6 +16,7 @@ import java.time.LocalTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class CreateWorkShiftRequest {
 
     @NotBlank(message = "Work shift name is required")
@@ -38,6 +40,8 @@ public class CreateWorkShiftRequest {
     private String description;
 
     private Boolean isNightShift;
+
+    private Boolean isActive;
 
     private java.util.UUID storeId;
 }

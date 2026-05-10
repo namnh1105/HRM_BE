@@ -32,4 +32,16 @@ public interface WorkShiftRepository extends JpaRepository<WorkShift, UUID> {
 
     @Query("SELECT ws FROM WorkShift ws WHERE ws.store.id = :storeId AND ws.isDeleted = false")
     Page<WorkShift> findActiveByStoreId(@Param("storeId") UUID storeId, Pageable pageable);
+
+    @Query("SELECT COUNT(ws) FROM WorkShift ws WHERE ws.isDeleted = false")
+    long countTotal();
+
+    @Query("SELECT COUNT(ws) FROM WorkShift ws WHERE ws.isActive = true AND ws.isDeleted = false")
+    long countActive();
+
+    @Query("SELECT COUNT(ws) FROM WorkShift ws WHERE ws.isActive = false AND ws.isDeleted = false")
+    long countInactive();
+
+    @Query("SELECT COUNT(ws) FROM WorkShift ws WHERE ws.isDeleted = true")
+    long countDeleted();
 }

@@ -5,6 +5,7 @@ import com.hainam.worksphere.authorization.security.RequirePermission;
 import com.hainam.worksphere.shared.constant.PermissionType;
 import com.hainam.worksphere.shared.dto.ApiResponse;
 import com.hainam.worksphere.shared.dto.PaginatedApiResponse;
+import com.hainam.worksphere.shared.dto.ResourceStatsResponse;
 import com.hainam.worksphere.workshift.dto.request.CreateWorkShiftRequest;
 import com.hainam.worksphere.workshift.dto.request.UpdateWorkShiftRequest;
 import com.hainam.worksphere.workshift.dto.response.WorkShiftResponse;
@@ -107,5 +108,13 @@ public class WorkShiftController {
     ) {
         workShiftService.softDeleteWorkShift(workShiftId, userPrincipal.getId());
         return ResponseEntity.ok(ApiResponse.success("Work shift deleted successfully", null));
+    }
+
+    @GetMapping("/stats")
+    @Operation(summary = "Get work shift statistics")
+    @RequirePermission(PermissionType.VIEW_WORK_SHIFT)
+    public ResponseEntity<ApiResponse<ResourceStatsResponse>> getWorkShiftStats() {
+        ResourceStatsResponse stats = workShiftService.getWorkShiftStats();
+        return ResponseEntity.ok(ApiResponse.success(stats));
     }
 }

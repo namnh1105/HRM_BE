@@ -4,6 +4,7 @@ import com.hainam.worksphere.shared.config.CacheConfig;
 import com.hainam.worksphere.shared.exception.StoreNotFoundException;
 import com.hainam.worksphere.shared.exception.ValidationException;
 import com.hainam.worksphere.shared.exception.WorkShiftNotFoundException;
+import com.hainam.worksphere.shared.dto.ResourceStatsResponse;
 import com.hainam.worksphere.store.domain.Store;
 import com.hainam.worksphere.store.repository.StoreRepository;
 import com.hainam.worksphere.workshift.domain.WorkShift;
@@ -156,5 +157,14 @@ public class WorkShiftService {
 
         double breakDuration = workShift.getBreakDuration() != null ? workShift.getBreakDuration() : 1.0;
         return Math.round((totalMinutes / 60.0 - breakDuration) * 100.0) / 100.0;
+    }
+
+    public ResourceStatsResponse getWorkShiftStats() {
+        return ResourceStatsResponse.builder()
+                .total(workShiftRepository.countTotal())
+                .active(workShiftRepository.countActive())
+                .inactive(workShiftRepository.countInactive())
+                .deleted(workShiftRepository.countDeleted())
+                .build();
     }
 }

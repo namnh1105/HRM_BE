@@ -17,7 +17,6 @@ public interface WorkShiftMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "totalHours", ignore = true)
     @Mapping(target = "store", ignore = true)
-    @Mapping(target = "isActive", constant = "true")
     @Mapping(target = "isDeleted", constant = "false")
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
