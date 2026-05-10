@@ -16,6 +16,8 @@ import com.hainam.worksphere.authorization.service.RoleService;
 import com.hainam.worksphere.shared.constant.PermissionType;
 import com.hainam.worksphere.shared.dto.ApiResponse;
 import com.hainam.worksphere.shared.dto.PaginatedApiResponse;
+import com.hainam.worksphere.shared.dto.ResourceStatsResponse;
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -81,8 +83,7 @@ public class RoleController {
     @GetMapping("/active")
     @RequirePermission(PermissionType.MANAGE_ROLES)
     public ResponseEntity<PaginatedApiResponse<RoleResponse>> getActiveRoles(
-            @PageableDefault(size = 20) Pageable pageable
-    ) {
+            @PageableDefault(size = 20) Pageable pageable) {
         log.info("Fetching active roles");
         Page<Role> roles = roleService.getAllActiveRoles(pageable);
         Page<RoleResponse> response = roles.map(roleMapper::toSimpleResponse);
@@ -201,13 +202,13 @@ public class RoleController {
     @RequirePermission(PermissionType.MANAGE_ROLES)
     public ResponseEntity<PaginatedApiResponse<RoleResponse>> searchRoles(
             @RequestParam String query,
-            @PageableDefault(size = 20) Pageable pageable
-    ) {
+            @PageableDefault(size = 20) Pageable pageable) {
         log.info("Searching roles with query: {}", query);
         Page<Role> roles = roleService.searchRoles(query, pageable);
         Page<RoleResponse> response = roles.map(roleMapper::toSimpleResponse);
         return ResponseEntity.ok(PaginatedApiResponse.success("Roles search completed", response));
     }
+
     @GetMapping("/stats")
     @RequirePermission(PermissionType.MANAGE_ROLES)
     public ResponseEntity<ApiResponse<ResourceStatsResponse>> getRoleStats() {
