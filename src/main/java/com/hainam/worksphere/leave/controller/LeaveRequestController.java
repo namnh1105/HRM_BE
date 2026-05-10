@@ -4,6 +4,7 @@ import com.hainam.worksphere.auth.security.UserPrincipal;
 import com.hainam.worksphere.authorization.security.RequirePermission;
 import com.hainam.worksphere.employee.dto.response.EmployeeResponse;
 import com.hainam.worksphere.employee.service.EmployeeService;
+import com.hainam.worksphere.leave.domain.LeaveRequestStatus;
 import com.hainam.worksphere.leave.dto.request.ApproveLeaveRequestDto;
 import com.hainam.worksphere.leave.dto.request.CreateLeaveRequestDto;
 import com.hainam.worksphere.leave.dto.response.LeaveRequestResponse;
@@ -48,6 +49,17 @@ public class LeaveRequestController {
         EmployeeResponse employee = employeeService.getEmployeeByUserId(userPrincipal.getId());
         LeaveRequestResponse response = leaveRequestService.createLeaveRequest(employee.getId(), request);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("Leave request created successfully", response));
+    }
+
+    @GetMapping
+    @Operation(summary = "Get all leave requests with optional status filter")
+    @RequirePermission(PermissionType.VIEW_LEAVE_REQUEST)
+    public ResponseEntity<PaginatedApiResponse<LeaveRequestResponse>> getAllLeaveRequests(
+            @RequestParam(required = false) LeaveRequestStatus status,
+            @PageableDefault(size = 10) Pageable pageable
+    ) {
+        Page<LeaveRequestResponse> response = leaveRequestService.getAllLeaveRequests(status, pageable);
+        return ResponseEntity.ok(PaginatedApiResponse.success(response));
     }
 
     @GetMapping("/me")

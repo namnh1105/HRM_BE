@@ -43,12 +43,16 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     @Query("SELECT u FROM User u WHERE u.id = :id AND u.isDeleted = true")
     Optional<User> findDeletedById(@Param("id") UUID id);
 
-    long countByIsDeletedFalse();
-    
-    long countByIsEnabledTrueAndIsDeletedFalse();
-    
-    long countByIsEnabledFalseAndIsDeletedFalse();
-    
-    long countByIsDeletedTrue();
+    @Query("SELECT COUNT(u) FROM User u")
+    long countTotal();
+
+    @Query("SELECT COUNT(u) FROM User u WHERE u.isEnabled = true AND u.isDeleted = false")
+    long countActive();
+
+    @Query("SELECT COUNT(u) FROM User u WHERE u.isEnabled = false AND u.isDeleted = false")
+    long countInactive();
+
+    @Query("SELECT COUNT(u) FROM User u WHERE u.isDeleted = true")
+    long countDeleted();
 }
 

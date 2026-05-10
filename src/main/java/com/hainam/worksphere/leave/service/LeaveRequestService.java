@@ -163,6 +163,15 @@ public class LeaveRequestService {
         return leaveRequestMapper.toLeaveRequestResponse(leaveRequest);
     }
 
+    public Page<LeaveRequestResponse> getAllLeaveRequests(LeaveRequestStatus status, Pageable pageable) {
+        if (status != null) {
+            return leaveRequestRepository.findActiveByStatus(status, pageable)
+                    .map(leaveRequestMapper::toLeaveRequestResponse);
+        }
+        return leaveRequestRepository.findAllActive(pageable)
+                .map(leaveRequestMapper::toLeaveRequestResponse);
+    }
+
     public ResourceStatsResponse getLeaveRequestStats() {
         return ResourceStatsResponse.builder()
                 .total(leaveRequestRepository.count())
