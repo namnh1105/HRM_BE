@@ -17,9 +17,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
@@ -33,14 +35,15 @@ public class DegreeController {
 
     private final DegreeService degreeService;
 
-    @PostMapping
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Create a new degree")
     @RequirePermission(PermissionType.CREATE_DEGREE)
     public ResponseEntity<ApiResponse<DegreeResponse>> createDegree(
-            @Valid @RequestBody CreateDegreeRequest request,
+            @Valid @ModelAttribute CreateDegreeRequest request,
+            @RequestPart(value = "file", required = false) MultipartFile file,
             @AuthenticationPrincipal UserPrincipal userPrincipal
     ) {
-        DegreeResponse response = degreeService.createDegree(request, userPrincipal.getId());
+        DegreeResponse response = degreeService.createDegree(request, file, userPrincipal.getId());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Degree created successfully", response));
     }
@@ -76,15 +79,16 @@ public class DegreeController {
         return ResponseEntity.ok(PaginatedApiResponse.success(response));
     }
 
-    @PutMapping("/{id}")
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Update a degree")
     @RequirePermission(PermissionType.UPDATE_DEGREE)
     public ResponseEntity<ApiResponse<DegreeResponse>> updateDegree(
             @PathVariable UUID id,
-            @Valid @RequestBody CreateDegreeRequest request,
+            @Valid @ModelAttribute CreateDegreeRequest request,
+            @RequestPart(value = "file", required = false) MultipartFile file,
             @AuthenticationPrincipal UserPrincipal userPrincipal
     ) {
-        DegreeResponse response = degreeService.updateDegree(id, request, userPrincipal.getId());
+        DegreeResponse response = degreeService.updateDegree(id, request, file, userPrincipal.getId());
         return ResponseEntity.ok(ApiResponse.success("Degree updated successfully", response));
     }
 

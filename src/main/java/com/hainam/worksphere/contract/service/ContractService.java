@@ -14,6 +14,7 @@ import com.hainam.worksphere.shared.dto.ResourceStatsResponse;
 import com.hainam.worksphere.shared.exception.ContractNotFoundException;
 import com.hainam.worksphere.shared.exception.EmployeeNotFoundException;
 import com.hainam.worksphere.shared.exception.ValidationException;
+import com.hainam.worksphere.shared.service.CloudinaryService;
 import com.hainam.worksphere.shared.audit.annotation.AuditAction;
 import com.hainam.worksphere.shared.audit.domain.ActionType;
 import com.hainam.worksphere.shared.audit.util.AuditContext;
@@ -24,6 +25,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Instant;
 import java.util.List;
@@ -37,11 +39,12 @@ public class ContractService {
     private final ContractRepository contractRepository;
     private final EmployeeRepository employeeRepository;
     private final ContractMapper contractMapper;
+    private final CloudinaryService cloudinaryService;
 
     @Transactional
     @CacheEvict(value = CacheConfig.CONTRACT_CACHE, allEntries = true)
     @AuditAction(type = ActionType.CREATE, entity = "CONTRACT")
-    public ContractResponse createContract(CreateContractRequest request, UUID createdBy) {
+    public ContractResponse createContract(CreateContractRequest request, MultipartFile file, UUID createdBy) {
         if (contractRepository.existsActiveByContractCode(request.getContractCode())) {
             throw new ValidationException("Contract code already exists: " + request.getContractCode());
         }
@@ -53,6 +56,8 @@ public class ContractService {
             throw new ValidationException("End date must not be before start date");
         }
 
+        String attachmentUrl = cloudinaryService.upload(file, "contracts");
+
         Contract contract = Contract.builder()
                 .contractCode(request.getContractCode())
                 .employee(employee)
@@ -63,7 +68,7 @@ public class ContractService {
                 .baseSalary(request.getBaseSalary())
                 .salaryCoefficient(request.getSalaryCoefficient() != null ? request.getSalaryCoefficient() : 1.0)
                 .note(request.getNote())
-                .attachmentUrl(request.getAttachmentUrl())
+            .attachmentUrl(attachmentUrl)
                 .createdBy(createdBy)
                 .build();
 
@@ -75,7 +80,7 @@ public class ContractService {
     @Transactional
     @CacheEvict(value = CacheConfig.CONTRACT_CACHE, allEntries = true)
     @AuditAction(type = ActionType.UPDATE, entity = "CONTRACT")
-    public ContractResponse updateContract(UUID id, UpdateContractRequest request, UUID updatedBy) {
+    public ContractResponse updateContract(UUID id, UpdateContractRequest request, MultipartFile file, UUID updatedBy) {
         Contract contract = contractRepository.findActiveById(id)
                 .orElseThrow(() -> ContractNotFoundException.byId(id.toString()));
 
@@ -101,6 +106,10 @@ public class ContractService {
         }
         if (request.getAttachmentUrl() != null) {
             contract.setAttachmentUrl(request.getAttachmentUrl());
+        }
+        if (file != null && !file.isEmpty()) {
+            String attachmentUrl = cloudinaryService.upload(file, "contracts");
+            contract.setAttachmentUrl(attachmentUrl);
         }
         contract.setUpdatedBy(updatedBy);
 

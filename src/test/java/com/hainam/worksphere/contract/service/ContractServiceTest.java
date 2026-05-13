@@ -14,6 +14,7 @@ import com.hainam.worksphere.employee.domain.Employee;
 import com.hainam.worksphere.employee.repository.EmployeeRepository;
 import com.hainam.worksphere.shared.exception.ContractNotFoundException;
 import com.hainam.worksphere.shared.exception.ValidationException;
+import com.hainam.worksphere.shared.service.CloudinaryService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -47,6 +48,9 @@ class ContractServiceTest extends BaseUnitTest {
 
     @Mock
     private ContractMapper contractMapper;
+
+    @Mock
+    private CloudinaryService cloudinaryService;
 
     @InjectMocks
     private ContractService contractService;
@@ -133,6 +137,7 @@ class ContractServiceTest extends BaseUnitTest {
 
         when(contractRepository.existsActiveByContractCode("CTR002")).thenReturn(false);
         when(employeeRepository.findActiveById(testEmployee.getId())).thenReturn(Optional.of(testEmployee));
+        when(cloudinaryService.upload(null, "contracts")).thenReturn(null);
         when(contractRepository.save(any(Contract.class))).thenAnswer(invocation -> {
             Contract saved = invocation.getArgument(0);
             saved.setId(UUID.randomUUID());
@@ -141,7 +146,7 @@ class ContractServiceTest extends BaseUnitTest {
         when(contractMapper.toContractResponse(any(Contract.class))).thenReturn(testContractResponse);
 
         // When
-        ContractResponse result = contractService.createContract(request, createdBy);
+        ContractResponse result = contractService.createContract(request, null, createdBy);
 
         // Then
         assertAll(
@@ -168,7 +173,7 @@ class ContractServiceTest extends BaseUnitTest {
         when(contractRepository.existsActiveByContractCode("CTR001")).thenReturn(true);
 
         // When & Then
-        assertThatThrownBy(() -> contractService.createContract(request, createdBy))
+        assertThatThrownBy(() -> contractService.createContract(request, null, createdBy))
                 .isInstanceOf(ValidationException.class)
                 .hasMessageContaining("Contract code already exists");
 
@@ -194,7 +199,7 @@ class ContractServiceTest extends BaseUnitTest {
         when(employeeRepository.findActiveById(testEmployee.getId())).thenReturn(Optional.of(testEmployee));
 
         // When & Then
-        assertThatThrownBy(() -> contractService.createContract(request, createdBy))
+        assertThatThrownBy(() -> contractService.createContract(request, null, createdBy))
                 .isInstanceOf(ValidationException.class)
                 .hasMessageContaining("End date must not be before start date");
 
@@ -241,7 +246,7 @@ class ContractServiceTest extends BaseUnitTest {
         when(contractMapper.toContractResponse(testContract)).thenReturn(testContractResponse);
 
         // When
-        ContractResponse result = contractService.updateContract(contractId, request, updatedBy);
+        ContractResponse result = contractService.updateContract(contractId, request, null, updatedBy);
 
         // Then
         assertAll(
@@ -287,7 +292,7 @@ class ContractServiceTest extends BaseUnitTest {
         when(contractRepository.findActiveById(nonExistentId)).thenReturn(Optional.empty());
 
         // When & Then
-        assertThatThrownBy(() -> contractService.updateContract(nonExistentId, request, updatedBy))
+        assertThatThrownBy(() -> contractService.updateContract(nonExistentId, request, null, updatedBy))
                 .isInstanceOf(ContractNotFoundException.class);
 
         verify(contractRepository).findActiveById(nonExistentId);

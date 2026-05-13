@@ -19,9 +19,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
@@ -35,14 +37,15 @@ public class ContractController {
 
     private final ContractService contractService;
 
-    @PostMapping
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Create a new contract")
     @RequirePermission(PermissionType.CREATE_CONTRACT)
     public ResponseEntity<ApiResponse<ContractResponse>> createContract(
-            @Valid @RequestBody CreateContractRequest request,
+            @Valid @ModelAttribute CreateContractRequest request,
+            @RequestPart(value = "file", required = false) MultipartFile file,
             @AuthenticationPrincipal UserPrincipal userPrincipal
     ) {
-        ContractResponse response = contractService.createContract(request, userPrincipal.getId());
+        ContractResponse response = contractService.createContract(request, file, userPrincipal.getId());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Contract created successfully", response));
     }
@@ -88,15 +91,16 @@ public class ContractController {
         return ResponseEntity.ok(PaginatedApiResponse.success(response));
     }
 
-    @PutMapping("/{id}")
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Update a contract")
     @RequirePermission(PermissionType.UPDATE_CONTRACT)
     public ResponseEntity<ApiResponse<ContractResponse>> updateContract(
             @PathVariable UUID id,
-            @Valid @RequestBody UpdateContractRequest request,
+            @Valid @ModelAttribute UpdateContractRequest request,
+            @RequestPart(value = "file", required = false) MultipartFile file,
             @AuthenticationPrincipal UserPrincipal userPrincipal
     ) {
-        ContractResponse response = contractService.updateContract(id, request, userPrincipal.getId());
+        ContractResponse response = contractService.updateContract(id, request, file, userPrincipal.getId());
         return ResponseEntity.ok(ApiResponse.success("Contract updated successfully", response));
     }
 

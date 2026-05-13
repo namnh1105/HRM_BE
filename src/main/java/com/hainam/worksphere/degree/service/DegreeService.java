@@ -13,6 +13,7 @@ import com.hainam.worksphere.shared.audit.util.AuditContext;
 import com.hainam.worksphere.shared.config.CacheConfig;
 import com.hainam.worksphere.shared.exception.DegreeNotFoundException;
 import com.hainam.worksphere.shared.exception.EmployeeNotFoundException;
+import com.hainam.worksphere.shared.service.CloudinaryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -20,6 +21,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Instant;
 import java.util.List;
@@ -33,13 +35,16 @@ public class DegreeService {
     private final DegreeRepository degreeRepository;
     private final EmployeeRepository employeeRepository;
     private final DegreeMapper degreeMapper;
+    private final CloudinaryService cloudinaryService;
 
     @Transactional
     @CacheEvict(value = CacheConfig.DEGREE_CACHE, allEntries = true)
     @AuditAction(type = ActionType.CREATE, entity = "DEGREE")
-    public DegreeResponse createDegree(CreateDegreeRequest request, UUID createdBy) {
+    public DegreeResponse createDegree(CreateDegreeRequest request, MultipartFile file, UUID createdBy) {
         Employee employee = employeeRepository.findActiveById(request.getEmployeeId())
                 .orElseThrow(() -> EmployeeNotFoundException.byId(request.getEmployeeId().toString()));
+
+        String attachmentUrl = cloudinaryService.upload(file, "degrees");
 
         Degree degree = Degree.builder()
                 .employee(employee)
@@ -49,7 +54,7 @@ public class DegreeService {
                 .institution(request.getInstitution())
                 .graduationDate(request.getGraduationDate())
                 .gpa(request.getGpa())
-                .attachmentUrl(request.getAttachmentUrl())
+            .attachmentUrl(attachmentUrl)
                 .note(request.getNote())
                 .createdBy(createdBy)
                 .build();
@@ -62,7 +67,7 @@ public class DegreeService {
     @Transactional
     @CacheEvict(value = CacheConfig.DEGREE_CACHE, allEntries = true)
     @AuditAction(type = ActionType.UPDATE, entity = "DEGREE")
-    public DegreeResponse updateDegree(UUID id, CreateDegreeRequest request, UUID updatedBy) {
+    public DegreeResponse updateDegree(UUID id, CreateDegreeRequest request, MultipartFile file, UUID updatedBy) {
         Degree degree = degreeRepository.findActiveById(id)
                 .orElseThrow(() -> DegreeNotFoundException.byId(id.toString()));
 
@@ -80,6 +85,10 @@ public class DegreeService {
         if (request.getGraduationDate() != null) degree.setGraduationDate(request.getGraduationDate());
         if (request.getGpa() != null) degree.setGpa(request.getGpa());
         if (request.getAttachmentUrl() != null) degree.setAttachmentUrl(request.getAttachmentUrl());
+        if (file != null && !file.isEmpty()) {
+            String attachmentUrl = cloudinaryService.upload(file, "degrees");
+            degree.setAttachmentUrl(attachmentUrl);
+        }
         if (request.getNote() != null) degree.setNote(request.getNote());
         degree.setUpdatedBy(updatedBy);
 
