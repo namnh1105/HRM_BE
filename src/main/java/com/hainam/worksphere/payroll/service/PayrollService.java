@@ -241,6 +241,8 @@ public class PayrollService {
 
         List<Employee> employees = employeeRepository.findAllActiveList();
         List<PayrollResponse> results = new ArrayList<>();
+        int skippedNoContract = 0;
+        int skippedNoAttendance = 0;
 
         for (Employee employee : employees) {
             Payroll existing = payrollRepository.findActiveByEmployeeIdAndMonthAndYear(employee.getId(), month, year)
@@ -262,6 +264,7 @@ public class PayrollService {
                     .orElse(null);
 
             if (contract == null) {
+                skippedNoContract++;
                 continue;
             }
 
@@ -275,13 +278,13 @@ public class PayrollService {
                     employee.getId(), startDate, endDate
             );
 
-            double baseSalaryPerShift = contract.getBaseSalary() != null ? contract.getBaseSalary() : 0.0;
-            double baseSalaryForMonth;
-            if (scheduledShifts > 0) {
-                baseSalaryForMonth = baseSalaryPerShift * scheduledShifts;
-            } else {
-                baseSalaryForMonth = baseSalaryPerShift * attendedShifts;
+            if (scheduledShifts == 0 && attendedShifts == 0) {
+                skippedNoAttendance++;
+                continue;
             }
+
+            double baseSalaryPerShift = contract.getBaseSalary() != null ? contract.getBaseSalary() : 0.0;
+            double baseSalaryForMonth = baseSalaryPerShift * (scheduledShifts > 0 ? scheduledShifts : attendedShifts);
 
             Payroll payroll = existing != null ? existing : Payroll.builder()
                     .employee(employee)
@@ -313,6 +316,13 @@ public class PayrollService {
             }
 
             results.add(payrollMapper.toPayrollResponse(saved));
+        }
+
+        if (results.isEmpty()) {
+            throw new ValidationException(
+                    "Không tạo được bảng lương: không có nhân viên đủ điều kiện (thiếu hợp đồng hoặc không có chấm công). " +
+                    "Thiếu hợp đồng: " + skippedNoContract + ", không có chấm công: " + skippedNoAttendance
+            );
         }
 
         return results;

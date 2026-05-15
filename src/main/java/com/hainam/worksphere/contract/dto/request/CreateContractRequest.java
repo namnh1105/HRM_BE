@@ -17,9 +17,6 @@ import java.util.UUID;
 @AllArgsConstructor
 public class CreateContractRequest {
 
-    @NotBlank(message = "Contract code is required")
-    private String contractCode;
-
     @NotNull(message = "Employee ID is required")
     private UUID employeeId;
 

@@ -45,10 +45,6 @@ public class ContractService {
     @CacheEvict(value = CacheConfig.CONTRACT_CACHE, allEntries = true)
     @AuditAction(type = ActionType.CREATE, entity = "CONTRACT")
     public ContractResponse createContract(CreateContractRequest request, MultipartFile file, UUID createdBy) {
-        if (contractRepository.existsActiveByContractCode(request.getContractCode())) {
-            throw new ValidationException("Contract code already exists: " + request.getContractCode());
-        }
-
         Employee employee = employeeRepository.findActiveById(request.getEmployeeId())
                 .orElseThrow(() -> EmployeeNotFoundException.byId(request.getEmployeeId().toString()));
 
@@ -59,7 +55,6 @@ public class ContractService {
         String attachmentUrl = cloudinaryService.upload(file, "contracts");
 
         Contract contract = Contract.builder()
-                .contractCode(request.getContractCode())
                 .employee(employee)
                 .contractType(request.getContractType())
                 .startDate(request.getStartDate())

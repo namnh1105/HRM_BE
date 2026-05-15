@@ -22,7 +22,6 @@ class ContractTest extends BaseUnitTest {
         // Given
         UUID id = UUID.randomUUID();
         Employee employee = TestFixtures.createTestEmployee();
-        String contractCode = "CTR001";
         LocalDate startDate = LocalDate.of(2023, 1, 1);
         LocalDate endDate = LocalDate.of(2025, 12, 31);
         LocalDate signingDate = LocalDate.of(2022, 12, 15);
@@ -33,7 +32,6 @@ class ContractTest extends BaseUnitTest {
         // When
         Contract contract = Contract.builder()
                 .id(id)
-                .contractCode(contractCode)
                 .employee(employee)
                 .contractType(ContractType.INDEFINITE_TERM)
                 .startDate(startDate)
@@ -49,7 +47,6 @@ class ContractTest extends BaseUnitTest {
         // Then
         assertAll(
                 () -> assertThat(contract.getId()).isEqualTo(id),
-                () -> assertThat(contract.getContractCode()).isEqualTo(contractCode),
                 () -> assertThat(contract.getEmployee()).isEqualTo(employee),
                 () -> assertThat(contract.getContractType()).isEqualTo(ContractType.INDEFINITE_TERM),
                 () -> assertThat(contract.getStartDate()).isEqualTo(startDate),
@@ -68,7 +65,6 @@ class ContractTest extends BaseUnitTest {
     void shouldCreateContractWithDefaultValues() {
         // When
         Contract contract = Contract.builder()
-                .contractCode("CTR_DEF")
                 .employee(TestFixtures.createTestEmployee())
                 .contractType(ContractType.INDEFINITE_TERM)
                 .startDate(LocalDate.now())
@@ -98,7 +94,6 @@ class ContractTest extends BaseUnitTest {
     void shouldHandleContractTypeEnum() {
         // Given
         Contract contract = Contract.builder()
-                .contractCode("CTR_TYPE")
                 .employee(TestFixtures.createTestEmployee())
                 .startDate(LocalDate.now())
                 .baseSalary(15000000.0)
@@ -126,7 +121,6 @@ class ContractTest extends BaseUnitTest {
     void shouldHandleContractStatusEnum() {
         // Given
         Contract contract = Contract.builder()
-                .contractCode("CTR_STATUS")
                 .employee(TestFixtures.createTestEmployee())
                 .contractType(ContractType.INDEFINITE_TERM)
                 .startDate(LocalDate.now())
@@ -155,7 +149,6 @@ class ContractTest extends BaseUnitTest {
 
         // When
         Contract contract = Contract.builder()
-                .contractCode("CTR_EMP")
                 .employee(employee)
                 .contractType(ContractType.INDEFINITE_TERM)
                 .startDate(LocalDate.now())
@@ -179,7 +172,6 @@ class ContractTest extends BaseUnitTest {
 
         // When
         Contract contract = Contract.builder()
-                .contractCode("CTR_SAL")
                 .employee(TestFixtures.createTestEmployee())
                 .contractType(ContractType.INDEFINITE_TERM)
                 .startDate(LocalDate.now())
@@ -203,7 +195,6 @@ class ContractTest extends BaseUnitTest {
 
         // When
         Contract contract = Contract.builder()
-                .contractCode("CTR_DEL")
                 .employee(TestFixtures.createTestEmployee())
                 .contractType(ContractType.INDEFINITE_TERM)
                 .startDate(LocalDate.now())
@@ -231,7 +222,6 @@ class ContractTest extends BaseUnitTest {
 
         // When
         Contract contract = Contract.builder()
-                .contractCode("CTR_DATE")
                 .employee(TestFixtures.createTestEmployee())
                 .contractType(ContractType.DEFINITE_TERM)
                 .startDate(startDate)

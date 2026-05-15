@@ -70,7 +70,6 @@ class ContractServiceTest extends BaseUnitTest {
 
         testContractResponse = ContractResponse.builder()
                 .id(testContract.getId())
-                .contractCode(testContract.getContractCode())
                 .employeeId(testEmployee.getId())
                 .employeeName(testEmployee.getFullName())
                 .employeeCode(testEmployee.getEmployeeCode())
@@ -97,7 +96,6 @@ class ContractServiceTest extends BaseUnitTest {
         assertAll(
             () -> assertThat(result).isNotNull(),
             () -> assertThat(result.getId()).isEqualTo(contractId),
-            () -> assertThat(result.getContractCode()).isEqualTo(testContract.getContractCode()),
             () -> verify(contractRepository).findActiveById(contractId),
             () -> verify(contractMapper).toContractResponse(testContract)
         );
@@ -123,7 +121,6 @@ class ContractServiceTest extends BaseUnitTest {
     void shouldCreateContractSuccessfully() {
         // Given
         CreateContractRequest request = CreateContractRequest.builder()
-                .contractCode("CTR002")
                 .employeeId(testEmployee.getId())
                 .contractType(ContractType.INDEFINITE_TERM)
                 .startDate(LocalDate.of(2025, 1, 1))
@@ -134,8 +131,6 @@ class ContractServiceTest extends BaseUnitTest {
                 .note("New contract")
                 .attachmentUrl("https://example.com/contract.pdf")
                 .build();
-
-        when(contractRepository.existsActiveByContractCode("CTR002")).thenReturn(false);
         when(employeeRepository.findActiveById(testEmployee.getId())).thenReturn(Optional.of(testEmployee));
         when(cloudinaryService.upload(null, "contracts")).thenReturn(null);
         when(contractRepository.save(any(Contract.class))).thenAnswer(invocation -> {
@@ -151,7 +146,6 @@ class ContractServiceTest extends BaseUnitTest {
         // Then
         assertAll(
             () -> assertThat(result).isNotNull(),
-            () -> verify(contractRepository).existsActiveByContractCode("CTR002"),
             () -> verify(employeeRepository).findActiveById(testEmployee.getId()),
             () -> verify(contractRepository).save(any(Contract.class)),
             () -> verify(contractMapper).toContractResponse(any(Contract.class))
@@ -159,43 +153,16 @@ class ContractServiceTest extends BaseUnitTest {
     }
 
     @Test
-    @DisplayName("Should throw ValidationException when duplicate contract code")
-    void shouldThrowValidationExceptionWhenDuplicateContractCode() {
-        // Given
-        CreateContractRequest request = CreateContractRequest.builder()
-                .contractCode("CTR001")
-                .employeeId(testEmployee.getId())
-                .contractType(ContractType.INDEFINITE_TERM)
-                .startDate(LocalDate.of(2025, 1, 1))
-                .baseSalary(15000000.0)
-                .build();
-
-        when(contractRepository.existsActiveByContractCode("CTR001")).thenReturn(true);
-
-        // When & Then
-        assertThatThrownBy(() -> contractService.createContract(request, null, createdBy))
-                .isInstanceOf(ValidationException.class)
-                .hasMessageContaining("Contract code already exists");
-
-        verify(contractRepository).existsActiveByContractCode("CTR001");
-        verify(contractRepository, never()).save(any(Contract.class));
-        verifyNoInteractions(employeeRepository);
-    }
-
-    @Test
     @DisplayName("Should throw ValidationException when end date is before start date")
     void shouldThrowValidationExceptionWhenEndDateBeforeStartDate() {
         // Given
         CreateContractRequest request = CreateContractRequest.builder()
-                .contractCode("CTR003")
                 .employeeId(testEmployee.getId())
                 .contractType(ContractType.INDEFINITE_TERM)
                 .startDate(LocalDate.of(2025, 6, 1))
                 .endDate(LocalDate.of(2025, 1, 1))
                 .baseSalary(15000000.0)
                 .build();
-
-        when(contractRepository.existsActiveByContractCode("CTR003")).thenReturn(false);
         when(employeeRepository.findActiveById(testEmployee.getId())).thenReturn(Optional.of(testEmployee));
 
         // When & Then

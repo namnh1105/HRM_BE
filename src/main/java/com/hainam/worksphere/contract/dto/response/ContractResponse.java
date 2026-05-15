@@ -17,8 +17,6 @@ public class ContractResponse {
 
     private UUID id;
 
-    private String contractCode;
-
     private UUID employeeId;
 
     private String employeeName;

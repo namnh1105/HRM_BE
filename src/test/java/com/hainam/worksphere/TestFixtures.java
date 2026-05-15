@@ -190,7 +190,6 @@ public class TestFixtures {
     // Contract fixtures
     public static Contract createTestContract() {
         return Contract.builder()
-                .contractCode("CTR001")
                 .employee(createTestEmployee())
                 .contractType(ContractType.INDEFINITE_TERM)
                 .startDate(LocalDate.of(2023, 1, 1))
