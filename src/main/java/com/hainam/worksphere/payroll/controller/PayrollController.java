@@ -4,6 +4,7 @@ import com.hainam.worksphere.auth.security.UserPrincipal;
 import com.hainam.worksphere.authorization.security.RequirePermission;
 import com.hainam.worksphere.employee.dto.response.EmployeeResponse;
 import com.hainam.worksphere.employee.service.EmployeeService;
+import com.hainam.worksphere.payroll.dto.request.AutoGeneratePayrollRequest;
 import com.hainam.worksphere.payroll.dto.request.CreatePayrollRequest;
 import com.hainam.worksphere.payroll.dto.request.UpdatePayrollRequest;
 import com.hainam.worksphere.payroll.dto.response.PayrollResponse;
@@ -88,6 +89,17 @@ public class PayrollController {
     ) {
         PayrollResponse response = payrollService.createPayroll(request, userPrincipal.getId());
         return ResponseEntity.ok(ApiResponse.success("Payroll created successfully", response));
+    }
+
+    @PostMapping("/auto-generate")
+    @Operation(summary = "Auto-generate payrolls from attendance")
+    @RequirePermission(PermissionType.CREATE_PAYROLL)
+    public ResponseEntity<ApiResponse<List<PayrollResponse>>> autoGeneratePayrolls(
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @RequestBody AutoGeneratePayrollRequest request
+    ) {
+        List<PayrollResponse> response = payrollService.autoGeneratePayrolls(request, userPrincipal.getId());
+        return ResponseEntity.ok(ApiResponse.success("Payrolls generated successfully", response));
     }
 
     @PutMapping("/{id}")

@@ -38,6 +38,10 @@ public class UpdatePayrollRequest {
 
     private Double personalIncomeTax;
 
+    private Double latePenalty;
+
+    private Integer lateCount;
+
     private PayrollStatus status;
 
     private LocalDate paymentDate;

@@ -19,6 +19,9 @@ public interface EmployeeRepository extends JpaRepository<Employee, UUID> {
     @Query("SELECT e FROM Employee e WHERE e.isDeleted = false")
     Page<Employee> findAllActive(Pageable pageable);
 
+    @Query("SELECT e FROM Employee e WHERE e.isDeleted = false")
+    List<Employee> findAllActiveList();
+
     @Query("SELECT e FROM Employee e WHERE e.id = :id AND e.isDeleted = false")
     Optional<Employee> findActiveById(@Param("id") UUID id);
 

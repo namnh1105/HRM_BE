@@ -87,6 +87,14 @@ public class Payroll {
     @Builder.Default
     private Double personalIncomeTax = 0.0;
 
+        @Column(name = "late_penalty")
+        @Builder.Default
+        private Double latePenalty = 0.0;
+
+        @Column(name = "late_count")
+        @Builder.Default
+        private Integer lateCount = 0;
+
     @Column(name = "total_deductions")
     @Builder.Default
     private Double totalDeductions = 0.0;

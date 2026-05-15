@@ -3,10 +3,12 @@ package com.hainam.worksphere.payroll.service;
 import com.hainam.worksphere.contract.domain.Contract;
 import com.hainam.worksphere.contract.domain.ContractStatus;
 import com.hainam.worksphere.contract.repository.ContractRepository;
+import com.hainam.worksphere.attendance.repository.AttendanceRepository;
 import com.hainam.worksphere.employee.domain.Employee;
 import com.hainam.worksphere.employee.repository.EmployeeRepository;
 import com.hainam.worksphere.payroll.domain.Payroll;
 import com.hainam.worksphere.payroll.domain.PayrollStatus;
+import com.hainam.worksphere.payroll.dto.request.AutoGeneratePayrollRequest;
 import com.hainam.worksphere.payroll.dto.request.CreatePayrollRequest;
 import com.hainam.worksphere.payroll.dto.request.UpdatePayrollRequest;
 import com.hainam.worksphere.payroll.dto.response.PayrollResponse;
@@ -21,13 +23,16 @@ import com.hainam.worksphere.shared.exception.ValidationException;
 import com.hainam.worksphere.shared.audit.annotation.AuditAction;
 import com.hainam.worksphere.shared.audit.domain.ActionType;
 import com.hainam.worksphere.shared.audit.util.AuditContext;
+import com.hainam.worksphere.workshift.repository.EmployeeWorkShiftRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -40,6 +45,8 @@ public class PayrollService {
     private final PayrollMapper payrollMapper;
     private final EmployeeRepository employeeRepository;
     private final ContractRepository contractRepository;
+    private final AttendanceRepository attendanceRepository;
+    private final EmployeeWorkShiftRepository employeeWorkShiftRepository;
     private final NotificationService notificationService;
 
     @Cacheable(value = CacheConfig.PAYROLL_CACHE, key = "'all'")
@@ -112,6 +119,8 @@ public class PayrollService {
                 .healthInsurance(request.getHealthInsurance() != null ? request.getHealthInsurance() : 0.0)
                 .unemploymentInsurance(request.getUnemploymentInsurance() != null ? request.getUnemploymentInsurance() : 0.0)
                 .personalIncomeTax(request.getPersonalIncomeTax() != null ? request.getPersonalIncomeTax() : 0.0)
+                .latePenalty(request.getLatePenalty() != null ? request.getLatePenalty() : 0.0)
+                .lateCount(request.getLateCount() != null ? request.getLateCount() : 0)
                 .note(request.getNote())
                 .status(PayrollStatus.DRAFT)
                 .createdBy(createdBy)
@@ -179,6 +188,12 @@ public class PayrollService {
         if (request.getPersonalIncomeTax() != null) {
             payroll.setPersonalIncomeTax(request.getPersonalIncomeTax());
         }
+        if (request.getLatePenalty() != null) {
+            payroll.setLatePenalty(request.getLatePenalty());
+        }
+        if (request.getLateCount() != null) {
+            payroll.setLateCount(request.getLateCount());
+        }
         if (request.getStatus() != null) {
             payroll.setStatus(request.getStatus());
         }
@@ -205,6 +220,102 @@ public class PayrollService {
         }
 
         return payrollMapper.toPayrollResponse(saved);
+    }
+
+    @Transactional
+    @CacheEvict(value = CacheConfig.PAYROLL_CACHE, allEntries = true)
+    @AuditAction(type = ActionType.CREATE, entity = "PAYROLL", actionCode = "AUTO_GENERATE_PAYROLLS")
+    public List<PayrollResponse> autoGeneratePayrolls(AutoGeneratePayrollRequest request, UUID createdBy) {
+        Integer month = request.getMonth();
+        Integer year = request.getYear();
+        if (month == null || year == null) {
+            throw new ValidationException("Month and year are required for payroll generation");
+        }
+
+        LocalDate startDate = LocalDate.of(year, month, 1);
+        LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
+
+        double latePenaltyPerShift = request.getLatePenaltyPerShift() != null ? request.getLatePenaltyPerShift() : 0.0;
+        double allowance = request.getAllowance() != null ? request.getAllowance() : 0.0;
+        boolean overwriteExisting = request.getOverwriteExisting() != null && request.getOverwriteExisting();
+
+        List<Employee> employees = employeeRepository.findAllActiveList();
+        List<PayrollResponse> results = new ArrayList<>();
+
+        for (Employee employee : employees) {
+            Payroll existing = payrollRepository.findActiveByEmployeeIdAndMonthAndYear(employee.getId(), month, year)
+                    .orElse(null);
+
+            if (existing != null && !overwriteExisting) {
+                results.add(payrollMapper.toPayrollResponse(existing));
+                continue;
+            }
+
+            if (existing != null && existing.getStatus() != PayrollStatus.DRAFT) {
+                results.add(payrollMapper.toPayrollResponse(existing));
+                continue;
+            }
+
+            Contract contract = contractRepository.findActiveByEmployeeIdAndStatus(employee.getId(), ContractStatus.ACTIVE)
+                    .stream()
+                    .findFirst()
+                    .orElse(null);
+
+            if (contract == null) {
+                continue;
+            }
+
+            long scheduledShifts = employeeWorkShiftRepository.countActiveByEmployeeIdAndDateBetween(
+                    employee.getId(), startDate, endDate
+            );
+            long attendedShifts = attendanceRepository.countPresentByEmployeeIdAndWorkDateBetween(
+                    employee.getId(), startDate, endDate
+            );
+            long lateCount = attendanceRepository.countLateByEmployeeIdAndWorkDateBetween(
+                    employee.getId(), startDate, endDate
+            );
+
+            double baseSalaryPerShift = contract.getBaseSalary() != null ? contract.getBaseSalary() : 0.0;
+            double baseSalaryForMonth;
+            if (scheduledShifts > 0) {
+                baseSalaryForMonth = baseSalaryPerShift * scheduledShifts;
+            } else {
+                baseSalaryForMonth = baseSalaryPerShift * attendedShifts;
+            }
+
+            Payroll payroll = existing != null ? existing : Payroll.builder()
+                    .employee(employee)
+                    .month(month)
+                    .year(year)
+                    .status(PayrollStatus.DRAFT)
+                    .createdBy(createdBy)
+                    .build();
+
+            payroll.setBaseSalary(baseSalaryForMonth);
+            payroll.setSalaryCoefficient(contract.getSalaryCoefficient() != null ? contract.getSalaryCoefficient() : 1.0);
+            payroll.setWorkingDays((int) (scheduledShifts > 0 ? scheduledShifts : 1));
+            payroll.setActualWorkingDays((int) attendedShifts);
+            payroll.setOvertimeHours(0.0);
+            payroll.setOvertimePay(0.0);
+            payroll.setAllowance(allowance);
+            payroll.setBonus(0.0);
+            payroll.setLatePenalty(latePenaltyPerShift * lateCount);
+            payroll.setLateCount((int) lateCount);
+            payroll.setUpdatedBy(createdBy);
+
+            calculatePayroll(payroll);
+
+            Payroll saved = payrollRepository.save(payroll);
+            if (existing == null) {
+                AuditContext.registerCreated(saved);
+            } else {
+                AuditContext.registerUpdated(saved);
+            }
+
+            results.add(payrollMapper.toPayrollResponse(saved));
+        }
+
+        return results;
     }
 
     @Transactional
@@ -263,7 +374,8 @@ public class PayrollService {
         double healthInsurance = payroll.getHealthInsurance() != null ? payroll.getHealthInsurance() : 0.0;
         double unemploymentInsurance = payroll.getUnemploymentInsurance() != null ? payroll.getUnemploymentInsurance() : 0.0;
         double personalIncomeTax = payroll.getPersonalIncomeTax() != null ? payroll.getPersonalIncomeTax() : 0.0;
-        double totalDeductions = socialInsurance + healthInsurance + unemploymentInsurance + personalIncomeTax;
+        double latePenalty = payroll.getLatePenalty() != null ? payroll.getLatePenalty() : 0.0;
+        double totalDeductions = socialInsurance + healthInsurance + unemploymentInsurance + personalIncomeTax + latePenalty;
 
         double netSalary = totalIncome - totalDeductions;
 

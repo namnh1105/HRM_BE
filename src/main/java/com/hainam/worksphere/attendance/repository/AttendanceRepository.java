@@ -57,6 +57,22 @@ public interface AttendanceRepository extends JpaRepository<Attendance, UUID> {
     @Query("SELECT a FROM Attendance a WHERE a.store.id = :storeId AND a.workDate = :workDate AND a.isDeleted = false")
     Page<Attendance> findActiveByStoreIdAndWorkDate(@Param("storeId") UUID storeId, @Param("workDate") LocalDate workDate, Pageable pageable);
 
+    @Query("SELECT COUNT(a) FROM Attendance a WHERE a.employee.id = :employeeId AND a.workDate BETWEEN :startDate AND :endDate " +
+           "AND a.checkInTime IS NOT NULL AND a.isDeleted = false")
+    long countPresentByEmployeeIdAndWorkDateBetween(
+            @Param("employeeId") UUID employeeId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
+
+    @Query("SELECT COUNT(a) FROM Attendance a WHERE a.employee.id = :employeeId AND a.workDate BETWEEN :startDate AND :endDate " +
+           "AND a.lateMinutes > 0 AND a.isDeleted = false")
+    long countLateByEmployeeIdAndWorkDateBetween(
+            @Param("employeeId") UUID employeeId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
+
     long countByIsDeletedFalse();
     long countByWorkDateAndIsDeletedFalse(LocalDate workDate);
     @Query("SELECT COUNT(a) FROM Attendance a WHERE a.workDate = :workDate AND a.status = 'LATE' AND a.isDeleted = false")

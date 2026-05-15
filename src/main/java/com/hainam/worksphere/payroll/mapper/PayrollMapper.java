@@ -24,7 +24,8 @@ public interface PayrollMapper {
         double healthInsurance = payroll.getHealthInsurance() != null ? payroll.getHealthInsurance() : 0.0;
         double unemploymentInsurance = payroll.getUnemploymentInsurance() != null ? payroll.getUnemploymentInsurance() : 0.0;
         double personalIncomeTax = payroll.getPersonalIncomeTax() != null ? payroll.getPersonalIncomeTax() : 0.0;
-        return socialInsurance + healthInsurance + unemploymentInsurance + personalIncomeTax;
+        double latePenalty = payroll.getLatePenalty() != null ? payroll.getLatePenalty() : 0.0;
+        return socialInsurance + healthInsurance + unemploymentInsurance + personalIncomeTax + latePenalty;
     }
 
     @Named("calculateTotalIncome")

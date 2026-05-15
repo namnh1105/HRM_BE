@@ -43,5 +43,9 @@ public class CreatePayrollRequest {
 
     private Double personalIncomeTax;
 
+    private Double latePenalty;
+
+    private Integer lateCount;
+
     private String note;
 }

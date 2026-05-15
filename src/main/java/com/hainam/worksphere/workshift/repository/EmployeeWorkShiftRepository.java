@@ -35,6 +35,15 @@ public interface EmployeeWorkShiftRepository extends JpaRepository<EmployeeWorkS
             @Param("date") LocalDate date
     );
 
+    @Query("SELECT COUNT(ews) FROM EmployeeWorkShift ews WHERE ews.employee.id = :employeeId " +
+          "AND ews.date BETWEEN :startDate AND :endDate " +
+          "AND ews.isDeleted = false")
+    long countActiveByEmployeeIdAndDateBetween(
+           @Param("employeeId") UUID employeeId,
+           @Param("startDate") LocalDate startDate,
+           @Param("endDate") LocalDate endDate
+    );
+
     @Query("SELECT CASE WHEN COUNT(ews) > 0 THEN true ELSE false END FROM EmployeeWorkShift ews " +
            "WHERE ews.employee.id = :employeeId AND ews.workShift.id = :workShiftId " +
            "AND ews.date = :date " +

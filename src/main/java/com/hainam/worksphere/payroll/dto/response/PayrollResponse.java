@@ -52,6 +52,10 @@ public class PayrollResponse {
 
     private Double personalIncomeTax;
 
+    private Double latePenalty;
+
+    private Integer lateCount;
+
     private Double totalDeductions;
 
     private Double totalIncome;
