@@ -5,5 +5,6 @@ public enum ContractType {
     DEFINITE_TERM,
     INDEFINITE_TERM,
     SEASONAL,
-    PART_TIME
+    PART_TIME,
+    MONTHLY
 }

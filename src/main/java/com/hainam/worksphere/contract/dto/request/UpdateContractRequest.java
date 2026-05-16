@@ -20,6 +20,8 @@ public class UpdateContractRequest {
 
     private Double salaryCoefficient;
 
+    private Double allowance;
+
     private ContractStatus status;
 
     private String note;

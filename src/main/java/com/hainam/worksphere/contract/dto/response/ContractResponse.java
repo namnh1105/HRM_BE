@@ -35,6 +35,8 @@ public class ContractResponse {
 
     private Double salaryCoefficient;
 
+    private Double allowance;
+
     private String status;
 
     private String note;

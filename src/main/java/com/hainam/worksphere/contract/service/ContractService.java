@@ -62,6 +62,7 @@ public class ContractService {
                 .signingDate(request.getSigningDate())
                 .baseSalary(request.getBaseSalary())
                 .salaryCoefficient(request.getSalaryCoefficient() != null ? request.getSalaryCoefficient() : 1.0)
+                .allowance(request.getAllowance() != null ? request.getAllowance() : 0.0)
                 .note(request.getNote())
             .attachmentUrl(attachmentUrl)
                 .createdBy(createdBy)
@@ -92,6 +93,9 @@ public class ContractService {
         }
         if (request.getSalaryCoefficient() != null) {
             contract.setSalaryCoefficient(request.getSalaryCoefficient());
+        }
+        if (request.getAllowance() != null) {
+            contract.setAllowance(request.getAllowance());
         }
         if (request.getStatus() != null) {
             contract.setStatus(request.getStatus());

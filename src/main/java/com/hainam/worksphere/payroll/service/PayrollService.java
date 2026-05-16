@@ -4,6 +4,8 @@ import com.hainam.worksphere.contract.domain.Contract;
 import com.hainam.worksphere.contract.domain.ContractStatus;
 import com.hainam.worksphere.contract.repository.ContractRepository;
 import com.hainam.worksphere.attendance.repository.AttendanceRepository;
+import com.hainam.worksphere.leave.repository.LeaveRequestRepository;
+import com.hainam.worksphere.leave.domain.LeaveRequestStatus;
 import com.hainam.worksphere.employee.domain.Employee;
 import com.hainam.worksphere.employee.repository.EmployeeRepository;
 import com.hainam.worksphere.payroll.domain.Payroll;
@@ -47,6 +49,7 @@ public class PayrollService {
     private final ContractRepository contractRepository;
     private final AttendanceRepository attendanceRepository;
     private final EmployeeWorkShiftRepository employeeWorkShiftRepository;
+    private final LeaveRequestRepository leaveRequestRepository;
     private final NotificationService notificationService;
 
     @Cacheable(value = CacheConfig.PAYROLL_CACHE, key = "'all'")
@@ -236,7 +239,8 @@ public class PayrollService {
         LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
 
         double latePenaltyPerShift = request.getLatePenaltyPerShift() != null ? request.getLatePenaltyPerShift() : 0.0;
-        double allowance = request.getAllowance() != null ? request.getAllowance() : 0.0;
+        double latePenaltyPerHour = request.getLatePenaltyPerHour() != null ? request.getLatePenaltyPerHour() : 0.0;
+        double requestAllowance = request.getAllowance() != null ? request.getAllowance() : 0.0;
         boolean overwriteExisting = request.getOverwriteExisting() != null && request.getOverwriteExisting();
 
         List<Employee> employees = employeeRepository.findAllActiveList();
@@ -283,8 +287,36 @@ public class PayrollService {
                 continue;
             }
 
-            double baseSalaryPerShift = contract.getBaseSalary() != null ? contract.getBaseSalary() : 0.0;
-            double baseSalaryForMonth = baseSalaryPerShift * (scheduledShifts > 0 ? scheduledShifts : attendedShifts);
+            double contractBaseSalary = contract.getBaseSalary() != null ? contract.getBaseSalary() : 0.0;
+            double contractAllowance = contract.getAllowance() != null ? contract.getAllowance() : 0.0;
+            double totalAllowance = requestAllowance + contractAllowance;
+            
+            double baseSalaryForMonth;
+            double calculatedLatePenalty;
+
+            if (contract.getContractType() == com.hainam.worksphere.contract.domain.ContractType.MONTHLY) {
+                long lateMinutes = attendanceRepository.sumLateMinutesByEmployeeIdAndWorkDateBetween(
+                        employee.getId(), startDate, endDate
+                );
+                
+                long approvedLeavesCount = leaveRequestRepository.findActiveByEmployeeIdAndStartDateBetween(
+                        employee.getId(), startDate, endDate)
+                        .stream()
+                        .filter(lr -> lr.getStatus() == LeaveRequestStatus.APPROVED)
+                        .mapToLong(lr -> java.time.temporal.ChronoUnit.DAYS.between(lr.getStartDate(), lr.getEndDate()) + 1)
+                        .sum();
+
+                long presentDays = attendedShifts + approvedLeavesCount;
+                if (scheduledShifts > 0) {
+                    baseSalaryForMonth = contractBaseSalary * presentDays / scheduledShifts;
+                } else {
+                    baseSalaryForMonth = contractBaseSalary;
+                }
+                calculatedLatePenalty = (lateMinutes / 60.0) * latePenaltyPerHour;
+            } else {
+                baseSalaryForMonth = contractBaseSalary * (scheduledShifts > 0 ? scheduledShifts : attendedShifts);
+                calculatedLatePenalty = latePenaltyPerShift * lateCount;
+            }
 
             Payroll payroll = existing != null ? existing : Payroll.builder()
                     .employee(employee)
@@ -300,9 +332,9 @@ public class PayrollService {
             payroll.setActualWorkingDays((int) attendedShifts);
             payroll.setOvertimeHours(0.0);
             payroll.setOvertimePay(0.0);
-            payroll.setAllowance(allowance);
+            payroll.setAllowance(totalAllowance);
             payroll.setBonus(0.0);
-            payroll.setLatePenalty(latePenaltyPerShift * lateCount);
+            payroll.setLatePenalty(calculatedLatePenalty);
             payroll.setLateCount((int) lateCount);
             payroll.setUpdatedBy(createdBy);
 

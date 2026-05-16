@@ -35,6 +35,8 @@ public class CreateContractRequest {
 
     private Double salaryCoefficient;
 
+    private Double allowance;
+
     private String note;
 
     private String attachmentUrl;

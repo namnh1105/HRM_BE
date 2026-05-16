@@ -62,6 +62,10 @@ public class Contract {
     @Column(name = "note", columnDefinition = "TEXT")
     private String note;
 
+    @Column(name = "allowance")
+    @Builder.Default
+    private Double allowance = 0.0;
+
     @Column(name = "attachment_url")
     private String attachmentUrl;
 

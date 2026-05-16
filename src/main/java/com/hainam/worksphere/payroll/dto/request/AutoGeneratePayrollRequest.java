@@ -21,6 +21,11 @@ public class AutoGeneratePayrollRequest {
     private Double latePenaltyPerShift;
 
     /**
+     * Penalty applied per hour of late attendance (for monthly salaried employees).
+     */
+    private Double latePenaltyPerHour;
+
+    /**
      * Fixed allowance added for each employee (if any).
      */
     private Double allowance;
