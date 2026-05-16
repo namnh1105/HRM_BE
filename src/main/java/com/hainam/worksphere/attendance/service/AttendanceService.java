@@ -50,8 +50,8 @@ public class AttendanceService {
     private final FaceApiClient faceApiClient;
 
     /** Buffer cho phép checkin sớm / checkout trễ so với ca (phút) */
-    private static final int CHECKIN_EARLY_BUFFER = 30;
-    private static final int CHECKOUT_LATE_BUFFER = 30;
+    private static final int CHECKIN_EARLY_BUFFER = 240; // 4 hours
+    private static final int CHECKOUT_LATE_BUFFER = 240; // 4 hours
 
     // ── Check-in ────────────────────────────────────────────────────
 
@@ -256,6 +256,7 @@ public class AttendanceService {
             throw new ValidationException("Nhân viên không có ca làm việc được phân công cho hôm nay");
         }
 
+        // 1. Try finding a shift that strictly matches the window
         for (EmployeeWorkShift assignment : assignments) {
             WorkShift shift = assignment.getWorkShift();
             if (shift != null && Boolean.TRUE.equals(shift.getIsActive())
@@ -263,6 +264,36 @@ public class AttendanceService {
                     && isTimeInShiftWindow(currentTime, shift.getStartTime(), shift.getEndTime())) {
                 return shift;
             }
+        }
+
+        // 2. If no strict match but there is only ONE shift today, just allow it
+        if (assignments.size() == 1) {
+            WorkShift shift = assignments.get(0).getWorkShift();
+            if (shift != null && Boolean.TRUE.equals(shift.getIsActive())
+                    && !Boolean.TRUE.equals(shift.getIsDeleted())) {
+                return shift;
+            }
+        }
+
+        // 3. If multiple shifts, find the closest one
+        WorkShift closestShift = null;
+        long minDiff = Long.MAX_VALUE;
+        for (EmployeeWorkShift assignment : assignments) {
+            WorkShift shift = assignment.getWorkShift();
+            if (shift != null && Boolean.TRUE.equals(shift.getIsActive())
+                    && !Boolean.TRUE.equals(shift.getIsDeleted())) {
+                long diffToStart = Math.abs(Duration.between(currentTime, shift.getStartTime()).toMinutes());
+                long diffToEnd = Math.abs(Duration.between(currentTime, shift.getEndTime()).toMinutes());
+                long min = Math.min(diffToStart, diffToEnd);
+                if (min < minDiff) {
+                    minDiff = min;
+                    closestShift = shift;
+                }
+            }
+        }
+        
+        if (closestShift != null) {
+            return closestShift;
         }
 
         String shiftNames = assignments.stream()
