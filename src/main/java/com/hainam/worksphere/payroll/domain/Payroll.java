@@ -55,6 +55,10 @@ public class Payroll {
     @Column(name = "actual_working_days")
     private Integer actualWorkingDays;
 
+    @Column(name = "working_hours")
+    @Builder.Default
+    private Double workingHours = 0.0;
+
     @Column(name = "overtime_hours")
     @Builder.Default
     private Double overtimeHours = 0.0;

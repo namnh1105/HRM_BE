@@ -14,20 +14,25 @@ import java.util.UUID;
 @Repository
 public interface EmployeeWorkShiftRepository extends JpaRepository<EmployeeWorkShift, UUID> {
 
-    @Query("SELECT ews FROM EmployeeWorkShift ews WHERE ews.isDeleted = false")
+    @Query("SELECT ews FROM EmployeeWorkShift ews " +
+           "JOIN FETCH ews.workShift ws JOIN FETCH ews.employee emp " +
+           "WHERE ews.isDeleted = false")
     List<EmployeeWorkShift> findAllActive();
 
     @Query("SELECT ews FROM EmployeeWorkShift ews WHERE ews.id = :id AND ews.isDeleted = false")
     Optional<EmployeeWorkShift> findActiveById(@Param("id") UUID id);
 
-    @Query("SELECT ews FROM EmployeeWorkShift ews WHERE ews.employee.id = :employeeId AND ews.isDeleted = false " +
+    @Query("SELECT ews FROM EmployeeWorkShift ews JOIN FETCH ews.workShift ws JOIN FETCH ews.employee emp " +
+           "WHERE ews.employee.id = :employeeId AND ews.isDeleted = false " +
            "ORDER BY ews.date DESC")
     List<EmployeeWorkShift> findActiveByEmployeeId(@Param("employeeId") UUID employeeId);
 
-    @Query("SELECT ews FROM EmployeeWorkShift ews WHERE ews.workShift.id = :workShiftId AND ews.isDeleted = false")
+    @Query("SELECT ews FROM EmployeeWorkShift ews JOIN FETCH ews.workShift ws JOIN FETCH ews.employee emp " +
+           "WHERE ews.workShift.id = :workShiftId AND ews.isDeleted = false")
     List<EmployeeWorkShift> findActiveByWorkShiftId(@Param("workShiftId") UUID workShiftId);
 
-    @Query("SELECT ews FROM EmployeeWorkShift ews WHERE ews.employee.id = :employeeId " +
+    @Query("SELECT ews FROM EmployeeWorkShift ews JOIN FETCH ews.workShift ws JOIN FETCH ews.employee emp " +
+           "WHERE ews.employee.id = :employeeId " +
            "AND ews.date = :date " +
            "AND ews.isDeleted = false")
     List<EmployeeWorkShift> findActiveByEmployeeIdAndDate(
@@ -59,6 +64,7 @@ public interface EmployeeWorkShiftRepository extends JpaRepository<EmployeeWorkS
     List<EmployeeWorkShift> findActiveByDate(@Param("date") LocalDate date);
 
     @Query("SELECT ews FROM EmployeeWorkShift ews " +
+           "JOIN FETCH ews.workShift ws JOIN FETCH ews.employee emp " +
            "WHERE ews.employee.store.id = :storeId AND ews.isDeleted = false")
     List<EmployeeWorkShift> findActiveByStoreId(@Param("storeId") UUID storeId);
 }

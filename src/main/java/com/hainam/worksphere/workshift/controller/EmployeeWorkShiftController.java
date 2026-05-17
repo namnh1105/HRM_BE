@@ -32,6 +32,14 @@ public class EmployeeWorkShiftController {
 
     private final EmployeeWorkShiftService employeeWorkShiftService;
 
+    @GetMapping
+    @Operation(summary = "Get all work shift assignments")
+    @RequirePermission(PermissionType.VIEW_WORK_SHIFT)
+    public ResponseEntity<ApiResponse<List<EmployeeWorkShiftResponse>>> getAllActive() {
+        List<EmployeeWorkShiftResponse> response = employeeWorkShiftService.getAllActive();
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
     @GetMapping("/employee/{employeeId}")
     @Operation(summary = "Get all work shift assignments for an employee")
     @RequirePermission(PermissionType.VIEW_WORK_SHIFT)

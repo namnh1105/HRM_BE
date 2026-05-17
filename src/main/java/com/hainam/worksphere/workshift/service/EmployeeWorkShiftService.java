@@ -35,6 +35,7 @@ public class EmployeeWorkShiftService {
     private final WorkShiftRepository workShiftRepository;
     private final EmployeeWorkShiftMapper employeeWorkShiftMapper;
 
+    @Transactional(readOnly = true)
     public List<EmployeeWorkShiftResponse> getByEmployeeId(UUID employeeId) {
         employeeRepository.findActiveById(employeeId)
                 .orElseThrow(() -> EmployeeNotFoundException.byId(employeeId.toString()));
@@ -45,6 +46,7 @@ public class EmployeeWorkShiftService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public List<EmployeeWorkShiftResponse> getByEmployeeIdAndDate(UUID employeeId, LocalDate date) {
         employeeRepository.findActiveById(employeeId)
                 .orElseThrow(() -> EmployeeNotFoundException.byId(employeeId.toString()));
@@ -55,6 +57,7 @@ public class EmployeeWorkShiftService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public List<EmployeeWorkShiftResponse> getByWorkShiftId(UUID workShiftId) {
         workShiftRepository.findActiveById(workShiftId)
                 .orElseThrow(() -> WorkShiftNotFoundException.byId(workShiftId.toString()));
@@ -65,6 +68,7 @@ public class EmployeeWorkShiftService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public EmployeeWorkShiftResponse getById(UUID id) {
         EmployeeWorkShift ews = employeeWorkShiftRepository.findActiveById(id)
                 .orElseThrow(() -> new ValidationException("Employee work shift assignment not found with id: " + id));
@@ -133,6 +137,7 @@ public class EmployeeWorkShiftService {
         employeeWorkShiftRepository.save(ews);
     }
 
+    @Transactional(readOnly = true)
     public List<EmployeeWorkShiftResponse> getByUserIdAndDate(UUID userId, LocalDate date) {
         Employee employee = employeeRepository.findActiveByUserId(userId)
                 .orElseThrow(() -> EmployeeNotFoundException.byId("user:" + userId));
@@ -143,6 +148,7 @@ public class EmployeeWorkShiftService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public List<EmployeeWorkShiftResponse> getAllByUserId(UUID userId) {
         Employee employee = employeeRepository.findActiveByUserId(userId)
                 .orElseThrow(() -> EmployeeNotFoundException.byId("user:" + userId));
@@ -153,8 +159,17 @@ public class EmployeeWorkShiftService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public List<EmployeeWorkShiftResponse> getByStoreId(UUID storeId) {
         return employeeWorkShiftRepository.findActiveByStoreId(storeId)
+                .stream()
+                .map(employeeWorkShiftMapper::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<EmployeeWorkShiftResponse> getAllActive() {
+        return employeeWorkShiftRepository.findAllActive()
                 .stream()
                 .map(employeeWorkShiftMapper::toResponse)
                 .collect(Collectors.toList());

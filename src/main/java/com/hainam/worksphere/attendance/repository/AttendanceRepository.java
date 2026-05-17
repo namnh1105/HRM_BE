@@ -81,6 +81,14 @@ public interface AttendanceRepository extends JpaRepository<Attendance, UUID> {
             @Param("endDate") LocalDate endDate
     );
 
+    @Query("SELECT COALESCE(SUM(a.workingHours), 0.0) FROM Attendance a WHERE a.employee.id = :employeeId AND a.workDate BETWEEN :startDate AND :endDate " +
+           "AND a.isDeleted = false")
+    double sumWorkingHoursByEmployeeIdAndWorkDateBetween(
+            @Param("employeeId") UUID employeeId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
+
     long countByIsDeletedFalse();
     long countByWorkDateAndIsDeletedFalse(LocalDate workDate);
     @Query("SELECT COUNT(a) FROM Attendance a WHERE a.workDate = :workDate AND a.status = 'LATE' AND a.isDeleted = false")

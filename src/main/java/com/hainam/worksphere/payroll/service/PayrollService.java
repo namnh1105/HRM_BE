@@ -91,19 +91,21 @@ public class PayrollService {
                 .orElseThrow(() -> EmployeeNotFoundException.byId(request.getEmployeeId().toString()));
 
         payrollRepository.findActiveByEmployeeIdAndMonthAndYear(
-                request.getEmployeeId(), request.getMonth(), request.getYear()
-        ).ifPresent(existing -> {
-            throw new ValidationException("Payroll already exists for this employee in " + request.getMonth() + "/" + request.getYear());
-        });
+                request.getEmployeeId(), request.getMonth(), request.getYear()).ifPresent(existing -> {
+                    throw new ValidationException("Payroll already exists for this employee in " + request.getMonth()
+                            + "/" + request.getYear());
+                });
 
         // Resolve baseSalary: use provided value, or look up from active contract
         Double baseSalary = request.getBaseSalary();
         if (baseSalary == null) {
-            baseSalary = contractRepository.findActiveByEmployeeIdAndStatus(request.getEmployeeId(), ContractStatus.ACTIVE)
+            baseSalary = contractRepository
+                    .findActiveByEmployeeIdAndStatus(request.getEmployeeId(), ContractStatus.ACTIVE)
                     .stream()
                     .findFirst()
                     .map(Contract::getBaseSalary)
-                    .orElseThrow(() -> new ValidationException("No active contract found for employee. Please provide base_salary or create an employee contract record."));
+                    .orElseThrow(() -> new ValidationException(
+                            "No active contract found for employee. Please provide base_salary or create an employee contract record."));
         }
 
         Payroll payroll = Payroll.builder()
@@ -120,7 +122,8 @@ public class PayrollService {
                 .bonus(request.getBonus() != null ? request.getBonus() : 0.0)
                 .socialInsurance(request.getSocialInsurance() != null ? request.getSocialInsurance() : 0.0)
                 .healthInsurance(request.getHealthInsurance() != null ? request.getHealthInsurance() : 0.0)
-                .unemploymentInsurance(request.getUnemploymentInsurance() != null ? request.getUnemploymentInsurance() : 0.0)
+                .unemploymentInsurance(
+                        request.getUnemploymentInsurance() != null ? request.getUnemploymentInsurance() : 0.0)
                 .personalIncomeTax(request.getPersonalIncomeTax() != null ? request.getPersonalIncomeTax() : 0.0)
                 .latePenalty(request.getLatePenalty() != null ? request.getLatePenalty() : 0.0)
                 .lateCount(request.getLateCount() != null ? request.getLateCount() : 0)
@@ -133,16 +136,15 @@ public class PayrollService {
 
         Payroll saved = payrollRepository.save(payroll);
         AuditContext.registerCreated(saved);
-        
+
         if (saved.getEmployee().getUser() != null) {
             notificationService.sendNotification(
-                saved.getEmployee().getUser().getId(),
-                NotificationType.SALARY,
-                "New Salary Slip",
-                String.format("Your salary slip for %d/%d has been generated.", saved.getMonth(), saved.getYear())
-            );
+                    saved.getEmployee().getUser().getId(),
+                    NotificationType.SALARY,
+                    "New Salary Slip",
+                    String.format("Your salary slip for %d/%d has been generated.", saved.getMonth(), saved.getYear()));
         }
-        
+
         return payrollMapper.toPayrollResponse(saved);
     }
 
@@ -215,11 +217,10 @@ public class PayrollService {
 
         if (saved.getEmployee().getUser() != null) {
             notificationService.sendNotification(
-                saved.getEmployee().getUser().getId(),
-                NotificationType.SALARY,
-                "Salary Slip Updated",
-                String.format("Your salary slip for %d/%d has been updated.", saved.getMonth(), saved.getYear())
-            );
+                    saved.getEmployee().getUser().getId(),
+                    NotificationType.SALARY,
+                    "Salary Slip Updated",
+                    String.format("Your salary slip for %d/%d has been updated.", saved.getMonth(), saved.getYear()));
         }
 
         return payrollMapper.toPayrollResponse(saved);
@@ -262,7 +263,8 @@ public class PayrollService {
                 continue;
             }
 
-            Contract contract = contractRepository.findActiveByEmployeeIdAndStatus(employee.getId(), ContractStatus.ACTIVE)
+            Contract contract = contractRepository
+                    .findActiveByEmployeeIdAndStatus(employee.getId(), ContractStatus.ACTIVE)
                     .stream()
                     .findFirst()
                     .orElse(null);
@@ -273,14 +275,13 @@ public class PayrollService {
             }
 
             long scheduledShifts = employeeWorkShiftRepository.countActiveByEmployeeIdAndDateBetween(
-                    employee.getId(), startDate, endDate
-            );
+                    employee.getId(), startDate, endDate);
             long attendedShifts = attendanceRepository.countPresentByEmployeeIdAndWorkDateBetween(
-                    employee.getId(), startDate, endDate
-            );
+                    employee.getId(), startDate, endDate);
             long lateCount = attendanceRepository.countLateByEmployeeIdAndWorkDateBetween(
-                    employee.getId(), startDate, endDate
-            );
+                    employee.getId(), startDate, endDate);
+            double workingHours = attendanceRepository.sumWorkingHoursByEmployeeIdAndWorkDateBetween(
+                    employee.getId(), startDate, endDate);
 
             if (scheduledShifts == 0 && attendedShifts == 0) {
                 skippedNoAttendance++;
@@ -290,20 +291,20 @@ public class PayrollService {
             double contractBaseSalary = contract.getBaseSalary() != null ? contract.getBaseSalary() : 0.0;
             double contractAllowance = contract.getAllowance() != null ? contract.getAllowance() : 0.0;
             double totalAllowance = requestAllowance + contractAllowance;
-            
+
             double baseSalaryForMonth;
             double calculatedLatePenalty;
 
             if (contract.getContractType() == com.hainam.worksphere.contract.domain.ContractType.MONTHLY) {
                 long lateMinutes = attendanceRepository.sumLateMinutesByEmployeeIdAndWorkDateBetween(
-                        employee.getId(), startDate, endDate
-                );
-                
+                        employee.getId(), startDate, endDate);
+
                 long approvedLeavesCount = leaveRequestRepository.findActiveByEmployeeIdAndStartDateBetween(
                         employee.getId(), startDate, endDate)
                         .stream()
                         .filter(lr -> lr.getStatus() == LeaveRequestStatus.APPROVED)
-                        .mapToLong(lr -> java.time.temporal.ChronoUnit.DAYS.between(lr.getStartDate(), lr.getEndDate()) + 1)
+                        .mapToLong(lr -> java.time.temporal.ChronoUnit.DAYS.between(lr.getStartDate(), lr.getEndDate())
+                                + 1)
                         .sum();
 
                 long presentDays = attendedShifts + approvedLeavesCount;
@@ -318,18 +319,21 @@ public class PayrollService {
                 calculatedLatePenalty = latePenaltyPerShift * lateCount;
             }
 
-            Payroll payroll = existing != null ? existing : Payroll.builder()
-                    .employee(employee)
-                    .month(month)
-                    .year(year)
-                    .status(PayrollStatus.DRAFT)
-                    .createdBy(createdBy)
-                    .build();
+            Payroll payroll = existing != null ? existing
+                    : Payroll.builder()
+                            .employee(employee)
+                            .month(month)
+                            .year(year)
+                            .status(PayrollStatus.DRAFT)
+                            .createdBy(createdBy)
+                            .build();
 
             payroll.setBaseSalary(baseSalaryForMonth);
-            payroll.setSalaryCoefficient(contract.getSalaryCoefficient() != null ? contract.getSalaryCoefficient() : 1.0);
+            payroll.setSalaryCoefficient(
+                    contract.getSalaryCoefficient() != null ? contract.getSalaryCoefficient() : 1.0);
             payroll.setWorkingDays((int) (scheduledShifts > 0 ? scheduledShifts : 1));
             payroll.setActualWorkingDays((int) attendedShifts);
+            payroll.setWorkingHours(workingHours);
             payroll.setOvertimeHours(0.0);
             payroll.setOvertimePay(0.0);
             payroll.setAllowance(totalAllowance);
@@ -352,9 +356,9 @@ public class PayrollService {
 
         if (results.isEmpty()) {
             throw new ValidationException(
-                    "Không tạo được bảng lương: không có nhân viên đủ điều kiện (thiếu hợp đồng hoặc không có chấm công). " +
-                    "Thiếu hợp đồng: " + skippedNoContract + ", không có chấm công: " + skippedNoAttendance
-            );
+                    "Không tạo được bảng lương: không có nhân viên đủ điều kiện (thiếu hợp đồng hoặc không có chấm công). "
+                            +
+                            "Thiếu hợp đồng: " + skippedNoContract + ", không có chấm công: " + skippedNoAttendance);
         }
 
         return results;
@@ -406,7 +410,8 @@ public class PayrollService {
         double allowance = payroll.getAllowance() != null ? payroll.getAllowance() : 0.0;
         double bonus = payroll.getBonus() != null ? payroll.getBonus() : 0.0;
 
-        int workingDays = payroll.getWorkingDays() != null && payroll.getWorkingDays() > 0 ? payroll.getWorkingDays() : 1;
+        int workingDays = payroll.getWorkingDays() != null && payroll.getWorkingDays() > 0 ? payroll.getWorkingDays()
+                : 1;
         int actualWorkingDays = payroll.getActualWorkingDays() != null ? payroll.getActualWorkingDays() : workingDays;
 
         double proratedSalary = (baseSalary * salaryCoefficient / workingDays) * actualWorkingDays;
@@ -414,10 +419,12 @@ public class PayrollService {
 
         double socialInsurance = payroll.getSocialInsurance() != null ? payroll.getSocialInsurance() : 0.0;
         double healthInsurance = payroll.getHealthInsurance() != null ? payroll.getHealthInsurance() : 0.0;
-        double unemploymentInsurance = payroll.getUnemploymentInsurance() != null ? payroll.getUnemploymentInsurance() : 0.0;
+        double unemploymentInsurance = payroll.getUnemploymentInsurance() != null ? payroll.getUnemploymentInsurance()
+                : 0.0;
         double personalIncomeTax = payroll.getPersonalIncomeTax() != null ? payroll.getPersonalIncomeTax() : 0.0;
         double latePenalty = payroll.getLatePenalty() != null ? payroll.getLatePenalty() : 0.0;
-        double totalDeductions = socialInsurance + healthInsurance + unemploymentInsurance + personalIncomeTax + latePenalty;
+        double totalDeductions = socialInsurance + healthInsurance + unemploymentInsurance + personalIncomeTax
+                + latePenalty;
 
         double netSalary = totalIncome - totalDeductions;
 

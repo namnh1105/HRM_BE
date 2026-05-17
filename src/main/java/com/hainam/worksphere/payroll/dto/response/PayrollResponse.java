@@ -36,6 +36,8 @@ public class PayrollResponse {
 
     private Integer actualWorkingDays;
 
+    private Double workingHours;
+
     private Double overtimeHours;
 
     private Double overtimePay;
